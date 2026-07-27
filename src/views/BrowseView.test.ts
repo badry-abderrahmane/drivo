@@ -3,16 +3,15 @@ import { mountWithVuetify } from "../test/setup";
 import { flushPromises } from "@vue/test-utils";
 import type { LibraryItem } from "../lib/types";
 
-const mk = (id: string, type: string, title: string): LibraryItem => ({
+const mk = (id: string, level: string, title: string): LibraryItem => ({
   fileId: id, name: title, mimeType: "application/pdf", path: [], webViewLink: "https://drive/" + id,
   modifiedTime: "2026-01-01T00:00:00.000Z", isFolder: false, displayTitle: title,
-  meta: { fileId: id, level: "2ème Bac SM", type, subject: "", chapter: "", title, description: "", tags: [], order: Number(id) },
+  meta: { fileId: id, level, type: "Cours", subject: "", chapter: "", title, description: "", tags: [], order: Number(id) },
 });
 
 beforeEach(() => vi.resetModules());
 
-// doMock injects loadLibrary into the fresh module graph (resetModules + dynamic import);
-// spyOn would not reach the freshly-imported copy used by useLibrary.
+// doMock injects loadLibrary into the fresh module graph (resetModules + dynamic import).
 async function mountView(items: LibraryItem[]) {
   vi.doMock("../lib/loadLibrary", () => ({ loadLibrary: vi.fn().mockResolvedValue({ items, stale: false }) }));
   const BrowseView = (await import("./BrowseView.vue")).default;
@@ -22,17 +21,19 @@ async function mountView(items: LibraryItem[]) {
 }
 
 describe("BrowseView", () => {
-  it("renders a card per item once loaded", async () => {
-    const w = await mountView([mk("1", "Cours", "Mécanique"), mk("2", "Exercices", "TD1")]);
-    expect(w.text()).toContain("Mécanique");
-    expect(w.text()).toContain("TD1");
+  it("groups by level by default (section titles visible)", async () => {
+    const w = await mountView([mk("1", "2ème Bac SM", "Mécanique"), mk("2", "1ère Bac", "Optique")]);
+    expect(w.text()).toContain("2ème Bac SM");
+    expect(w.text()).toContain("1ère Bac");
   });
 
-  it("paginates to items-per-page (24)", async () => {
-    const many = Array.from({ length: 30 }, (_, i) => mk(String(i + 1), "Cours", "Doc " + (i + 1)));
-    const w = await mountView(many);
+  it("switches to a flat card grid when searching", async () => {
+    const w = await mountView([mk("1", "2ème Bac SM", "Mécanique"), mk("2", "1ère Bac", "Optique")]);
+    const input = w.get('[data-test="search"] input');
+    await input.setValue("Mécanique");
+    await flushPromises();
     const cards = w.findAll(".v-card");
-    expect(cards.length).toBeLessThanOrEqual(24);
-    expect(cards.length).toBeGreaterThan(0);
+    expect(cards.length).toBe(1);
+    expect(w.text()).toContain("Mécanique");
   });
 });

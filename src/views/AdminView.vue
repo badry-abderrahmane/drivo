@@ -8,6 +8,7 @@
         <v-spacer />
         <v-btn color="primary" data-test="save" :loading="saving" @click="save">Enregistrer</v-btn>
         <v-btn class="ml-2" variant="tonal" data-test="reindex" :loading="reindexing" @click="doReindex">Réindexer Drive</v-btn>
+        <v-btn class="ml-2" variant="text" data-test="logout" prepend-icon="mdi-logout" @click="logout">Se déconnecter</v-btn>
       </v-toolbar>
 
       <v-alert v-if="stale" type="warning" variant="tonal" class="ma-4">Hors ligne — données en cache.</v-alert>
@@ -59,6 +60,7 @@ import PasswordGate from "../components/PasswordGate.vue";
 import { useLibrary } from "../composables/useLibrary";
 import { saveMeta, reindex } from "../api";
 import { LEVELS, TYPES, SUBJECTS } from "../config";
+import { loadAdminPassword, saveAdminPassword, clearAdminPassword } from "../lib/adminAuth";
 import { toEditRow, toSaveInput, saveKey, changedRows, type EditRow } from "./adminRows";
 
 const { items, stale, ensureLoaded, reload } = useLibrary();
@@ -90,7 +92,16 @@ function rebuildRows(): void {
 }
 watch(items, rebuildRows);
 
-onMounted(ensureLoaded);
+// Restore a session-persisted password so the admin isn't re-prompted after a
+// refresh or navigation within the same tab.
+onMounted(async () => {
+  const stored = loadAdminPassword();
+  if (stored) {
+    password.value = stored;
+    await ensureLoaded();
+    rebuildRows();
+  }
+});
 
 function notify(text: string, color: string): void {
   snack.text = text;
@@ -100,8 +111,14 @@ function notify(text: string, color: string): void {
 
 async function onUnlocked(pw: string): Promise<void> {
   password.value = pw;
+  saveAdminPassword(pw);
   await ensureLoaded();
   rebuildRows();
+}
+
+function logout(): void {
+  clearAdminPassword();
+  password.value = "";
 }
 
 async function save(): Promise<void> {

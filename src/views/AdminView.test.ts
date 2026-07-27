@@ -9,7 +9,10 @@ const item: LibraryItem = {
   meta: { fileId: "1", level: "", type: "", subject: "", chapter: "", title: "", description: "", tags: [], order: 0 },
 };
 
-beforeEach(() => vi.resetModules());
+beforeEach(() => {
+  vi.resetModules();
+  sessionStorage.clear();
+});
 
 async function mountAdmin() {
   const saveMeta = vi.fn().mockResolvedValue({ ok: true });
@@ -77,5 +80,27 @@ describe("AdminView", () => {
     const saveBtn = w.get('[data-test="save"]');
     // button is no longer in the loading state (Vuetify sets aria-disabled / loading class)
     expect(saveBtn.classes().join(" ")).not.toContain("v-btn--loading");
+  });
+
+  it("persists the password to the session on unlock", async () => {
+    const { w } = await mountAdmin();
+    await unlock(w);
+    expect(sessionStorage.getItem("drivo:admin_pw")).toBe("secret");
+  });
+
+  it("skips the gate when a password is already stored in the session", async () => {
+    sessionStorage.setItem("drivo:admin_pw", "secret");
+    const { w } = await mountAdmin();
+    expect(w.find(".v-data-table").exists()).toBe(true);
+    expect(w.find('[data-test="unlock"]').exists()).toBe(false);
+  });
+
+  it("logout clears the session and returns to the gate", async () => {
+    const { w } = await mountAdmin();
+    await unlock(w);
+    await w.get('[data-test="logout"]').trigger("click");
+    await flushPromises();
+    expect(w.find('[data-test="unlock"]').exists()).toBe(true);
+    expect(sessionStorage.getItem("drivo:admin_pw")).toBeNull();
   });
 });
