@@ -1,14 +1,8 @@
 import { defineConfig } from "vite";
-import { resolve } from "path";
+import vue from "@vitejs/plugin-vue";
+import vuetify from "vite-plugin-vuetify";
 
 export default defineConfig({
   base: "/drivo/",
-  build: {
-    rollupOptions: {
-      input: {
-        main: resolve(__dirname, "index.html"),
-        admin: resolve(__dirname, "admin.html"),
-      },
-    },
-  },
+  plugins: [vue(), vuetify({ autoImport: true })],
 });
