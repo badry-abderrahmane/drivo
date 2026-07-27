@@ -259,8 +259,16 @@
           <v-card-title class="text-h6 font-weight-bold">
             Modifier le document
           </v-card-title>
-          <v-card-subtitle class="text-caption text-medium-emphasis text-truncate">
-            Fichier d'origine : {{ editingRow.name }}
+          <v-card-subtitle class="text-body-1 text-truncate">
+            Fichier d'origine : <span class="font-weight-medium">{{ editingRow.name }}</span>
+          </v-card-subtitle>
+          <v-card-subtitle
+            v-if="editingRow.path.length"
+            class="text-caption text-medium-emphasis text-truncate d-flex align-center ga-1 mt-1"
+            :title="editingRow.path.join(' / ')"
+          >
+            <v-icon icon="mdi-folder-outline" size="14" />
+            {{ editingRow.path.join(" / ") }}
           </v-card-subtitle>
         </v-card-item>
 
