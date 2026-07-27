@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { toEditRow, toSaveInput } from "./adminRows";
+import { toEditRow, toSaveInput, saveKey, changedRows } from "./adminRows";
 import type { LibraryItem } from "../lib/types";
 
 const item: LibraryItem = {
@@ -18,5 +18,19 @@ describe("adminRows", () => {
     r.title = "New";
     const s = toSaveInput(r);
     expect(s).toEqual({ fileId: "1", level: "2ème Bac SM", type: "Cours", subject: "Physique", chapter: "Mécanique", title: "New", description: "D", tags: "a,b", order: 3 });
+  });
+
+  it("changedRows returns only rows that differ from the baseline", () => {
+    const a = toEditRow({ ...item, fileId: "1" } as LibraryItem);
+    const b = toEditRow({ ...item, fileId: "2", meta: { ...item.meta, fileId: "2" } } as LibraryItem);
+    const baseline = new Map([[a.fileId, saveKey(a)], [b.fileId, saveKey(b)]]);
+    expect(changedRows([a, b], baseline)).toEqual([]); // nothing edited
+    a.title = "Edited";
+    expect(changedRows([a, b], baseline)).toEqual([a]); // only the edited row
+  });
+
+  it("changedRows treats a row missing from the baseline as changed", () => {
+    const a = toEditRow(item);
+    expect(changedRows([a], new Map())).toEqual([a]);
   });
 });

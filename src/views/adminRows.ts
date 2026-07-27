@@ -28,3 +28,13 @@ export function toSaveInput(r: EditRow): SaveInput {
     title: r.title, description: r.description, tags: r.tags, order: Number(r.order) || 0,
   };
 }
+
+/** Stable serialization of a row's saved fields; used to detect edits. */
+export function saveKey(r: EditRow): string {
+  return JSON.stringify(toSaveInput(r));
+}
+
+/** Rows whose saved fields differ from the baseline snapshot (keyed by fileId). */
+export function changedRows(rows: EditRow[], baseline: Map<string, string>): EditRow[] {
+  return rows.filter((r) => baseline.get(r.fileId) !== saveKey(r));
+}
