@@ -109,9 +109,20 @@
               >
                 <v-icon :icon="kindOf(item).icon" size="20" />
               </div>
-              <span class="font-weight-bold text-body-2 text-truncate" style="max-width: 200px" :title="item.name">
-                {{ item.name }}
-              </span>
+              <div class="d-flex flex-column overflow-hidden">
+                <span class="font-weight-bold text-body-2 text-truncate" style="max-width: 240px" :title="item.name">
+                  {{ item.name }}
+                </span>
+                <span
+                  v-if="item.path.length"
+                  class="text-caption text-medium-emphasis text-truncate d-flex align-center ga-1"
+                  style="max-width: 240px"
+                  :title="item.path.join(' / ')"
+                >
+                  <v-icon icon="mdi-folder-outline" size="12" />
+                  {{ item.path.join(" / ") }}
+                </span>
+              </div>
             </div>
           </template>
 
@@ -471,6 +482,7 @@ const editForm = reactive<EditRow>({
   fileId: "",
   name: "",
   mimeType: "",
+  path: [],
   level: "",
   type: "",
   subject: "",
