@@ -11,12 +11,25 @@
         <v-btn class="ml-2" variant="text" data-test="logout" prepend-icon="mdi-logout" @click="logout">Se déconnecter</v-btn>
       </v-toolbar>
 
+      <v-progress-linear v-if="loading" indeterminate color="primary" data-test="loading" />
+
+      <div v-if="loading && rows.length === 0" class="d-flex flex-column align-center pa-8 ga-3 text-medium-emphasis">
+        <v-progress-circular indeterminate color="primary" />
+        <span>Chargement des fichiers…</span>
+      </div>
+
+      <v-alert v-if="error" type="error" variant="tonal" class="ma-4">
+        Échec du chargement des fichiers : {{ error }}
+      </v-alert>
+
       <v-alert v-if="stale" type="warning" variant="tonal" class="ma-4">Hors ligne — données en cache.</v-alert>
 
       <v-data-table
+        v-show="rows.length > 0"
         :headers="headers"
         :items="rows"
         :search="search"
+        :loading="loading"
         item-value="fileId"
         :items-per-page="25"
         :items-per-page-options="[10, 25, 50, 100]"
@@ -63,7 +76,7 @@ import { LEVELS, TYPES, SUBJECTS } from "../config";
 import { loadAdminPassword, saveAdminPassword, clearAdminPassword } from "../lib/adminAuth";
 import { toEditRow, toSaveInput, saveKey, changedRows, type EditRow } from "./adminRows";
 
-const { items, stale, ensureLoaded, reload } = useLibrary();
+const { items, loading, error, stale, ensureLoaded, reload } = useLibrary();
 // Snapshot of each row's saved state at load/save time, to send only edited rows.
 const baseline = new Map<string, string>();
 const password = ref("");

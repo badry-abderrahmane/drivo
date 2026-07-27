@@ -95,6 +95,29 @@ describe("AdminView", () => {
     expect(w.find('[data-test="unlock"]').exists()).toBe(false);
   });
 
+  it("shows a loading indicator while the library loads after unlock", async () => {
+    let resolveLoad: (v: { items: LibraryItem[]; stale: boolean }) => void = () => {};
+    const loadLibrary = vi.fn(() => new Promise((r) => { resolveLoad = r; }));
+    const saveMeta = vi.fn().mockResolvedValue({ ok: true });
+    vi.doMock("../lib/loadLibrary", () => ({ loadLibrary }));
+    vi.doMock("../api", () => ({ saveMeta, reindex: vi.fn() }));
+    const AdminView = (await import("./AdminView.vue")).default;
+    const w = mountWithVuetify(AdminView);
+    await flushPromises();
+
+    await w.get('input[type="password"]').setValue("secret");
+    await w.get('[data-test="unlock"]').trigger("click");
+    await flushPromises(); // password validated; library load still pending
+
+    expect(w.find('[data-test="loading"]').exists()).toBe(true);
+    expect(w.text()).toContain("Chargement des fichiers");
+
+    resolveLoad({ items: [item], stale: false });
+    await flushPromises();
+    expect(w.find('[data-test="loading"]').exists()).toBe(false);
+    expect(w.find(".v-data-table").exists()).toBe(true);
+  });
+
   it("logout clears the session and returns to the gate", async () => {
     const { w } = await mountAdmin();
     await unlock(w);
