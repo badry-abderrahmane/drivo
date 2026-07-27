@@ -1,7 +1,7 @@
 var CACHE_PREFIX = 'manifest_';
 var CACHE_META_KEY = 'manifest_meta';
-var CACHE_TTL_SECONDS = 600; // 10 minutes
-var CHUNK_CHARS = 45000;     // keep each cache value well under the 100 KB per-value limit
+var CACHE_TTL_SECONDS = 21600; // 6 hours (CacheService maximum)
+var CHUNK_CHARS = 45000;       // keep each cache value well under the 100 KB per-value limit
 
 function doGet() {
   return json_(getManifestCached_());
@@ -19,16 +19,35 @@ function doPost(e) {
     return json_({ ok: false, error: 'unauthorized' });
   }
   if (body.action === 'save') {
-    writeMeta(body.rows || []);
-    clearCache_();
+    var rows = body.rows || [];
+    writeMeta(rows);
+    // Patch the cached manifest's metadata in place instead of clearing it, so the
+    // next student is never forced into a cold (slow) rebuild after a metadata edit.
+    patchMetaInCache_(rows);
     return json_({ ok: true });
   }
   if (body.action === 'reindex') {
-    var fresh = buildManifest_(true); // reindex is the only path that (re)shares files
+    var fresh = buildManifest_(true); // reindex is the only interactive path that (re)shares files
     putCache_(fresh);
     return json_({ ok: true, count: fresh.files.length });
   }
   return json_({ ok: false, error: 'unknown_action' });
+}
+
+// Background refresh — installed as a time-driven trigger (see setupTrigger) so the
+// cache is re-walked periodically and students almost never hit a cold rebuild.
+function refreshCache() {
+  putCache_(buildManifest_(true));
+}
+
+// Run this ONCE from the Apps Script editor to install the periodic refresh.
+function setupTrigger() {
+  var triggers = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < triggers.length; i++) {
+    if (triggers[i].getHandlerFunction() === 'refreshCache') ScriptApp.deleteTrigger(triggers[i]);
+  }
+  ScriptApp.newTrigger('refreshCache').timeBased().everyHours(4).create();
+  refreshCache(); // warm it immediately
 }
 
 function getManifestCached_() {
@@ -80,15 +99,23 @@ function putCache_(payload) {
   }
 }
 
-function clearCache_() {
-  var cache = CacheService.getScriptCache();
-  var metaVal = cache.get(CACHE_META_KEY);
-  var keys = [CACHE_META_KEY];
-  if (metaVal) {
-    var n = Number(metaVal);
-    for (var i = 0; i < n; i++) keys.push(CACHE_PREFIX + i);
+// Merge saved rows into the cached manifest's meta array and re-cache. No-op if the
+// cache is cold (next GET rebuilds it anyway).
+function patchMetaInCache_(rows) {
+  if (!rows || !rows.length) return;
+  var manifest = getCachedManifest_();
+  if (!manifest) return;
+  var byId = {};
+  for (var i = 0; i < manifest.meta.length; i++) byId[manifest.meta[i].fileId] = manifest.meta[i];
+  for (var j = 0; j < rows.length; j++) {
+    var r = rows[j];
+    if (byId[r.fileId]) {
+      for (var k in r) byId[r.fileId][k] = r[k];
+    } else {
+      manifest.meta.push(r);
+    }
   }
-  cache.removeAll(keys);
+  putCache_(manifest);
 }
 
 function json_(obj) {
