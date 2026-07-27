@@ -1,11 +1,6 @@
-import { loadLibrary } from "./lib/loadLibrary";
-import { renderBrowse } from "./components/browse";
+import { createApp } from "vue";
+import App from "./App.vue";
+import router from "./router";
+import vuetify from "./plugins/vuetify";
 
-const root = document.getElementById("app")!;
-root.textContent = "Chargement…";
-
-loadLibrary()
-  .then(({ items, stale }) => renderBrowse(root, items, stale))
-  .catch(() => {
-    root.textContent = "Impossible de charger la bibliothèque. Réessayez plus tard.";
-  });
+createApp(App).use(router).use(vuetify).mount("#app");
