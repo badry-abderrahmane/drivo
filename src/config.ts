@@ -9,5 +9,5 @@ export const LEVELS = [
   "2ème Bac PC",
   "2ème Bac SVT",
 ];
-export const TYPES = ["Cours", "Exercices", "Examen", "TP", "Résumé"];
-export const SUBJECTS = ["Physique", "Chimie"];
+export const TYPES = ["Cours", "Exercices", "Devoir surveillé", "Examen National", "TP", "Résumé"];
+export const SUBJECTS = ["Physique", "Chimie", "Physique & Chimie"];
