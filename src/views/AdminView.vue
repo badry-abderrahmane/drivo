@@ -435,7 +435,9 @@ function kindOf(r: EditRow) {
 }
 
 const { items, loading, error, stale, ensureLoaded, reload } = useLibrary();
-const baseline = new Map<string, string>();
+// Reactive so that updating it after a save re-triggers the "unsaved changes" badge
+// (a plain Map's mutations wouldn't invalidate the computed that reads it).
+const baseline = reactive(new Map<string, string>());
 const password = ref("");
 const search = ref("");
 const saving = ref(false);

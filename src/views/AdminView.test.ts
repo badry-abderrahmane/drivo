@@ -61,6 +61,17 @@ describe("AdminView", () => {
     expect(rows[0].title).toBe("Nouveau titre");
   });
 
+  it("clears the unsaved-changes badge after a successful save", async () => {
+    const { w } = await mountAdmin();
+    await unlock(w);
+    await w.get('[data-test="cell-title"] input').setValue("Nouveau titre");
+    await flushPromises();
+    expect(w.text()).toContain("non enregistrée"); // badge visible after editing
+    await w.get('[data-test="save"]').trigger("click");
+    await flushPromises();
+    expect(w.text()).not.toContain("non enregistrée"); // badge cleared after save
+  });
+
   it("save with no edits does not call the backend", async () => {
     const { w, saveMeta } = await mountAdmin();
     await unlock(w);
