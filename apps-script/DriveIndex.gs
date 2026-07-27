@@ -3,26 +3,18 @@
 //
 // Sharing: share the ROOT FOLDER once as anyone-with-link viewer. Every file and
 // subfolder inside inherits that access — including files added later — so this is a
-// single API call regardless of library size.
+// single API call regardless of library size (measured ~0.3s vs ~130s per-file).
 //
-// Instrumented (v3-diag): logs a version marker plus separate timings for the
-// folder-share call and the walk, so the execution log shows where time goes.
-
-var DRIVEINDEX_VERSION = 'v3-diag';
+// The walk makes one `files.list` per folder, sequentially. At ~100 folders this is
+// ~20s, but it runs only in the background (the 4-hourly refresh trigger) or on a
+// manual reindex — never on a student page load, which is served from the warm cache.
 
 function walkFolder(rootId, autoShare) {
-  console.log('walkFolder start ' + DRIVEINDEX_VERSION + ' autoShare=' + autoShare);
+  if (autoShare) ensureShared_(rootId); // share root once; descendants inherit
 
-  if (autoShare) {
-    var ts = new Date().getTime();
-    ensureShared_(rootId); // share root once; descendants inherit
-    console.log('root folder share took ' + (new Date().getTime() - ts) + ' ms');
-  }
-
-  var tw = new Date().getTime();
+  var t0 = new Date().getTime();
   var nodes = [];
   var folderCount = 0;
-  var listCalls = 0;
   var pathOf = {};
   pathOf[rootId] = [];
   var queue = [rootId];
@@ -38,7 +30,6 @@ function walkFolder(rootId, autoShare) {
         pageSize: 1000,
         pageToken: pageToken,
       });
-      listCalls++;
       var files = resp.files || [];
       for (var i = 0; i < files.length; i++) {
         var f = files[i];
@@ -61,8 +52,8 @@ function walkFolder(rootId, autoShare) {
       pageToken = resp.nextPageToken;
     } while (pageToken);
   }
-  console.log('walk done: ' + nodes.length + ' files, ' + folderCount + ' folders, ' +
-    listCalls + ' list calls, ' + (new Date().getTime() - tw) + ' ms');
+  console.log('walk: ' + nodes.length + ' files, ' + folderCount + ' folders, ' +
+    (new Date().getTime() - t0) + ' ms');
   return nodes;
 }
 
