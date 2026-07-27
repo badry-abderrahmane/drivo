@@ -260,16 +260,22 @@
               />
             </v-col>
 
-            <!-- Chapter Field -->
+            <!-- Chapter Field: level-aware autocomplete that also accepts a new value -->
             <v-col cols="12" sm="6">
-              <v-text-field
+              <v-combobox
                 v-model="editForm.chapter"
                 label="Chapitre"
-                placeholder="Ex: Chapitre 3"
+                :items="chapterOptions"
+                :placeholder="editForm.level ? 'Choisir ou saisir un chapitre' : 'Saisir un chapitre'"
+                :hint="chapterOptions.length ? 'Programme officiel — ou saisissez le vôtre' : 'Choisissez un niveau pour voir les chapitres du programme'"
+                persistent-hint
                 variant="outlined"
                 density="comfortable"
                 prepend-inner-icon="mdi-bookmark-outline"
                 class="rounded-lg mb-2"
+                clearable
+                auto-select-first
+                :menu-props="{ maxHeight: 340 }"
               />
             </v-col>
 
@@ -366,6 +372,7 @@ import { reindex } from "../api";
 import { LEVELS, TYPES, SUBJECTS } from "../config";
 import { loadAdminPassword, saveAdminPassword, clearAdminPassword } from "../lib/adminAuth";
 import { fileKind } from "../lib/fileKind";
+import { chaptersFor } from "../data/chapters";
 import { toEditRow, toSaveInput, saveKey, changedRows, type EditRow } from "./adminRows";
 
 function kindOf(r: EditRow) {
@@ -432,11 +439,16 @@ function closeEditModal(): void {
   editingRow.value = null;
 }
 
+// Chapters suggested for the currently-edited level + matière (combobox still
+// accepts any free-typed value not in this list).
+const chapterOptions = computed(() => chaptersFor(editForm.level, editForm.subject));
+
 function applyModalEdits(): void {
   if (!editingRow.value) return;
   const target = rows.value.find((r) => r.fileId === editingRow.value?.fileId);
   if (target) {
-    Object.assign(target, editForm);
+    // A cleared v-combobox yields null; normalise to "" so saving stays consistent.
+    Object.assign(target, editForm, { chapter: editForm.chapter || "" });
   }
   closeEditModal();
 }
