@@ -21,4 +21,14 @@ describe("FileCard", () => {
     expect(a.attributes("target")).toBe("_blank");
     expect(a.text()).toContain("Ouvrir");
   });
+
+  it("shows a file-type icon based on the file", () => {
+    const pdf = mountWithVuetify(FileCard, { props: { item } }); // raw.pdf
+    expect(pdf.find(".mdi-file-pdf-box").exists()).toBe(true);
+
+    const video = mountWithVuetify(FileCard, {
+      props: { item: { ...item, name: "cours.mp4", mimeType: "video/mp4" } },
+    });
+    expect(video.find(".mdi-file-video").exists()).toBe(true);
+  });
 });

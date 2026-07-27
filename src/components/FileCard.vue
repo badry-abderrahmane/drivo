@@ -1,7 +1,10 @@
 <template>
   <v-card variant="outlined" class="h-100 d-flex flex-column">
     <v-card-item>
-      <v-chip v-if="item.meta.type" size="small" color="secondary" class="mb-2">{{ item.meta.type }}</v-chip>
+      <div class="d-flex align-center ga-2 mb-2">
+        <v-icon :icon="kind.icon" :color="kind.color" size="28" />
+        <v-chip v-if="item.meta.type" size="small" color="secondary">{{ item.meta.type }}</v-chip>
+      </div>
       <v-card-title class="text-wrap text-body-1 font-weight-medium">{{ item.displayTitle }}</v-card-title>
       <v-card-subtitle v-if="subtitle">{{ subtitle }}</v-card-subtitle>
     </v-card-item>
@@ -23,9 +26,11 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import type { LibraryItem } from "../lib/types";
+import { fileKind } from "../lib/fileKind";
 
 const props = defineProps<{ item: LibraryItem }>();
 const subtitle = computed(() =>
   [props.item.meta.level, props.item.meta.chapter].filter(Boolean).join(" · ")
 );
+const kind = computed(() => fileKind(props.item.name, props.item.mimeType));
 </script>
