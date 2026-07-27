@@ -1,1 +1,2 @@
-document.getElementById("app")!.textContent = "Admin (à venir)";
+import { renderAdmin } from "./components/admin";
+renderAdmin(document.getElementById("app")!);

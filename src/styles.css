@@ -12,3 +12,10 @@ body { margin: 0; }
 .open { margin-top: auto; text-decoration: none; color: #2563eb; font-weight: 600; }
 .banner { background: #fef3c7; padding: 0.6rem 1rem; }
 .empty { color: #777; padding: 1rem; }
+.gate { display: flex; gap: 0.5rem; padding: 2rem; align-items: center; }
+.gate-msg { color: #b91c1c; }
+.toolbar { display: flex; gap: 0.5rem; padding: 1rem; align-items: center; position: sticky; top: 0; background: #fff; border-bottom: 1px solid #eee; }
+.status { color: #555; }
+.arow { display: grid; grid-template-columns: 160px 1.5fr 1fr 1fr 1fr 1fr 1.5fr 60px; gap: 0.4rem; padding: 0.4rem 1rem; align-items: center; }
+.arow input, .arow select { padding: 0.3rem; min-width: 0; }
+.arow-name { font-size: 0.75rem; color: #555; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
