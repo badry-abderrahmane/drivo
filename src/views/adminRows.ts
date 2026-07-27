@@ -4,6 +4,7 @@ import type { SaveInput } from "../api";
 export interface EditRow {
   fileId: string;
   name: string;
+  mimeType: string; // display-only (drives the file-type icon); not sent on save
   level: string;
   type: string;
   subject: string;
@@ -17,7 +18,7 @@ export interface EditRow {
 export function toEditRow(it: LibraryItem): EditRow {
   const m = it.meta;
   return {
-    fileId: m.fileId, name: it.name, level: m.level, type: m.type, subject: m.subject,
+    fileId: m.fileId, name: it.name, mimeType: it.mimeType, level: m.level, type: m.type, subject: m.subject,
     chapter: m.chapter, title: m.title, description: m.description, tags: m.tags.join(","), order: m.order,
   };
 }

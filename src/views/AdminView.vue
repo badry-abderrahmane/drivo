@@ -36,6 +36,12 @@
         density="comfortable"
         class="px-2"
       >
+        <template #item.name="{ item }">
+          <div class="d-flex align-center ga-2">
+            <v-icon :icon="kindOf(item).icon" :color="kindOf(item).color" size="20" />
+            <span>{{ item.name }}</span>
+          </div>
+        </template>
         <template #item.title="{ item }">
           <v-text-field data-test="cell-title" v-model="item.title" :placeholder="item.name" variant="plain" hide-details density="compact" />
         </template>
@@ -74,7 +80,12 @@ import { useLibrary } from "../composables/useLibrary";
 import { saveMeta, reindex } from "../api";
 import { LEVELS, TYPES, SUBJECTS } from "../config";
 import { loadAdminPassword, saveAdminPassword, clearAdminPassword } from "../lib/adminAuth";
+import { fileKind } from "../lib/fileKind";
 import { toEditRow, toSaveInput, saveKey, changedRows, type EditRow } from "./adminRows";
+
+function kindOf(r: EditRow) {
+  return fileKind(r.name, r.mimeType);
+}
 
 const { items, loading, error, stale, ensureLoaded, reload } = useLibrary();
 // Snapshot of each row's saved state at load/save time, to send only edited rows.

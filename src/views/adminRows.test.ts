@@ -9,15 +9,17 @@ const item: LibraryItem = {
 };
 
 describe("adminRows", () => {
-  it("toEditRow flattens tags to a comma string and copies fields", () => {
+  it("toEditRow flattens tags to a comma string and copies fields incl. mimeType", () => {
     const r = toEditRow(item);
-    expect(r).toMatchObject({ fileId: "1", name: "raw.pdf", level: "2ème Bac SM", type: "Cours", title: "T", tags: "a,b", order: 3 });
+    expect(r).toMatchObject({ fileId: "1", name: "raw.pdf", mimeType: "application/pdf", level: "2ème Bac SM", type: "Cours", title: "T", tags: "a,b", order: 3 });
   });
-  it("toSaveInput passes through the editable fields", () => {
+  it("toSaveInput passes through the editable fields and omits mimeType/name", () => {
     const r = toEditRow(item);
     r.title = "New";
     const s = toSaveInput(r);
     expect(s).toEqual({ fileId: "1", level: "2ème Bac SM", type: "Cours", subject: "Physique", chapter: "Mécanique", title: "New", description: "D", tags: "a,b", order: 3 });
+    expect(s).not.toHaveProperty("mimeType");
+    expect(s).not.toHaveProperty("name");
   });
 
   it("changedRows returns only rows that differ from the baseline", () => {
