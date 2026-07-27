@@ -43,10 +43,11 @@ describe("AdminView", () => {
     expect(w.text()).toContain("raw.pdf");
   });
 
-  it("save sends rows with the unlocked password", async () => {
+  it("save sends only the edited row with the unlocked password", async () => {
     const { w, saveMeta } = await mountAdmin();
     await unlock(w);
     saveMeta.mockClear(); // drop the unlock-validation call
+    await w.get('[data-test="cell-title"] input').setValue("Nouveau titre");
     await w.get('[data-test="save"]').trigger("click");
     await flushPromises();
     expect(saveMeta).toHaveBeenCalledTimes(1);
@@ -54,5 +55,27 @@ describe("AdminView", () => {
     expect(pw).toBe("secret");
     expect(rows).toHaveLength(1);
     expect(rows[0].fileId).toBe("1");
+    expect(rows[0].title).toBe("Nouveau titre");
+  });
+
+  it("save with no edits does not call the backend", async () => {
+    const { w, saveMeta } = await mountAdmin();
+    await unlock(w);
+    saveMeta.mockClear();
+    await w.get('[data-test="save"]').trigger("click");
+    await flushPromises();
+    expect(saveMeta).not.toHaveBeenCalled();
+  });
+
+  it("resets the saving state even if saveMeta rejects", async () => {
+    const { w, saveMeta } = await mountAdmin();
+    await unlock(w);
+    saveMeta.mockRejectedValueOnce(new Error("network"));
+    await w.get('[data-test="cell-title"] input').setValue("X");
+    await w.get('[data-test="save"]').trigger("click");
+    await flushPromises();
+    const saveBtn = w.get('[data-test="save"]');
+    // button is no longer in the loading state (Vuetify sets aria-disabled / loading class)
+    expect(saveBtn.classes().join(" ")).not.toContain("v-btn--loading");
   });
 });

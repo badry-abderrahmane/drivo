@@ -23,7 +23,7 @@
         class="px-2"
       >
         <template #item.title="{ item }">
-          <v-text-field v-model="item.title" :placeholder="item.name" variant="plain" hide-details density="compact" />
+          <v-text-field data-test="cell-title" v-model="item.title" :placeholder="item.name" variant="plain" hide-details density="compact" />
         </template>
         <template #item.level="{ item }">
           <v-select v-model="item.level" :items="LEVELS" clearable variant="plain" hide-details density="compact" style="min-width: 140px" />
@@ -59,9 +59,11 @@ import PasswordGate from "../components/PasswordGate.vue";
 import { useLibrary } from "../composables/useLibrary";
 import { saveMeta, reindex } from "../api";
 import { LEVELS, TYPES, SUBJECTS } from "../config";
-import { toEditRow, toSaveInput, type EditRow } from "./adminRows";
+import { toEditRow, toSaveInput, saveKey, changedRows, type EditRow } from "./adminRows";
 
 const { items, stale, ensureLoaded, reload } = useLibrary();
+// Snapshot of each row's saved state at load/save time, to send only edited rows.
+const baseline = new Map<string, string>();
 const password = ref("");
 const search = ref("");
 const saving = ref(false);
@@ -83,6 +85,8 @@ const headers = [
 
 function rebuildRows(): void {
   rows.value = items.value.map(toEditRow);
+  baseline.clear();
+  for (const r of rows.value) baseline.set(r.fileId, saveKey(r));
 }
 watch(items, rebuildRows);
 
@@ -101,22 +105,42 @@ async function onUnlocked(pw: string): Promise<void> {
 }
 
 async function save(): Promise<void> {
+  const changed = changedRows(rows.value, baseline);
+  if (changed.length === 0) {
+    notify("Aucune modification à enregistrer.", "info");
+    return;
+  }
   saving.value = true;
-  const res = await saveMeta(password.value, rows.value.map(toSaveInput));
-  saving.value = false;
-  notify(res.ok ? "Enregistré ✓" : `Erreur : ${res.error ?? "inconnue"}`, res.ok ? "success" : "error");
+  try {
+    const res = await saveMeta(password.value, changed.map(toSaveInput));
+    if (res.ok) {
+      for (const r of changed) baseline.set(r.fileId, saveKey(r));
+      notify(`Enregistré ✓ (${changed.length} fichier${changed.length > 1 ? "s" : ""})`, "success");
+    } else {
+      notify(`Erreur : ${res.error ?? "inconnue"}`, "error");
+    }
+  } catch (e) {
+    notify(`Échec de l'enregistrement : ${e instanceof Error ? e.message : String(e)}`, "error");
+  } finally {
+    saving.value = false;
+  }
 }
 
 async function doReindex(): Promise<void> {
   reindexing.value = true;
-  const res = await reindex(password.value);
-  reindexing.value = false;
-  if (res.ok) {
-    notify(`Réindexé (${res.count ?? "?"} fichiers) ✓`, "success");
-    await reload();
-    rebuildRows();
-  } else {
-    notify(`Erreur : ${res.error ?? "inconnue"}`, "error");
+  try {
+    const res = await reindex(password.value);
+    if (res.ok) {
+      notify(`Réindexé (${res.count ?? "?"} fichiers) ✓`, "success");
+      await reload();
+      rebuildRows();
+    } else {
+      notify(`Erreur : ${res.error ?? "inconnue"}`, "error");
+    }
+  } catch (e) {
+    notify(`Échec de la réindexation : ${e instanceof Error ? e.message : String(e)}`, "error");
+  } finally {
+    reindexing.value = false;
   }
 }
 </script>
