@@ -164,23 +164,73 @@
             <span class="text-body-2 font-weight-medium">{{ item.order ?? 0 }}</span>
           </template>
 
-          <!-- Actions Column (Opens Modal) -->
+          <!-- Actions Column (Preview + Edit) -->
           <template #item.actions="{ item }">
-            <v-btn
-              color="primary"
-              variant="tonal"
-              size="small"
-              class="rounded-pill px-3 font-weight-medium"
-              prepend-icon="mdi-square-edit-outline"
-              data-test="edit-row"
-              @click="openEditModal(item)"
-            >
-              Éditer
-            </v-btn>
+            <div class="d-flex align-center justify-end ga-1">
+              <v-btn
+                icon="mdi-eye-outline"
+                variant="text"
+                size="small"
+                color="primary"
+                data-test="preview-row"
+                :title="`Aperçu de ${item.name}`"
+                @click="openPreview(item)"
+              />
+              <v-btn
+                color="primary"
+                variant="tonal"
+                size="small"
+                class="rounded-pill px-3 font-weight-medium"
+                prepend-icon="mdi-square-edit-outline"
+                data-test="edit-row"
+                @click="openEditModal(item)"
+              >
+                Éditer
+              </v-btn>
+            </div>
           </template>
         </v-data-table>
       </v-card>
     </div>
+
+    <!-- File Preview Modal (in-app, no leaving the app) -->
+    <v-dialog v-model="previewDialog" max-width="960" transition="dialog-bottom-transition">
+      <v-card v-if="previewRow" class="rounded-2xl overflow-hidden">
+        <v-toolbar density="comfortable" color="surface" class="px-2">
+          <div
+            class="icon-wrapper d-flex align-center justify-center rounded-lg ml-2 mr-1 pa-1"
+            :style="{ backgroundColor: `${kindOf(previewRow).color}15`, color: kindOf(previewRow).color }"
+          >
+            <v-icon :icon="kindOf(previewRow).icon" size="20" />
+          </div>
+          <v-toolbar-title class="text-body-1 font-weight-medium text-truncate">
+            {{ previewRow.title || previewRow.name }}
+          </v-toolbar-title>
+          <v-spacer />
+          <v-btn
+            :href="previewOpenUrl"
+            target="_blank"
+            rel="noopener"
+            variant="text"
+            size="small"
+            prepend-icon="mdi-open-in-new"
+            class="rounded-pill"
+          >
+            Ouvrir dans Drive
+          </v-btn>
+          <v-btn icon="mdi-close" variant="text" @click="closePreview" />
+        </v-toolbar>
+        <div class="preview-frame-wrapper">
+          <iframe
+            :src="previewSrc"
+            data-test="preview-frame"
+            class="preview-frame"
+            allow="autoplay"
+            allowfullscreen
+          />
+        </div>
+      </v-card>
+    </v-dialog>
 
     <!-- Edit Row Modal (MD3 Dialog) -->
     <v-dialog v-model="editDialog" max-width="640" transition="dialog-bottom-transition" persistent>
@@ -376,6 +426,7 @@ import { reindex } from "../api";
 import { LEVELS, TYPES, SUBJECTS } from "../config";
 import { loadAdminPassword, saveAdminPassword, clearAdminPassword } from "../lib/adminAuth";
 import { fileKind } from "../lib/fileKind";
+import { drivePreviewUrl, driveOpenUrl } from "../lib/drivePreview";
 import { chaptersFor } from "../data/chapters";
 import { toEditRow, toSaveInput, saveKey, changedRows, type EditRow } from "./adminRows";
 
@@ -391,6 +442,25 @@ const saving = ref(false);
 const reindexing = ref(false);
 const rows = ref<EditRow[]>([]);
 const snack = reactive({ show: false, text: "", color: "success" });
+
+// In-app file preview state
+const previewDialog = ref(false);
+const previewRow = ref<EditRow | null>(null);
+const previewSrc = computed(() =>
+  previewRow.value ? drivePreviewUrl(previewRow.value.fileId, previewRow.value.mimeType) : ""
+);
+const previewOpenUrl = computed(() =>
+  previewRow.value ? driveOpenUrl(previewRow.value.fileId, previewRow.value.mimeType) : "#"
+);
+
+function openPreview(row: EditRow): void {
+  previewRow.value = row;
+  previewDialog.value = true;
+}
+function closePreview(): void {
+  previewDialog.value = false;
+  previewRow.value = null;
+}
 
 // Modal editing state
 const editDialog = ref(false);
@@ -545,5 +615,18 @@ async function doReindex(): Promise<void> {
 
 .table-input :deep(.v-field) {
   border-radius: 8px !important;
+}
+
+.preview-frame-wrapper {
+  width: 100%;
+  height: 78vh;
+  background: #000;
+}
+
+.preview-frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
 }
 </style>

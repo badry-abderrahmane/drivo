@@ -118,6 +118,18 @@ describe("AdminView", () => {
     expect(w.find(".v-data-table").exists()).toBe(true);
   });
 
+  it("opens an in-app preview with the file's Drive preview iframe", async () => {
+    const { w } = await mountAdmin();
+    await unlock(w);
+    expect(w.find('[data-test="preview-row"]').exists()).toBe(true);
+    await w.get('[data-test="preview-row"]').trigger("click");
+    await flushPromises();
+    // v-dialog content teleports to the document; assert the iframe + its src there.
+    const iframe = document.querySelector('[data-test="preview-frame"]') as HTMLIFrameElement | null;
+    expect(iframe).not.toBeNull();
+    expect(iframe?.getAttribute("src")).toContain("/file/d/1/preview");
+  });
+
   it("logout clears the session and returns to the gate", async () => {
     const { w } = await mountAdmin();
     await unlock(w);
