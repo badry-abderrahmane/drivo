@@ -1,6 +1,6 @@
 // Public web-app URL of the Apps Script backend. NOT a secret.
-// Replaced with the real deployment URL in Task 8's final step.
-export const BACKEND_URL = "__BACKEND_URL__";
+export const BACKEND_URL =
+  "https://script.google.com/macros/s/AKfycbzxrDtvVBdg0XuBD0hXCuaBpF3WUlWAmCt0WWbUMJNOilXV0ualQYT5AqNSrZ965Jzqww/exec";
 
 export const LEVELS = [
   "Tronc Commun",
