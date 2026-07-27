@@ -104,7 +104,7 @@ const props = withDefaults(
 );
 
 const subtitle = computed(() =>
-  [props.item.meta.level, props.item.meta.subject, props.item.meta.chapter]
+  [props.item.meta.level, props.item.meta.subject, ...props.item.meta.chapter]
     .filter(Boolean)
     .join(" · ")
 );

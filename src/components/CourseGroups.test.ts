@@ -7,7 +7,7 @@ import type { LibraryItem } from "../lib/types";
 const mk = (fileId: string, level: string, title: string): LibraryItem => ({
   fileId, name: title, mimeType: "application/pdf", path: [], webViewLink: "u",
   modifiedTime: "2026-01-01T00:00:00.000Z", isFolder: false, displayTitle: title,
-  meta: { fileId, level, type: "", subject: "", chapter: "", title, description: "", tags: [], order: 0 },
+  meta: { fileId, level, type: "", subject: "", chapter: [], title, description: "", tags: [], order: 0 },
 });
 
 describe("CourseGroups", () => {

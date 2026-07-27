@@ -4,15 +4,22 @@ export function parseTags(s: string): string[] {
   return s ? s.split(",").map((t) => t.trim()).filter(Boolean) : [];
 }
 
+// Chapters use ';' as the separator (not ',') because several official chapter
+// titles contain commas, e.g. "Noyaux, masse et énergie".
+export function parseChapters(s: string): string[] {
+  return s ? s.split(";").map((c) => c.trim()).filter(Boolean) : [];
+}
+
 export function normalizeMeta(raw: Partial<RawRow> & { fileId: string }): MetaRow {
   const rawTags = (raw as RawRow).tags;
+  const rawChapter = (raw as RawRow).chapter;
   const order = Number(raw.order);
   return {
     fileId: raw.fileId,
     level: raw.level ?? "",
     type: raw.type ?? "",
     subject: raw.subject ?? "",
-    chapter: raw.chapter ?? "",
+    chapter: Array.isArray(rawChapter) ? rawChapter : parseChapters(rawChapter ?? ""),
     title: raw.title ?? "",
     description: raw.description ?? "",
     tags: Array.isArray(rawTags) ? rawTags : parseTags(rawTags ?? ""),

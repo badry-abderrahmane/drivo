@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseTags, normalizeMeta, buildLibrary } from "./manifest";
+import { parseTags, parseChapters, normalizeMeta, buildLibrary } from "./manifest";
 import type { DriveNode } from "./types";
 
 const node = (over: Partial<DriveNode> & { fileId: string }): DriveNode => ({
@@ -16,6 +16,22 @@ describe("parseTags", () => {
   it("splits, trims, drops empties", () => {
     expect(parseTags("a, b ,,c")).toEqual(["a", "b", "c"]);
     expect(parseTags("")).toEqual([]);
+  });
+});
+
+describe("parseChapters", () => {
+  it("splits on ';' (not ',') so comma-containing titles stay intact", () => {
+    expect(parseChapters("Noyaux, masse et énergie; Dipôle RC")).toEqual([
+      "Noyaux, masse et énergie",
+      "Dipôle RC",
+    ]);
+    expect(parseChapters("Mécanique")).toEqual(["Mécanique"]);
+    expect(parseChapters("")).toEqual([]);
+  });
+
+  it("normalizeMeta parses the chapter cell into a list", () => {
+    expect(normalizeMeta({ fileId: "1", chapter: "A; B" }).chapter).toEqual(["A", "B"]);
+    expect(normalizeMeta({ fileId: "1" }).chapter).toEqual([]);
   });
 });
 

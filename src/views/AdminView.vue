@@ -153,7 +153,9 @@
 
           <!-- Chapter Column -->
           <template #item.chapter="{ item }">
-            <span v-if="item.chapter" class="text-body-2 text-truncate" style="max-width: 140px">{{ item.chapter }}</span>
+            <span v-if="item.chapter.length" class="text-body-2 text-truncate" style="max-width: 180px" :title="item.chapter.join(' · ')">
+              {{ item.chapter.join(" · ") }}
+            </span>
             <span v-else class="text-caption text-disabled">—</span>
           </template>
 
@@ -264,16 +266,18 @@
             <v-col cols="12" sm="6">
               <v-combobox
                 v-model="editForm.chapter"
-                label="Chapitre"
+                label="Chapitre(s)"
                 :items="chapterOptions"
-                :placeholder="editForm.level ? 'Choisir ou saisir un chapitre' : 'Saisir un chapitre'"
-                :hint="chapterOptions.length ? 'Programme officiel — ou saisissez le vôtre' : 'Choisissez un niveau pour voir les chapitres du programme'"
+                :placeholder="editForm.level ? 'Choisir ou saisir un ou plusieurs chapitres' : 'Saisir un chapitre'"
+                :hint="chapterOptions.length ? 'Programme officiel — plusieurs possibles, ou saisissez le vôtre' : 'Choisissez un niveau pour voir les chapitres du programme'"
                 persistent-hint
+                multiple
+                chips
+                closable-chips
                 variant="outlined"
                 density="comfortable"
                 prepend-inner-icon="mdi-bookmark-outline"
                 class="rounded-lg mb-2"
-                clearable
                 auto-select-first
                 :menu-props="{ maxHeight: 340 }"
               />
@@ -398,7 +402,7 @@ const editForm = reactive<EditRow>({
   level: "",
   type: "",
   subject: "",
-  chapter: "",
+  chapter: [],
   title: "",
   description: "",
   tags: "",
@@ -430,7 +434,8 @@ const pendingChangesCount = computed(() => {
 
 function openEditModal(row: EditRow): void {
   editingRow.value = row;
-  Object.assign(editForm, { ...row });
+  // Clone chapter array so editing the modal doesn't mutate the row until "Appliquer".
+  Object.assign(editForm, { ...row, chapter: [...row.chapter] });
   editDialog.value = true;
 }
 
@@ -447,8 +452,7 @@ function applyModalEdits(): void {
   if (!editingRow.value) return;
   const target = rows.value.find((r) => r.fileId === editingRow.value?.fileId);
   if (target) {
-    // A cleared v-combobox yields null; normalise to "" so saving stays consistent.
-    Object.assign(target, editForm, { chapter: editForm.chapter || "" });
+    Object.assign(target, editForm, { chapter: [...editForm.chapter] });
   }
   closeEditModal();
 }

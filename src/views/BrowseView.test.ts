@@ -6,7 +6,7 @@ import type { LibraryItem } from "../lib/types";
 const mk = (id: string, level: string, title: string): LibraryItem => ({
   fileId: id, name: title, mimeType: "application/pdf", path: [], webViewLink: "https://drive/" + id,
   modifiedTime: "2026-01-01T00:00:00.000Z", isFolder: false, displayTitle: title,
-  meta: { fileId: id, level, type: "Cours", subject: "", chapter: "", title, description: "", tags: [], order: Number(id) },
+  meta: { fileId: id, level, type: "Cours", subject: "", chapter: [], title, description: "", tags: [], order: Number(id) },
 });
 
 beforeEach(() => vi.resetModules());
