@@ -22,7 +22,7 @@ export function mountWithVuetify<C extends Component>(
 ) {
   const vuetify = createVuetify({ components, directives });
   const globalOpts = options.global ?? {};
-  const plugins = (globalOpts.plugins as unknown[]) ?? [];
+  const plugins = globalOpts.plugins ?? [];
   return mount(component, {
     ...options,
     global: { ...globalOpts, plugins: [vuetify, ...plugins] },
