@@ -10,16 +10,17 @@ const item: LibraryItem = {
 };
 
 describe("FileCard", () => {
-  it("renders title, type, subtitle, description and an open link", () => {
+  it("renders title, type, subtitle, description and links to the file (whole card)", () => {
     const w = mountWithVuetify(FileCard, { props: { item } });
     expect(w.text()).toContain("Mécanique — Cours");
     expect(w.text()).toContain("Cours");
     expect(w.text()).toContain("2ème Bac SM");
     expect(w.text()).toContain("Chapitre 1");
+    // The whole card is the clickable link now (no separate "Ouvrir" button).
     const a = w.get("a");
     expect(a.attributes("href")).toBe("https://drive/1");
     expect(a.attributes("target")).toBe("_blank");
-    expect(a.text()).toContain("Ouvrir");
+    expect(w.text()).not.toContain("Ouvrir");
   });
 
   it("shows a file-type icon based on the file", () => {

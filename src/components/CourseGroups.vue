@@ -1,25 +1,60 @@
 <template>
-  <v-expansion-panels v-model="open" multiple variant="accordion" class="pa-2">
-    <v-expansion-panel v-for="s in sections" :key="s.level" :value="s.level">
-      <v-expansion-panel-title>
-        <span class="text-subtitle-1 font-weight-medium">{{ s.level }}</span>
-        <v-chip size="small" class="ml-3" color="primary" variant="tonal">{{ s.count }}</v-chip>
-      </v-expansion-panel-title>
-      <v-expansion-panel-text>
-        <div v-for="g in s.groups" :key="g.key" class="mb-6">
-          <div class="text-overline text-medium-emphasis mb-2 d-flex align-center">
-            {{ g.label }}
-            <v-chip size="x-small" class="ml-2" variant="text">{{ g.items.length }}</v-chip>
+  <div class="course-groups">
+    <v-expansion-panels v-model="open" multiple variant="popout" class="gap-4">
+      <v-expansion-panel
+        v-for="s in sections"
+        :key="s.level"
+        :value="s.level"
+        class="rounded-xl border mb-3 group-panel"
+        elevation="0"
+      >
+        <v-expansion-panel-title class="py-3 px-4">
+          <div class="d-flex align-center ga-3 w-100">
+            <div class="level-icon-avatar rounded-lg d-flex align-center justify-center bg-primary-subtle pa-2">
+              <v-icon icon="mdi-school" color="primary" size="22" />
+            </div>
+            <div>
+              <div class="text-subtitle-1 font-weight-bold">{{ s.level }}</div>
+              <div class="text-caption text-medium-emphasis">
+                {{ s.groups.length }} chapitre(s) / section(s)
+              </div>
+            </div>
+            <v-spacer />
+            <v-chip size="small" color="primary" variant="tonal" class="font-weight-bold mr-2">
+              {{ s.count }} document{{ s.count > 1 ? "s" : "" }}
+            </v-chip>
           </div>
-          <v-row dense>
-            <v-col v-for="it in g.items" :key="it.fileId" cols="12" sm="6" md="4" lg="3">
-              <FileCard :item="it" />
-            </v-col>
-          </v-row>
-        </div>
-      </v-expansion-panel-text>
-    </v-expansion-panel>
-  </v-expansion-panels>
+        </v-expansion-panel-title>
+
+        <v-expansion-panel-text class="pt-2 px-4 pb-4">
+          <div v-for="g in s.groups" :key="g.key" class="mb-6 group-section">
+            <!-- Group Header -->
+            <div class="group-header d-flex align-center justify-space-between pb-2 mb-3 border-b">
+              <div class="d-flex align-center ga-2">
+                <v-icon icon="mdi-folder-open-outline" size="18" color="primary" />
+                <span class="text-subtitle-2 font-weight-bold text-uppercase tracking-wide">
+                  {{ g.label }}
+                </span>
+              </div>
+              <v-chip size="x-small" variant="flat" color="surface-variant" class="font-weight-medium">
+                {{ g.items.length }}
+              </v-chip>
+            </div>
+
+            <!-- Group Grid or List -->
+            <div v-if="mode === 'list'" class="d-flex flex-column ga-2">
+              <FileCard v-for="it in g.items" :key="it.fileId" :item="it" mode="list" />
+            </div>
+            <v-row v-else dense class="match-height">
+              <v-col v-for="it in g.items" :key="it.fileId" cols="12" sm="6" md="4" lg="3" class="d-flex">
+                <FileCard :item="it" mode="grid" />
+              </v-col>
+            </v-row>
+          </div>
+        </v-expansion-panel-text>
+      </v-expansion-panel>
+    </v-expansion-panels>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -27,10 +62,17 @@ import { ref, watch } from "vue";
 import FileCard from "./FileCard.vue";
 import type { LevelSection } from "../lib/group";
 
-const props = defineProps<{ sections: LevelSection[] }>();
+const props = withDefaults(
+  defineProps<{
+    sections: LevelSection[];
+    mode?: "grid" | "list";
+  }>(),
+  {
+    mode: "grid",
+  }
+);
 
-// Open the first section by default so the page never looks empty; keep the rest
-// collapsed for a quick scan.
+// Open the first section by default so the page never looks empty
 const open = ref<string[]>([]);
 watch(
   () => props.sections,
@@ -40,3 +82,30 @@ watch(
   { immediate: true }
 );
 </script>
+
+<style scoped>
+.group-panel {
+  background: var(--v-theme-surface);
+  border: 1px solid rgba(var(--v-border-color), 0.12) !important;
+  overflow: hidden;
+  transition: border-color 0.2s ease;
+}
+
+.group-panel:hover {
+  border-color: rgba(var(--v-theme-primary), 0.25) !important;
+}
+
+.level-icon-avatar {
+  background: rgba(var(--v-theme-primary), 0.08);
+  width: 40px;
+  height: 40px;
+}
+
+.tracking-wide {
+  letter-spacing: 0.5px;
+}
+
+.bg-primary-subtle {
+  background-color: rgba(var(--v-theme-primary), 0.08);
+}
+</style>
