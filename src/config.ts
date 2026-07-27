@@ -4,7 +4,8 @@ export const BACKEND_URL =
 
 export const LEVELS = [
   "Tronc Commun",
-  "1ère Bac",
+  "1ère Bac Sc. Exp",
+  "1ère Bac SM",
   "2ème Bac SM",
   "2ème Bac PC",
   "2ème Bac SVT",

@@ -38,7 +38,39 @@ export const CHAPTERS_BY_LEVEL: Record<string, LevelChapters> = {
       "Modélisation des transformations chimiques - Bilan de matière",
     ],
   },
-  "1ère Bac": {
+  "1ère Bac Sc. Exp": {
+    Physique: [
+      "Rotation d'un solide indéformable autour d'un axe fixe",
+      "Travail et puissance d'une force",
+      "Travail et énergie cinétique",
+      "Travail et énergie potentielle de pesanteur - Énergie mécanique",
+      "Transfert d'énergie dans un circuit électrique",
+      "Comportement global d'un circuit électrique",
+      "Le champ magnétique",
+      "Le champ magnétique créé par un courant électrique",
+      "Les forces électromagnétiques - La loi de Laplace",
+      "Visibilité d'un objet",
+      "Les images formées par un miroir plan",
+      "Les images formées par une lentille mince convergente",
+    ],
+    Chimie: [
+      "Importance de la mesure en chimie",
+      "Grandeurs physiques liées à la quantité de matière",
+      "Solutions électrolytiques et concentrations",
+      "Suivi d'une transformation chimique",
+      "Mesure des quantités de matière en solution par conductimétrie",
+      "Les réactions acido-basiques",
+      "Les réactions d'oxydo-réduction",
+      "Les dosages directs",
+      "Expansion de la chimie organique",
+      "Les molécules organiques et les squelettes carbonés",
+      "Modification du squelette carboné",
+      "Les groupes caractéristiques en chimie organique",
+      "La réactivité des alcools",
+    ],
+  },
+  "1ère Bac SM": {
+    // Same as Sc. Exp plus 4 SM-only physics chapters (thermodynamics + electrostatics).
     Physique: [
       "Rotation d'un solide indéformable autour d'un axe fixe",
       "Travail et puissance d'une force",
