@@ -1,21 +1,35 @@
 // Fast folder walk using the Drive Advanced Service (v3): one bulk `files.list`
 // per folder instead of many per-file DriveApp calls.
 //
-// Sharing: instead of sharing all N files one-by-one (N slow API calls), we share
-// the ROOT FOLDER once as anyone-with-link viewer. Every file and subfolder inside
-// inherits that access — including files added later — so this is a single API call
-// regardless of library size, and new files become viewable with no reindex.
+// Sharing: share the ROOT FOLDER once as anyone-with-link viewer. Every file and
+// subfolder inside inherits that access — including files added later — so this is a
+// single API call regardless of library size.
+//
+// Instrumented (v3-diag): logs a version marker plus separate timings for the
+// folder-share call and the walk, so the execution log shows where time goes.
+
+var DRIVEINDEX_VERSION = 'v3-diag';
 
 function walkFolder(rootId, autoShare) {
-  if (autoShare) ensureShared_(rootId); // share root once; descendants inherit
+  console.log('walkFolder start ' + DRIVEINDEX_VERSION + ' autoShare=' + autoShare);
 
+  if (autoShare) {
+    var ts = new Date().getTime();
+    ensureShared_(rootId); // share root once; descendants inherit
+    console.log('root folder share took ' + (new Date().getTime() - ts) + ' ms');
+  }
+
+  var tw = new Date().getTime();
   var nodes = [];
+  var folderCount = 0;
+  var listCalls = 0;
   var pathOf = {};
   pathOf[rootId] = [];
   var queue = [rootId];
 
   while (queue.length) {
     var folderId = queue.shift();
+    folderCount++;
     var pageToken = null;
     do {
       var resp = Drive.Files.list({
@@ -24,6 +38,7 @@ function walkFolder(rootId, autoShare) {
         pageSize: 1000,
         pageToken: pageToken,
       });
+      listCalls++;
       var files = resp.files || [];
       for (var i = 0; i < files.length; i++) {
         var f = files[i];
@@ -46,6 +61,8 @@ function walkFolder(rootId, autoShare) {
       pageToken = resp.nextPageToken;
     } while (pageToken);
   }
+  console.log('walk done: ' + nodes.length + ' files, ' + folderCount + ' folders, ' +
+    listCalls + ' list calls, ' + (new Date().getTime() - tw) + ' ms');
   return nodes;
 }
 
