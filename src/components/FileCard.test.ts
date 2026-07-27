@@ -23,6 +23,17 @@ describe("FileCard", () => {
     expect(w.text()).not.toContain("Ouvrir");
   });
 
+  it("shows every chapter as its own tag (no truncation to one)", () => {
+    const multi = {
+      ...item,
+      meta: { ...item.meta, chapter: ["Mécanique", "Ondes", "Électricité"] },
+    };
+    const w = mountWithVuetify(FileCard, { props: { item: multi } });
+    expect(w.text()).toContain("Mécanique");
+    expect(w.text()).toContain("Ondes");
+    expect(w.text()).toContain("Électricité");
+  });
+
   it("shows a file-type icon based on the file", () => {
     const pdf = mountWithVuetify(FileCard, { props: { item } }); // raw.pdf
     expect(pdf.find(".mdi-file-pdf-box").exists()).toBe(true);

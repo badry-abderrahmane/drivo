@@ -23,8 +23,13 @@
         </v-chip>
       </div>
 
-      <div class="text-caption text-medium-emphasis text-truncate">
-        {{ subtitle || item.name }}
+      <div v-if="subtitle" class="text-caption text-medium-emphasis text-truncate">{{ subtitle }}</div>
+
+      <div v-if="item.meta.chapter.length" class="d-flex flex-wrap ga-1 mt-1">
+        <span v-for="ch in item.meta.chapter" :key="ch" class="chapter-tag">
+          <v-icon icon="mdi-bookmark-outline" size="12" />
+          {{ ch }}
+        </span>
       </div>
     </div>
   </v-card>
@@ -55,16 +60,21 @@
       {{ item.displayTitle }}
     </h3>
 
-    <p v-if="subtitle" class="text-caption text-medium-emphasis mb-2 d-flex align-center ga-1">
-      <v-icon icon="mdi-bookmark-outline" size="14" />
-      <span class="text-truncate">{{ subtitle }}</span>
-    </p>
+    <p v-if="subtitle" class="text-caption text-medium-emphasis mb-2">{{ subtitle }}</p>
 
-    <p v-if="item.meta.description" class="text-body-2 text-medium-emphasis line-clamp-2 mb-3">
+    <!-- All chapters, fully visible (wrapping tags) -->
+    <div v-if="item.meta.chapter.length" class="d-flex flex-wrap ga-1 mb-2">
+      <span v-for="ch in item.meta.chapter" :key="ch" class="chapter-tag">
+        <v-icon icon="mdi-bookmark-outline" size="13" />
+        {{ ch }}
+      </span>
+    </div>
+
+    <p v-if="item.meta.description" class="text-body-2 text-medium-emphasis line-clamp-2 mb-2">
       {{ item.meta.description }}
     </p>
 
-    <div v-if="item.meta.tags && item.meta.tags.length > 0" class="d-flex flex-wrap ga-1 mb-3">
+    <div v-if="item.meta.tags && item.meta.tags.length > 0" class="d-flex flex-wrap ga-1">
       <v-chip
         v-for="tag in item.meta.tags.slice(0, 3)"
         :key="tag"
@@ -74,16 +84,6 @@
       >
         #{{ tag }}
       </v-chip>
-    </div>
-
-    <v-spacer />
-
-    <div class="d-flex align-center justify-space-between pt-2 border-t mt-2">
-      <span class="text-caption text-disabled">
-        {{ formattedDate }}
-      </span>
-
-      <v-icon icon="mdi-open-in-new" size="16" class="text-disabled" />
     </div>
   </v-card>
 </template>
@@ -103,23 +103,12 @@ const props = withDefaults(
   }
 );
 
+// Context line — chapters are shown separately as tags so they stay fully visible.
 const subtitle = computed(() =>
-  [props.item.meta.level, props.item.meta.subject, ...props.item.meta.chapter]
-    .filter(Boolean)
-    .join(" · ")
+  [props.item.meta.level, props.item.meta.subject].filter(Boolean).join(" · ")
 );
 
 const kind = computed(() => fileKind(props.item.name, props.item.mimeType));
-
-const formattedDate = computed(() => {
-  if (!props.item.modifiedTime) return "";
-  try {
-    const d = new Date(props.item.modifiedTime);
-    return d.toLocaleDateString("fr-FR", { month: "short", year: "numeric" });
-  } catch {
-    return "";
-  }
-});
 </script>
 
 <style scoped>
@@ -157,5 +146,20 @@ const formattedDate = computed(() => {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* Chapter tag: pill that wraps its text so long chapter titles stay fully visible. */
+.chapter-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  max-width: 100%;
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: rgba(var(--v-theme-primary), 0.08);
+  color: rgb(var(--v-theme-primary));
+  font-size: 0.7rem;
+  line-height: 1.25;
+  white-space: normal;
 }
 </style>
