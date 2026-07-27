@@ -1,8 +1,14 @@
 // Fast folder walk using the Drive Advanced Service (v3): one bulk `files.list`
-// per folder instead of many per-file DriveApp calls. Cuts a ~460-file walk from
-// ~60s to a few seconds.
+// per folder instead of many per-file DriveApp calls.
+//
+// Sharing: instead of sharing all N files one-by-one (N slow API calls), we share
+// the ROOT FOLDER once as anyone-with-link viewer. Every file and subfolder inside
+// inherits that access — including files added later — so this is a single API call
+// regardless of library size, and new files become viewable with no reindex.
 
 function walkFolder(rootId, autoShare) {
+  if (autoShare) ensureShared_(rootId); // share root once; descendants inherit
+
   var nodes = [];
   var pathOf = {};
   pathOf[rootId] = [];
@@ -25,7 +31,6 @@ function walkFolder(rootId, autoShare) {
           pathOf[f.id] = pathOf[folderId].concat([f.name]);
           queue.push(f.id);
         } else {
-          if (autoShare) ensureShared_(f.id);
           nodes.push({
             fileId: f.id,
             name: f.name,
@@ -44,12 +49,12 @@ function walkFolder(rootId, autoShare) {
   return nodes;
 }
 
-// Best-effort: make a file readable by anyone with the link. Idempotent — if the
-// permission already exists Drive throws and we ignore it. Only called from reindex.
-function ensureShared_(fileId) {
+// Best-effort: grant anyone-with-link viewer access. Idempotent — if the permission
+// already exists Drive may throw; we ignore it and keep going.
+function ensureShared_(id) {
   try {
-    Drive.Permissions.create({ role: 'reader', type: 'anyone' }, fileId);
+    Drive.Permissions.create({ role: 'reader', type: 'anyone' }, id);
   } catch (e) {
-    // already shared, or not permitted (e.g. shared-drive file) — keep indexing
+    // already shared, or not permitted (e.g. a shared drive) — continue
   }
 }

@@ -41,8 +41,15 @@ top-level plan, Task 8.
 To change the refresh cadence, edit `everyHours(4)` in `setupTrigger` (Code.gs)
 and re-run `setupTrigger`.
 
+## Sharing model
+Sharing is applied to the **root folder once** (anyone-with-link viewer); every
+file and subfolder inside inherits it, including files added later. So indexing
+makes one sharing API call regardless of how many files there are — no per-file
+sharing, and new files are viewable without a reindex.
+
 ## Scale note
-The folder walk uses the Drive Advanced Service (bulk `files.list`), so a few
-hundred files index in seconds. For many thousands of files a full reindex could
-approach the 6-minute execution limit; if that happens, page the walk across
-multiple trigger runs. Not needed at course-library scale.
+The folder walk uses the Drive Advanced Service (bulk `files.list`, one call per
+folder) plus a single folder-share call, so indexing stays fast (seconds) into the
+thousands of files. Only if the number of *folders* grows very large would a walk
+approach the 6-minute execution limit; if that ever happens, page the walk across
+multiple trigger runs.
