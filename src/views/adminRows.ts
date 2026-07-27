@@ -8,7 +8,7 @@ export interface EditRow {
   level: string;
   type: string;
   subject: string;
-  chapter: string;
+  chapter: string[]; // multiple chapters (multi-select combobox)
   title: string;
   description: string;
   tags: string; // comma-separated in the editor
@@ -19,13 +19,14 @@ export function toEditRow(it: LibraryItem): EditRow {
   const m = it.meta;
   return {
     fileId: m.fileId, name: it.name, mimeType: it.mimeType, level: m.level, type: m.type, subject: m.subject,
-    chapter: m.chapter, title: m.title, description: m.description, tags: m.tags.join(","), order: m.order,
+    chapter: [...m.chapter], title: m.title, description: m.description, tags: m.tags.join(","), order: m.order,
   };
 }
 
 export function toSaveInput(r: EditRow): SaveInput {
   return {
-    fileId: r.fileId, level: r.level, type: r.type, subject: r.subject, chapter: r.chapter,
+    fileId: r.fileId, level: r.level, type: r.type, subject: r.subject,
+    chapter: r.chapter.join(";"), // ';' separator — chapter titles may contain commas
     title: r.title, description: r.description, tags: r.tags, order: Number(r.order) || 0,
   };
 }

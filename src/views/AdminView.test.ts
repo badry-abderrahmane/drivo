@@ -6,7 +6,7 @@ import type { LibraryItem } from "../lib/types";
 const item: LibraryItem = {
   fileId: "1", name: "raw.pdf", mimeType: "application/pdf", path: [], webViewLink: "u",
   modifiedTime: "2026-01-01T00:00:00.000Z", isFolder: false, displayTitle: "raw.pdf",
-  meta: { fileId: "1", level: "", type: "", subject: "", chapter: "", title: "", description: "", tags: [], order: 0 },
+  meta: { fileId: "1", level: "", type: "", subject: "", chapter: [], title: "", description: "", tags: [], order: 0 },
 };
 
 beforeEach(() => {

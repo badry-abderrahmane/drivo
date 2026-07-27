@@ -22,13 +22,17 @@ export function levelOf(it: LibraryItem): string {
   return it.meta.level || it.path[0] || UNCLASSIFIED;
 }
 
-/** Sub-group label: "subject · chapter" from metadata, else the folder path below the
- *  level segment, else Général. */
-export function topicOf(it: LibraryItem): string {
-  const meta = [it.meta.subject, it.meta.chapter].filter(Boolean).join(" · ");
-  if (meta) return meta;
+/** Sub-group labels: one "subject · chapter" per chapter (a file with multiple
+ *  chapters lands under each). With no chapters, falls back to the subject, then the
+ *  folder path below the level segment, then Général. */
+export function topicsOf(it: LibraryItem): string[] {
+  const subject = it.meta.subject;
+  if (it.meta.chapter.length > 0) {
+    return it.meta.chapter.map((ch) => [subject, ch].filter(Boolean).join(" · "));
+  }
+  if (subject) return [subject];
   const sub = it.path.slice(1).join(" / ");
-  return sub || GENERAL;
+  return [sub || GENERAL];
 }
 
 function levelRank(level: string): number {
@@ -42,11 +46,12 @@ export function groupCourses(items: LibraryItem[]): LevelSection[] {
   const byLevel = new Map<string, Map<string, LibraryItem[]>>();
   for (const it of items) {
     const lvl = levelOf(it);
-    const top = topicOf(it);
     if (!byLevel.has(lvl)) byLevel.set(lvl, new Map());
     const topics = byLevel.get(lvl)!;
-    if (!topics.has(top)) topics.set(top, []);
-    topics.get(top)!.push(it);
+    for (const top of new Set(topicsOf(it))) {
+      if (!topics.has(top)) topics.set(top, []);
+      topics.get(top)!.push(it);
+    }
   }
 
   const sections: LevelSection[] = [];
@@ -60,7 +65,8 @@ export function groupCourses(items: LibraryItem[]): LevelSection[] {
       if (b.label === GENERAL) return 1;
       return a.label.localeCompare(b.label, "fr");
     });
-    const count = groups.reduce((n, g) => n + g.items.length, 0);
+    // Unique files in the level (a file placed under several chapters counts once).
+    const count = new Set(groups.flatMap((g) => g.items.map((it) => it.fileId))).size;
     sections.push({ level, count, groups });
   }
 

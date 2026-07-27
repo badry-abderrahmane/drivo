@@ -14,7 +14,7 @@ export function applyFilters(items: LibraryItem[], f: Filters): LibraryItem[] {
     if (f.level && it.meta.level !== f.level) return false;
     if (f.type && it.meta.type !== f.type) return false;
     if (f.subject && it.meta.subject !== f.subject) return false;
-    if (f.chapter && it.meta.chapter !== f.chapter) return false;
+    if (f.chapter && !it.meta.chapter.includes(f.chapter)) return false;
     if (q) {
       const hay = (it.displayTitle + " " + it.meta.tags.join(" ")).toLowerCase();
       if (!hay.includes(q)) return false;
@@ -33,9 +33,16 @@ export function sortItems(items: LibraryItem[]): LibraryItem[] {
 
 export function distinctValues(
   items: LibraryItem[],
-  key: "level" | "type" | "subject" | "chapter"
+  key: "level" | "type" | "subject"
 ): string[] {
   const set = new Set<string>();
   for (const it of items) if (it.meta[key]) set.add(it.meta[key]);
+  return [...set].sort((a, b) => a.localeCompare(b, "fr"));
+}
+
+/** Distinct chapters across all items (chapter is a list per item). */
+export function distinctChapters(items: LibraryItem[]): string[] {
+  const set = new Set<string>();
+  for (const it of items) for (const c of it.meta.chapter) if (c) set.add(c);
   return [...set].sort((a, b) => a.localeCompare(b, "fr"));
 }

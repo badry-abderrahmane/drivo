@@ -27,7 +27,7 @@ export interface MetaRow {
   level: string;
   type: string;
   subject: string;
-  chapter: string;
+  chapter: string[];
   title: string;
   description: string;
   tags: string[];

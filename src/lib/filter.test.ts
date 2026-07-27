@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { applyFilters, sortItems, distinctValues } from "./filter";
+import { applyFilters, sortItems, distinctValues, distinctChapters } from "./filter";
 import type { LibraryItem } from "./types";
 
 const item = (over: Partial<LibraryItem["meta"]> & { fileId: string }, title = "t"): LibraryItem => ({
@@ -13,7 +13,7 @@ const item = (over: Partial<LibraryItem["meta"]> & { fileId: string }, title = "
   displayTitle: title,
   meta: {
     fileId: over.fileId, level: over.level ?? "", type: over.type ?? "",
-    subject: over.subject ?? "", chapter: over.chapter ?? "", title: over.title ?? "",
+    subject: over.subject ?? "", chapter: over.chapter ?? [], title: over.title ?? "",
     description: "", tags: over.tags ?? [], order: over.order ?? 0,
   },
 });
@@ -47,6 +47,29 @@ describe("sortItems", () => {
       item({ fileId: "c", order: 1 }, "Alpha"),
     ];
     expect(sortItems(items).map((i) => i.fileId)).toEqual(["c", "b", "a"]);
+  });
+});
+
+describe("chapter filtering (chapter is a list per file)", () => {
+  const items = [
+    item({ fileId: "1", chapter: ["Mécanique", "Ondes"] }, "Examen"),
+    item({ fileId: "2", chapter: ["Ondes"] }, "TD"),
+    item({ fileId: "3", chapter: [] }, "Autre"),
+  ];
+  it("matches a file if the chapter is among its list", () => {
+    expect(applyFilters(items, { chapter: "Mécanique" }).map((i) => i.fileId)).toEqual(["1"]);
+    expect(applyFilters(items, { chapter: "Ondes" }).map((i) => i.fileId)).toEqual(["1", "2"]);
+  });
+});
+
+describe("distinctChapters", () => {
+  it("flattens and de-duplicates chapters across files, sorted", () => {
+    const items = [
+      item({ fileId: "1", chapter: ["Ondes", "Mécanique"] }),
+      item({ fileId: "2", chapter: ["Ondes"] }),
+      item({ fileId: "3", chapter: [] }),
+    ];
+    expect(distinctChapters(items)).toEqual(["Mécanique", "Ondes"]);
   });
 });
 

@@ -4,7 +4,7 @@ import type { LibraryItem } from "../lib/types";
 const item = (id: string): LibraryItem => ({
   fileId: id, name: id + ".pdf", mimeType: "application/pdf", path: [], webViewLink: "u",
   modifiedTime: "2026-01-01T00:00:00.000Z", isFolder: false, displayTitle: id,
-  meta: { fileId: id, level: "", type: "", subject: "", chapter: "", title: "", description: "", tags: [], order: 0 },
+  meta: { fileId: id, level: "", type: "", subject: "", chapter: [], title: "", description: "", tags: [], order: 0 },
 });
 
 beforeEach(() => vi.resetModules());

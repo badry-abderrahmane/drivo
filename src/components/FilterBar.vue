@@ -141,7 +141,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from "vue";
-import { distinctValues, type Filters } from "../lib/filter";
+import { distinctValues, distinctChapters, type Filters } from "../lib/filter";
 import type { LibraryItem } from "../lib/types";
 
 const props = defineProps<{ items: LibraryItem[]; modelValue: Filters }>();
@@ -191,7 +191,7 @@ const hasActiveFilters = computed(() => activeCount.value > 0);
 const levels = computed(() => distinctValues(props.items, "level"));
 const types = computed(() => distinctValues(props.items, "type"));
 const subjects = computed(() => distinctValues(props.items, "subject"));
-const chapters = computed(() => distinctValues(props.items, "chapter"));
+const chapters = computed(() => distinctChapters(props.items));
 </script>
 
 <style scoped>
