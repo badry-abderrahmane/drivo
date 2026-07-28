@@ -22,31 +22,34 @@ async function mountMenu(items: LibraryItem[]) {
   return w;
 }
 
+function cardFor(w: Awaited<ReturnType<typeof mountMenu>>, level: string) {
+  return w.findAll('[data-test="level-card"]').find((c) => c.text().includes(level))!;
+}
+
 describe("MenuView", () => {
-  it("shows a card only for levels with qualifying files", async () => {
-    const w = await mountMenu([
-      full("1", {}),                                     // 2ème Bac SM, qualifies
-      { ...full("2", { level: "2ème Bac PC" }), meta: { ...full("2", { level: "2ème Bac PC" }).meta, title: "" } }, // under-tagged
-    ]);
+  it("always shows a card for every official level", async () => {
+    const w = await mountMenu([full("1", {})]);
     const cards = w.findAll('[data-test="level-card"]');
-    expect(cards).toHaveLength(1);
+    expect(cards).toHaveLength(6);
+    expect(w.text()).toContain("Tronc Commun");
     expect(w.text()).toContain("2ème Bac SM");
   });
 
-  it("opens the level table with theme names and numbered links on click", async () => {
-    const w = await mountMenu([full("1", {}), full("2", { chapter: ["Dipôle RC"] })]);
-    await w.get('[data-test="level-card"]').trigger("click");
+  it("opens the full program as rows, filling cells and leaving others empty", async () => {
+    const w = await mountMenu([full("1", { chapter: ["Ondes mécaniques progressives"] })]);
+    await cardFor(w, "2ème Bac SM").trigger("click");
     await flushPromises();
     expect(w.text()).toContain("Menu thématique — 2ème Bac SM");
+    // full program rows present, incl. a chapter with no file
     expect(w.text()).toContain("Ondes mécaniques progressives");
-    expect(w.text()).toContain("Dipôle RC");
-    expect(w.findAll('[data-test="menu-link"]').length).toBeGreaterThan(0);
+    expect(w.text()).toContain("Modulation d'amplitude"); // official chapter with no file → still a row
+    expect(w.findAll('[data-test="menu-link"]').length).toBe(1); // only the one file
   });
 
   it("previews a file when a numbered link is clicked", async () => {
     document.body.innerHTML = "";
     const w = await mountMenu([full("1", {})]);
-    await w.get('[data-test="level-card"]').trigger("click");
+    await cardFor(w, "2ème Bac SM").trigger("click");
     await flushPromises();
     await w.get('[data-test="menu-link"]').trigger("click");
     await flushPromises();
