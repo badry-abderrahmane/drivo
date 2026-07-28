@@ -33,6 +33,17 @@
         </v-btn>
 
         <v-btn
+          :to="{ name: 'menu' }"
+          :variant="route.name === 'menu' ? 'flat' : 'text'"
+          :color="route.name === 'menu' ? 'primary' : 'default'"
+          size="small"
+          class="rounded-pill font-weight-medium px-4"
+          prepend-icon="mdi-view-list-outline"
+        >
+          Menu thématique
+        </v-btn>
+
+        <v-btn
           :to="{ name: 'admin' }"
           :variant="route.name === 'admin' ? 'flat' : 'text'"
           :color="route.name === 'admin' ? 'primary' : 'default'"
