@@ -53,6 +53,9 @@
           </v-btn>
           <h1 class="text-h5 font-weight-bold">Menu thématique — {{ selectedLevel }}</h1>
         </div>
+        <v-alert v-if="currentMenu.types.length === 0" type="info" variant="tonal" class="mb-4 rounded-xl">
+          Aucune ressource classée pour ce niveau pour le moment — le programme complet est affiché ci-dessous.
+        </v-alert>
         <MenuTable :menu="currentMenu" @preview="openPreview" />
       </template>
     </template>
@@ -66,15 +69,17 @@ import { ref, computed, onMounted } from "vue";
 import MenuTable from "../components/MenuTable.vue";
 import FilePreview from "../components/FilePreview.vue";
 import { useLibrary } from "../composables/useLibrary";
-import { levelsWithMenu, buildLevelMenu, isMenuReady } from "../lib/menu";
+import { menuLevels, buildLevelMenu, isMenuReady } from "../lib/menu";
 import type { LibraryItem } from "../lib/types";
 
 const { items, loading, stale, error, ensureLoaded } = useLibrary();
 
 const selectedLevel = ref<string | null>(null);
 
+// All official program levels are always shown; the count is how many of that
+// level's files are fully tagged so far.
 const levels = computed(() =>
-  levelsWithMenu(items.value).map((level) => ({
+  menuLevels().map((level) => ({
     level,
     count: items.value.filter((it) => isMenuReady(it) && it.meta.level === level).length,
   }))

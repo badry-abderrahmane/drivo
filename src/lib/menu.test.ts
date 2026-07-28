@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { isMenuReady, levelsWithMenu, buildLevelMenu } from "./menu";
+import { isMenuReady, menuLevels, buildLevelMenu } from "./menu";
+import { CHAPTERS_BY_LEVEL } from "../data/chapters";
 import type { LibraryItem } from "./types";
 
 const mk = (
@@ -29,62 +30,72 @@ describe("isMenuReady", () => {
   });
 });
 
-describe("levelsWithMenu", () => {
-  it("lists levels with qualifying files, in config order, others after", () => {
-    const items = [
-      full("1", { level: "2ème Bac PC" }),
-      full("2", { level: "Tronc Commun" }),
-      full("3", { level: "Zzz Autre" }),
-      mk("4", { level: "1ère Bac SM" }), // under-tagged → excluded
-    ];
-    expect(levelsWithMenu(items)).toEqual(["Tronc Commun", "2ème Bac PC", "Zzz Autre"]);
+describe("menuLevels", () => {
+  it("returns all official program levels in config order", () => {
+    expect(menuLevels()).toEqual([
+      "Tronc Commun",
+      "1ère Bac Sc. Exp",
+      "1ère Bac SM",
+      "2ème Bac SM",
+      "2ème Bac PC",
+      "2ème Bac SVT",
+    ]);
   });
 });
 
 describe("buildLevelMenu", () => {
-  it("orders columns by TYPES config and rows by curriculum, with cells populated", () => {
+  it("shows the full official program as rows (Physique then Chimie), even empty", () => {
+    const menu = buildLevelMenu([], "2ème Bac SM");
+    expect(menu.sections.map((s) => s.subject)).toEqual(["Physique", "Chimie"]);
+    expect(menu.sections[0].rows.map((r) => r.chapter)).toEqual(CHAPTERS_BY_LEVEL["2ème Bac SM"].Physique);
+    expect(menu.sections[1].rows.map((r) => r.chapter)).toEqual(CHAPTERS_BY_LEVEL["2ème Bac SM"].Chimie);
+    expect(menu.types).toEqual([]); // no files → no columns
+  });
+
+  it("columns are only the types present, ordered by config", () => {
+    const items = [
+      full("e", { type: "Exercices" }),
+      full("c", { type: "Cours" }),
+      full("v", { type: "Vidéo" }),
+    ];
+    expect(buildLevelMenu(items, "2ème Bac SM").types).toEqual(["Cours", "Exercices", "Vidéo"]);
+  });
+
+  it("fills cells by chapter + type; empty where no file; sorts by order", () => {
     const items = [
       full("c1", { type: "Cours", chapter: ["Ondes mécaniques progressives"] }, 2),
       full("c2", { type: "Cours", chapter: ["Ondes mécaniques progressives"] }, 1),
-      full("e1", { type: "Exercices", chapter: ["Ondes mécaniques progressives"] }),
-      full("c3", { type: "Cours", chapter: ["Dipôle RC"] }),
-      full("ch", { subject: "Chimie", type: "Cours", chapter: ["État d'équilibre d'un système chimique"] }),
+      full("e1", { type: "Exercices", chapter: ["Dipôle RC"] }),
     ];
     const menu = buildLevelMenu(items, "2ème Bac SM");
-    // columns: Cours before Exercices (config order)
-    expect(menu.types).toEqual(["Cours", "Exercices"]);
-    // sections: Physique before Chimie
-    expect(menu.sections.map((s) => s.subject)).toEqual(["Physique", "Chimie"]);
-
     const phys = menu.sections[0];
-    // rows follow curriculum order: "Ondes mécaniques progressives" (index 0) before "Dipôle RC"
-    expect(phys.rows.map((r) => r.chapter)).toEqual(["Ondes mécaniques progressives", "Dipôle RC"]);
-
-    const ondes = phys.rows[0];
-    // Cours cell has c1+c2 sorted by order (c2 first), Exercices cell has e1
+    const ondes = phys.rows.find((r) => r.chapter === "Ondes mécaniques progressives")!;
     const coursCell = ondes.cells.find((c) => c.type === "Cours")!;
-    expect(coursCell.files.map((f) => f.fileId)).toEqual(["c2", "c1"]);
-    const exCell = ondes.cells.find((c) => c.type === "Exercices")!;
-    expect(exCell.files.map((f) => f.fileId)).toEqual(["e1"]);
+    expect(coursCell.files.map((f) => f.fileId)).toEqual(["c2", "c1"]); // order 1 before 2
+    // Ondes has no Exercices file → empty cell
+    expect(ondes.cells.find((c) => c.type === "Exercices")!.files).toEqual([]);
+    // Dipôle RC row has the exercices file
+    const rc = phys.rows.find((r) => r.chapter === "Dipôle RC")!;
+    expect(rc.cells.find((c) => c.type === "Exercices")!.files.map((f) => f.fileId)).toEqual(["e1"]);
   });
 
-  it("places a multi-chapter file in each chapter row, deduped per cell", () => {
+  it("places a multi-chapter file under each of its official chapters", () => {
+    const items = [full("x", { type: "Exercices", chapter: ["Ondes mécaniques progressives", "Dipôle RC"] })];
+    const phys = buildLevelMenu(items, "2ème Bac SM").sections[0];
+    const inOndes = phys.rows.find((r) => r.chapter === "Ondes mécaniques progressives")!.cells.find((c) => c.type === "Exercices")!;
+    const inRc = phys.rows.find((r) => r.chapter === "Dipôle RC")!.cells.find((c) => c.type === "Exercices")!;
+    expect(inOndes.files.map((f) => f.fileId)).toEqual(["x"]);
+    expect(inRc.files.map((f) => f.fileId)).toEqual(["x"]);
+  });
+
+  it("ignores off-program chapters and other levels", () => {
     const items = [
-      full("x", { type: "Exercices", chapter: ["Ondes mécaniques progressives", "Dipôle RC"] }),
+      full("keep", { type: "Cours", chapter: ["Ondes mécaniques progressives"] }),
+      full("offprog", { type: "Cours", chapter: ["Chapitre Inventé"] }),
+      full("other", { level: "2ème Bac PC", type: "Cours", chapter: ["Ondes mécaniques progressives"] }),
     ];
-    const menu = buildLevelMenu(items, "2ème Bac SM");
-    const rows = menu.sections[0].rows;
-    expect(rows.map((r) => r.chapter).sort()).toEqual(["Dipôle RC", "Ondes mécaniques progressives"].sort());
-    for (const r of rows) {
-      const cell = r.cells.find((c) => c.type === "Exercices")!;
-      expect(cell.files.map((f) => f.fileId)).toEqual(["x"]);
-    }
-  });
-
-  it("only includes qualifying files for the given level", () => {
-    const items = [full("1", {}), full("2", { level: "2ème Bac PC" }), mk("3", { level: "2ème Bac SM" })];
     const menu = buildLevelMenu(items, "2ème Bac SM");
     const allFiles = menu.sections.flatMap((s) => s.rows.flatMap((r) => r.cells.flatMap((c) => c.files)));
-    expect(allFiles.map((f) => f.fileId)).toEqual(["1"]);
+    expect([...new Set(allFiles.map((f) => f.fileId))]).toEqual(["keep"]);
   });
 });
