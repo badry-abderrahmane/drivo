@@ -100,7 +100,7 @@
           hover
           class="admin-table"
         >
-          <!-- File Column -->
+          <!-- File Column: display title above filename + folder path (read-only) -->
           <template #item.name="{ item }">
             <div class="d-flex align-center ga-2 py-2">
               <div
@@ -110,13 +110,21 @@
                 <v-icon :icon="kindOf(item).icon" size="20" />
               </div>
               <div class="d-flex flex-column overflow-hidden">
-                <span class="font-weight-bold text-body-2 text-truncate" style="max-width: 240px" :title="item.name">
+                <span class="font-weight-bold text-body-2 text-truncate" style="max-width: 300px" :title="item.title || item.name">
+                  {{ item.title || item.name }}
+                </span>
+                <span
+                  v-if="item.title"
+                  class="text-caption text-medium-emphasis text-truncate"
+                  style="max-width: 300px"
+                  :title="item.name"
+                >
                   {{ item.name }}
                 </span>
                 <span
                   v-if="item.path.length"
-                  class="text-caption text-medium-emphasis text-truncate d-flex align-center ga-1"
-                  style="max-width: 240px"
+                  class="text-caption text-disabled text-truncate d-flex align-center ga-1"
+                  style="max-width: 300px"
                   :title="item.path.join(' / ')"
                 >
                   <v-icon icon="mdi-folder-outline" size="12" />
@@ -124,20 +132,6 @@
                 </span>
               </div>
             </div>
-          </template>
-
-          <!-- Title Column with Inline Input & Quick Preview -->
-          <template #item.title="{ item }">
-            <v-text-field
-              data-test="cell-title"
-              v-model="item.title"
-              :placeholder="item.name"
-              variant="outlined"
-              hide-details
-              density="compact"
-              class="table-input"
-              style="min-width: 160px"
-            />
           </template>
 
           <!-- Level Column -->
@@ -156,23 +150,12 @@
             <span v-else class="text-caption text-disabled">—</span>
           </template>
 
-          <!-- Subject Column -->
-          <template #item.subject="{ item }">
-            <span v-if="item.subject" class="text-body-2 font-weight-medium">{{ item.subject }}</span>
-            <span v-else class="text-caption text-disabled">—</span>
-          </template>
-
-          <!-- Chapter Column -->
+          <!-- Chapter Column: one chapter per line -->
           <template #item.chapter="{ item }">
-            <span v-if="item.chapter.length" class="text-body-2 text-truncate" style="max-width: 180px" :title="item.chapter.join(' · ')">
-              {{ item.chapter.join(" · ") }}
-            </span>
+            <div v-if="item.chapter.length" class="d-flex flex-column ga-1 py-1">
+              <span v-for="ch in item.chapter" :key="ch" class="chapter-pill">{{ ch }}</span>
+            </div>
             <span v-else class="text-caption text-disabled">—</span>
-          </template>
-
-          <!-- Order Column -->
-          <template #item.order="{ item }">
-            <span class="text-body-2 font-weight-medium">{{ item.order ?? 0 }}</span>
           </template>
 
           <!-- Actions Column (Preview + Edit) -->
@@ -244,6 +227,7 @@
             <v-col cols="12">
               <v-text-field
                 v-model="editForm.title"
+                data-test="modal-title"
                 label="Titre d'affichage"
                 placeholder="Ex: Cours de Mécanique - Chapitre 1"
                 variant="outlined"
@@ -375,6 +359,7 @@
             variant="flat"
             class="rounded-pill px-6 font-weight-bold"
             prepend-icon="mdi-check"
+            data-test="apply-edit"
             @click="applyModalEdits"
           >
             Appliquer
@@ -457,12 +442,9 @@ const editForm = reactive<EditRow>({
 
 const headers = [
   { title: "Fichier", key: "name", sortable: true },
-  { title: "Titre d'affichage", key: "title", sortable: true },
   { title: "Niveau", key: "level", sortable: true },
   { title: "Type", key: "type", sortable: true },
-  { title: "Matière", key: "subject", sortable: true },
-  { title: "Chapitre", key: "chapter", sortable: true },
-  { title: "Ordre", key: "order", sortable: true },
+  { title: "Chapitres", key: "chapter", sortable: false },
   { title: "Actions", key: "actions", sortable: false, align: "end" as const },
 ];
 
@@ -591,5 +573,18 @@ async function doReindex(): Promise<void> {
 
 .table-input :deep(.v-field) {
   border-radius: 8px !important;
+}
+
+/* One chapter per line, wrapping long titles, as a subtle pill. */
+.chapter-pill {
+  display: inline-block;
+  max-width: 240px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(var(--v-theme-primary), 0.08);
+  color: rgb(var(--v-theme-primary));
+  font-size: 0.72rem;
+  line-height: 1.25;
+  white-space: normal;
 }
 </style>

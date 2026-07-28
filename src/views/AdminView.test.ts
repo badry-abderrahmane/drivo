@@ -32,6 +32,19 @@ async function unlock(w: Awaited<ReturnType<typeof mountAdmin>>["w"]) {
   await flushPromises();
 }
 
+// Editing happens in the modal (teleported to document). Open it for the first row,
+// set the display title, and apply.
+async function editTitleViaModal(w: Awaited<ReturnType<typeof mountAdmin>>["w"], title: string) {
+  await w.get('[data-test="edit-row"]').trigger("click");
+  await flushPromises();
+  const input = document.querySelector('[data-test="modal-title"] input') as HTMLInputElement;
+  input.value = title;
+  input.dispatchEvent(new Event("input"));
+  await flushPromises();
+  (document.querySelector('[data-test="apply-edit"]') as HTMLButtonElement).click();
+  await flushPromises();
+}
+
 describe("AdminView", () => {
   it("shows the gate first and no table", async () => {
     const { w } = await mountAdmin();
@@ -50,7 +63,7 @@ describe("AdminView", () => {
     const { w, saveMeta } = await mountAdmin();
     await unlock(w);
     saveMeta.mockClear(); // drop the unlock-validation call
-    await w.get('[data-test="cell-title"] input').setValue("Nouveau titre");
+    await editTitleViaModal(w, "Nouveau titre");
     await w.get('[data-test="save"]').trigger("click");
     await flushPromises();
     expect(saveMeta).toHaveBeenCalledTimes(1);
@@ -64,8 +77,7 @@ describe("AdminView", () => {
   it("clears the unsaved-changes badge after a successful save", async () => {
     const { w } = await mountAdmin();
     await unlock(w);
-    await w.get('[data-test="cell-title"] input').setValue("Nouveau titre");
-    await flushPromises();
+    await editTitleViaModal(w, "Nouveau titre");
     expect(w.text()).toContain("non enregistrée"); // badge visible after editing
     await w.get('[data-test="save"]').trigger("click");
     await flushPromises();
@@ -85,7 +97,7 @@ describe("AdminView", () => {
     const { w, saveMeta } = await mountAdmin();
     await unlock(w);
     saveMeta.mockRejectedValueOnce(new Error("network"));
-    await w.get('[data-test="cell-title"] input').setValue("X");
+    await editTitleViaModal(w, "X");
     await w.get('[data-test="save"]').trigger("click");
     await flushPromises();
     const saveBtn = w.get('[data-test="save"]');
