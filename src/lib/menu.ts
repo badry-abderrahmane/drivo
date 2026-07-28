@@ -1,6 +1,7 @@
 import type { LibraryItem } from "./types";
 import { LEVELS, TYPES } from "../config";
 import { CHAPTERS_BY_LEVEL, type LevelChapters } from "../data/chapters";
+import { isClassified } from "./classification";
 
 export interface MenuCell {
   type: string;
@@ -23,10 +24,11 @@ export interface LevelMenu {
 // Section order within a level's table.
 const MATIERES: (keyof LevelChapters)[] = ["Physique", "Chimie"];
 
-/** A file is menu-ready only when title, level, type, subject and ≥1 chapter are set. */
+/** A file appears in the menu when it is classified — Niveau, Type, Matière and
+ *  ≥1 Chapitre. The display title is not required (links show a number; the title
+ *  is only a hover tooltip, falling back to the filename). */
 export function isMenuReady(it: LibraryItem): boolean {
-  const m = it.meta;
-  return !!(m.title && m.level && m.type && m.subject && m.chapter.length > 0);
+  return isClassified(it.meta);
 }
 
 /** All official-program levels, in config order (each has a full chapter list). */

@@ -20,9 +20,9 @@ const full = (fileId: string, over: Partial<LibraryItem["meta"]>, order = 0) =>
   mk(fileId, { title: "T " + fileId, level: "2ème Bac SM", type: "Cours", subject: "Physique", chapter: ["Ondes mécaniques progressives"], ...over }, order);
 
 describe("isMenuReady", () => {
-  it("requires title, level, type, subject and at least one chapter", () => {
+  it("requires level, type, subject and a chapter — but NOT the display title", () => {
     expect(isMenuReady(full("1", {}))).toBe(true);
-    expect(isMenuReady(full("1", { title: "" }))).toBe(false);
+    expect(isMenuReady(full("1", { title: "" }))).toBe(true); // title not required
     expect(isMenuReady(full("1", { level: "" }))).toBe(false);
     expect(isMenuReady(full("1", { type: "" }))).toBe(false);
     expect(isMenuReady(full("1", { subject: "" }))).toBe(false);
