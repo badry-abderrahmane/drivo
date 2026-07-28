@@ -153,6 +153,27 @@ describe("AdminView", () => {
     expect(iframe?.getAttribute("src")).toContain("/file/d/1/preview");
   });
 
+  it("shows the classification progress (classified / total)", async () => {
+    const base = (fileId: string, over: Partial<LibraryItem["meta"]>): LibraryItem => ({
+      fileId, name: fileId + ".pdf", mimeType: "application/pdf", path: [], webViewLink: "u",
+      modifiedTime: "2026-01-01T00:00:00.000Z", isFolder: false, displayTitle: fileId,
+      meta: { fileId, level: "", type: "", subject: "", chapter: [], title: "", description: "", tags: [], order: 0, ...over },
+    });
+    const items = [
+      base("1", { level: "2ème Bac SM", type: "Cours", subject: "Physique", chapter: ["Ondes"] }), // classified
+      base("2", { level: "2ème Bac SM", type: "Cours", subject: "Physique", chapter: [] }),          // not classified
+    ];
+    sessionStorage.setItem("drivo:admin_pw", "secret"); // skip the gate
+    vi.doMock("../lib/loadLibrary", () => ({ loadLibrary: vi.fn().mockResolvedValue({ items, stale: false }) }));
+    vi.doMock("../api", () => ({ saveMeta: vi.fn().mockResolvedValue({ ok: true }), reindex: vi.fn() }));
+    const AdminView = (await import("./AdminView.vue")).default;
+    const w = mountWithVuetify(AdminView);
+    await flushPromises();
+    const progress = w.get('[data-test="progress"]');
+    expect(progress.text()).toContain("1 / 2");
+    expect(progress.text()).toContain("50%");
+  });
+
   it("logout clears the session and returns to the gate", async () => {
     const { w } = await mountAdmin();
     await unlock(w);

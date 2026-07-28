@@ -86,6 +86,26 @@
         Hors ligne — données en cache.
       </v-alert>
 
+      <!-- Classification progress -->
+      <v-card v-show="rows.length > 0" class="rounded-xl border pa-4 mb-4" elevation="0" data-test="progress">
+        <div class="d-flex align-center justify-space-between mb-2 flex-wrap ga-2">
+          <span class="text-body-2 font-weight-medium d-flex align-center ga-2">
+            <v-icon icon="mdi-progress-check" size="18" color="primary" />
+            Fichiers classés (Niveau · Type · Matière · Chapitre)
+          </span>
+          <span class="text-body-2 font-weight-bold">
+            {{ stats.classified }} / {{ stats.total }}
+            <span :class="stats.percent === 100 ? 'text-success' : 'text-primary'">({{ stats.percent }}%)</span>
+          </span>
+        </div>
+        <v-progress-linear
+          :model-value="stats.percent"
+          :color="stats.percent === 100 ? 'success' : 'primary'"
+          height="8"
+          rounded
+        />
+      </v-card>
+
       <!-- Data Table Card -->
       <v-card v-show="rows.length > 0" class="rounded-2xl border pa-2 overflow-hidden shadow-sm" elevation="0">
         <v-data-table
@@ -134,20 +154,17 @@
             </div>
           </template>
 
-          <!-- Level Column -->
+          <!-- Niveau / Type Column (stacked chips) -->
           <template #item.level="{ item }">
-            <v-chip v-if="item.level" size="small" color="primary" variant="tonal" class="font-weight-medium">
-              {{ item.level }}
-            </v-chip>
-            <span v-else class="text-caption text-disabled">—</span>
-          </template>
-
-          <!-- Type Column -->
-          <template #item.type="{ item }">
-            <v-chip v-if="item.type" size="small" color="secondary" variant="tonal" class="font-weight-medium">
-              {{ item.type }}
-            </v-chip>
-            <span v-else class="text-caption text-disabled">—</span>
+            <div class="d-flex flex-column ga-1 py-1">
+              <v-chip v-if="item.level" size="x-small" color="primary" variant="tonal" class="font-weight-medium">
+                {{ item.level }}
+              </v-chip>
+              <v-chip v-if="item.type" size="x-small" color="secondary" variant="tonal" class="font-weight-medium">
+                {{ item.type }}
+              </v-chip>
+              <span v-if="!item.level && !item.type" class="text-caption text-disabled">—</span>
+            </div>
           </template>
 
           <!-- Chapter Column: one chapter per line -->
@@ -395,6 +412,7 @@ import { LEVELS, TYPES, SUBJECTS } from "../config";
 import { loadAdminPassword, saveAdminPassword, clearAdminPassword } from "../lib/adminAuth";
 import { fileKind } from "../lib/fileKind";
 import FilePreview from "../components/FilePreview.vue";
+import { classificationStats } from "../lib/classification";
 import { chaptersFor } from "../data/chapters";
 import { toEditRow, toSaveInput, saveKey, changedRows, type EditRow } from "./adminRows";
 
@@ -442,8 +460,7 @@ const editForm = reactive<EditRow>({
 
 const headers = [
   { title: "Fichier", key: "name", sortable: true },
-  { title: "Niveau", key: "level", sortable: true },
-  { title: "Type", key: "type", sortable: true },
+  { title: "Niveau / Type", key: "level", sortable: true },
   { title: "Chapitres", key: "chapter", sortable: false },
   { title: "Actions", key: "actions", sortable: false, align: "end" as const },
 ];
@@ -459,6 +476,9 @@ const pendingChangesCount = computed(() => {
   if (rows.value.length === 0) return 0;
   return changedRows(rows.value, baseline).length;
 });
+
+// Live classification progress (reflects unsaved edits too, since it reads rows).
+const stats = computed(() => classificationStats(rows.value));
 
 function openEditModal(row: EditRow): void {
   editingRow.value = row;
