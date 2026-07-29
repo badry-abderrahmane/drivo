@@ -13,6 +13,20 @@ export function isClassified(x: Classifiable): boolean {
   return !!(x.level.length > 0 && x.type && x.subject && x.chapter.length > 0);
 }
 
+/**
+ * French labels of the classification fields this row is still missing, in the canonical
+ * order used throughout the UI. Empty exactly when isClassified is true — the two live
+ * side by side so they cannot drift apart.
+ */
+export function missingFields(x: Classifiable): string[] {
+  const missing: string[] = [];
+  if (x.level.length === 0) missing.push("Niveau");
+  if (!x.type) missing.push("Type");
+  if (!x.subject) missing.push("Matière");
+  if (x.chapter.length === 0) missing.push("Chapitre");
+  return missing;
+}
+
 export function classificationStats(items: Classifiable[]): {
   classified: number;
   total: number;
