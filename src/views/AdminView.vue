@@ -703,9 +703,10 @@ const chapterOptions = computed(() => {
   return [...new Set(merged)];
 });
 
-// Display-title suggestions: this file's chapters, plain and with the type appended.
+// Display-title suggestions: the original file name first, then this file's chapters,
+// plain and with the type appended.
 const titleOptions = computed(() =>
-  titleSuggestions(editForm.chapter, editForm.type, chapterOptions.value)
+  titleSuggestions(editForm.name, editForm.chapter, editForm.type, chapterOptions.value)
 );
 
 function applyModalEdits(): void {

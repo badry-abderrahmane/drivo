@@ -45,18 +45,29 @@ export function changedRows(rows: EditRow[], baseline: Map<string, string>): Edi
   return rows.filter((r) => baseline.get(r.fileId) !== saveKey(r));
 }
 
+/** "Ondes mécaniques.pdf" -> "Ondes mécaniques". Names without an extension pass through. */
+function withoutExtension(name: string): string {
+  return name.replace(/\.[^.\s]+$/, "");
+}
+
 /**
- * Suggestions for the display title. Titles are nearly always a chapter name, sometimes
- * with the document type appended, so offer both shapes for the chapters assigned to this
- * file — falling back to the level's official programme when no chapter is set yet.
+ * Suggestions for the display title, in order of likely usefulness:
+ *  1. the original file name (extension dropped — it would never belong in a title), since
+ *     many files are already named well enough to reuse;
+ *  2. each chapter assigned to this file, plain and with the document type appended, as a
+ *     title is nearly always a chapter name.
+ * Falls back to the level's official programme when no chapter is set yet.
  */
 export function titleSuggestions(
+  name: string,
   chapters: string[],
   type: string,
   programme: string[]
 ): string[] {
-  const base = chapters.length > 0 ? chapters : programme;
   const out: string[] = [];
+  const bare = withoutExtension(name).trim();
+  if (bare) out.push(bare);
+  const base = chapters.length > 0 ? chapters : programme;
   for (const c of base) {
     if (!c) continue;
     out.push(c);

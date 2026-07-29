@@ -49,35 +49,51 @@ describe("adminRows", () => {
 });
 
 describe("titleSuggestions", () => {
-  it("offers each assigned chapter plain and combined with the type", () => {
-    expect(titleSuggestions(["Ondes mécaniques"], "Cours", [])).toEqual([
+  it("puts the original file name first, without its extension", () => {
+    expect(titleSuggestions("scan_ondes.pdf", ["Ondes mécaniques"], "Cours", [])).toEqual([
+      "scan_ondes",
       "Ondes mécaniques",
       "Ondes mécaniques — Cours",
     ]);
   });
 
+  it("keeps a name that has no extension, and only strips the last one", () => {
+    expect(titleSuggestions("exam", [], "", [])).toEqual(["exam"]);
+    expect(titleSuggestions("exam.v2.pdf", [], "", [])).toEqual(["exam.v2"]);
+  });
+
   it("covers every assigned chapter", () => {
-    expect(titleSuggestions(["A", "B"], "TD", [])).toEqual(["A", "A — TD", "B", "B — TD"]);
+    expect(titleSuggestions("f.pdf", ["A", "B"], "TD", [])).toEqual([
+      "f",
+      "A",
+      "A — TD",
+      "B",
+      "B — TD",
+    ]);
   });
 
   it("omits the combined form when no type is set", () => {
-    expect(titleSuggestions(["A"], "", [])).toEqual(["A"]);
+    expect(titleSuggestions("f.pdf", ["A"], "", [])).toEqual(["f", "A"]);
   });
 
   it("falls back to the programme when the file has no chapter yet", () => {
-    expect(titleSuggestions([], "Cours", ["P1"])).toEqual(["P1", "P1 — Cours"]);
+    expect(titleSuggestions("f.pdf", [], "Cours", ["P1"])).toEqual(["f", "P1", "P1 — Cours"]);
   });
 
   it("prefers the file's own chapters over the programme", () => {
-    expect(titleSuggestions(["Mine"], "", ["P1", "P2"])).toEqual(["Mine"]);
+    expect(titleSuggestions("f.pdf", ["Mine"], "", ["P1", "P2"])).toEqual(["f", "Mine"]);
   });
 
-  it("is empty when there is nothing to suggest", () => {
-    expect(titleSuggestions([], "Cours", [])).toEqual([]);
+  it("suggests only the name when there is nothing else", () => {
+    expect(titleSuggestions("f.pdf", [], "Cours", [])).toEqual(["f"]);
   });
 
-  it("drops empty chapter entries and de-duplicates", () => {
-    expect(titleSuggestions(["A", "", "A"], "", [])).toEqual(["A"]);
+  it("is empty when even the name is blank", () => {
+    expect(titleSuggestions("", [], "Cours", [])).toEqual([]);
+  });
+
+  it("drops empty chapter entries and de-duplicates against the name", () => {
+    expect(titleSuggestions("A.pdf", ["A", "", "A"], "", [])).toEqual(["A"]);
   });
 });
 
