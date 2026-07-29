@@ -156,14 +156,16 @@
 
           <!-- Niveau / Type Column (stacked chips) -->
           <template #item.level="{ item }">
-            <div class="d-flex flex-column ga-1 py-1">
-              <v-chip v-if="item.level" size="x-small" color="primary" variant="tonal" class="font-weight-medium">
-                {{ item.level }}
-              </v-chip>
-              <v-chip v-if="item.type" size="x-small" color="secondary" variant="tonal" class="font-weight-medium">
+            <div class="d-flex flex-column ga-1 py-1" style="max-width: 200px">
+              <div v-if="item.level.length" class="d-flex flex-wrap ga-1">
+                <v-chip v-for="lvl in item.level" :key="lvl" size="x-small" color="primary" variant="tonal" class="font-weight-medium">
+                  {{ lvl }}
+                </v-chip>
+              </div>
+              <v-chip v-if="item.type" size="x-small" color="secondary" variant="tonal" class="font-weight-medium align-self-start">
                 {{ item.type }}
               </v-chip>
-              <span v-if="!item.level && !item.type" class="text-caption text-disabled">—</span>
+              <span v-if="!item.level.length && !item.type" class="text-caption text-disabled">—</span>
             </div>
           </template>
 
@@ -254,12 +256,15 @@
               />
             </v-col>
 
-            <!-- Level Select -->
+            <!-- Level Select (multiple: a course can be shared across branches) -->
             <v-col cols="12" sm="6">
               <v-select
                 v-model="editForm.level"
-                label="Niveau d'études"
+                label="Niveau(x) d'études"
                 :items="LEVELS"
+                multiple
+                chips
+                closable-chips
                 clearable
                 variant="outlined"
                 density="comfortable"
@@ -302,7 +307,7 @@
                 v-model="editForm.chapter"
                 label="Chapitre(s)"
                 :items="chapterOptions"
-                :placeholder="editForm.level ? 'Choisir ou saisir un ou plusieurs chapitres' : 'Saisir un chapitre'"
+                :placeholder="editForm.level.length ? 'Choisir ou saisir un ou plusieurs chapitres' : 'Saisir un chapitre'"
                 :hint="chapterOptions.length ? 'Programme officiel — plusieurs possibles, ou saisissez le vôtre' : 'Choisissez un niveau pour voir les chapitres du programme'"
                 persistent-hint
                 multiple
@@ -448,7 +453,7 @@ const editForm = reactive<EditRow>({
   name: "",
   mimeType: "",
   path: [],
-  level: "",
+  level: [],
   type: "",
   subject: "",
   chapter: [],
@@ -482,8 +487,8 @@ const stats = computed(() => classificationStats(rows.value));
 
 function openEditModal(row: EditRow): void {
   editingRow.value = row;
-  // Clone chapter array so editing the modal doesn't mutate the row until "Appliquer".
-  Object.assign(editForm, { ...row, chapter: [...row.chapter] });
+  // Clone list fields so editing the modal doesn't mutate the row until "Appliquer".
+  Object.assign(editForm, { ...row, level: [...row.level], chapter: [...row.chapter] });
   editDialog.value = true;
 }
 
@@ -494,13 +499,16 @@ function closeEditModal(): void {
 
 // Chapters suggested for the currently-edited level + matière (combobox still
 // accepts any free-typed value not in this list).
-const chapterOptions = computed(() => chaptersFor(editForm.level, editForm.subject));
+const chapterOptions = computed(() => {
+  const merged = editForm.level.flatMap((l) => chaptersFor(l, editForm.subject));
+  return [...new Set(merged)];
+});
 
 function applyModalEdits(): void {
   if (!editingRow.value) return;
   const target = rows.value.find((r) => r.fileId === editingRow.value?.fileId);
   if (target) {
-    Object.assign(target, editForm, { chapter: [...editForm.chapter] });
+    Object.assign(target, editForm, { level: [...editForm.level], chapter: [...editForm.chapter] });
   }
   closeEditModal();
 }

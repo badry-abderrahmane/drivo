@@ -33,12 +33,21 @@ describe("parseChapters", () => {
     expect(normalizeMeta({ fileId: "1", chapter: "A; B" }).chapter).toEqual(["A", "B"]);
     expect(normalizeMeta({ fileId: "1" }).chapter).toEqual([]);
   });
+
+  it("normalizeMeta parses the level cell into a list (a file can span branches)", () => {
+    expect(normalizeMeta({ fileId: "1", level: "2ème Bac SM; 2ème Bac PC" }).level).toEqual([
+      "2ème Bac SM",
+      "2ème Bac PC",
+    ]);
+    expect(normalizeMeta({ fileId: "1", level: "2ème Bac SM" }).level).toEqual(["2ème Bac SM"]);
+    expect(normalizeMeta({ fileId: "1" }).level).toEqual([]);
+  });
 });
 
 describe("normalizeMeta", () => {
   it("fills defaults and parses tag string", () => {
     const m = normalizeMeta({ fileId: "1", tags: "x, y", order: "3" as unknown as number });
-    expect(m.level).toBe("");
+    expect(m.level).toEqual([]);
     expect(m.tags).toEqual(["x", "y"]);
     expect(m.order).toBe(3);
   });
@@ -60,6 +69,6 @@ describe("buildLibrary", () => {
   it("falls back to raw filename when no metadata title", () => {
     const lib = buildLibrary([node({ fileId: "9", name: "exam.pdf" })], []);
     expect(lib[0].displayTitle).toBe("exam.pdf");
-    expect(lib[0].meta.level).toBe("");
+    expect(lib[0].meta.level).toEqual([]);
   });
 });

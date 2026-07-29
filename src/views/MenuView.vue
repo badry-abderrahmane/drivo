@@ -81,7 +81,7 @@ const selectedLevel = ref<string | null>(null);
 const levels = computed(() =>
   menuLevels().map((level) => ({
     level,
-    count: items.value.filter((it) => isMenuReady(it) && it.meta.level === level).length,
+    count: items.value.filter((it) => isMenuReady(it) && it.meta.level.includes(level)).length,
   }))
 );
 

@@ -6,7 +6,7 @@ import type { LibraryItem } from "../lib/types";
 const item: LibraryItem = {
   fileId: "1", name: "raw.pdf", mimeType: "application/pdf", path: [], webViewLink: "u",
   modifiedTime: "2026-01-01T00:00:00.000Z", isFolder: false, displayTitle: "raw.pdf",
-  meta: { fileId: "1", level: "", type: "", subject: "", chapter: [], title: "", description: "", tags: [], order: 0 },
+  meta: { fileId: "1", level: [], type: "", subject: "", chapter: [], title: "", description: "", tags: [], order: 0 },
 };
 
 beforeEach(() => {
@@ -157,11 +157,11 @@ describe("AdminView", () => {
     const base = (fileId: string, over: Partial<LibraryItem["meta"]>): LibraryItem => ({
       fileId, name: fileId + ".pdf", mimeType: "application/pdf", path: [], webViewLink: "u",
       modifiedTime: "2026-01-01T00:00:00.000Z", isFolder: false, displayTitle: fileId,
-      meta: { fileId, level: "", type: "", subject: "", chapter: [], title: "", description: "", tags: [], order: 0, ...over },
+      meta: { fileId, level: [], type: "", subject: "", chapter: [], title: "", description: "", tags: [], order: 0, ...over },
     });
     const items = [
-      base("1", { level: "2ème Bac SM", type: "Cours", subject: "Physique", chapter: ["Ondes"] }), // classified
-      base("2", { level: "2ème Bac SM", type: "Cours", subject: "Physique", chapter: [] }),          // not classified
+      base("1", { level: ["2ème Bac SM"], type: "Cours", subject: "Physique", chapter: ["Ondes"] }), // classified
+      base("2", { level: ["2ème Bac SM"], type: "Cours", subject: "Physique", chapter: [] }),          // not classified
     ];
     sessionStorage.setItem("drivo:admin_pw", "secret"); // skip the gate
     vi.doMock("../lib/loadLibrary", () => ({ loadLibrary: vi.fn().mockResolvedValue({ items, stale: false }) }));

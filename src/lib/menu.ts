@@ -49,7 +49,7 @@ function typeRank(type: string): number {
  */
 export function buildLevelMenu(items: LibraryItem[], level: string): LevelMenu {
   const program = CHAPTERS_BY_LEVEL[level];
-  const ready = items.filter((it) => isMenuReady(it) && it.meta.level === level);
+  const ready = items.filter((it) => isMenuReady(it) && it.meta.level.includes(level));
 
   // Columns: doc types present anywhere in this level, ordered by config.
   const types = [...new Set(ready.map((it) => it.meta.type))].sort(

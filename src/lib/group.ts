@@ -17,9 +17,11 @@ export interface LevelSection {
   groups: CourseGroup[];
 }
 
-/** Grouping level: metadata `level`, else the top folder-path segment, else Non classé. */
-export function levelOf(it: LibraryItem): string {
-  return it.meta.level || it.path[0] || UNCLASSIFIED;
+/** Grouping levels: metadata `level` list, else the top folder-path segment, else
+ *  Non classé. A file with several levels is grouped under each. */
+export function levelsOf(it: LibraryItem): string[] {
+  if (it.meta.level.length > 0) return it.meta.level;
+  return [it.path[0] || UNCLASSIFIED];
 }
 
 /** Sub-group labels: one "subject · chapter" per chapter (a file with multiple
@@ -45,12 +47,13 @@ function levelRank(level: string): number {
 export function groupCourses(items: LibraryItem[]): LevelSection[] {
   const byLevel = new Map<string, Map<string, LibraryItem[]>>();
   for (const it of items) {
-    const lvl = levelOf(it);
-    if (!byLevel.has(lvl)) byLevel.set(lvl, new Map());
-    const topics = byLevel.get(lvl)!;
-    for (const top of new Set(topicsOf(it))) {
-      if (!topics.has(top)) topics.set(top, []);
-      topics.get(top)!.push(it);
+    for (const lvl of new Set(levelsOf(it))) {
+      if (!byLevel.has(lvl)) byLevel.set(lvl, new Map());
+      const topics = byLevel.get(lvl)!;
+      for (const top of new Set(topicsOf(it))) {
+        if (!topics.has(top)) topics.set(top, []);
+        topics.get(top)!.push(it);
+      }
     }
   }
 

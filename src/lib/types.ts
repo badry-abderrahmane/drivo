@@ -24,7 +24,7 @@ export interface RawRow {
 
 export interface MetaRow {
   fileId: string;
-  level: string;
+  level: string[];
   type: string;
   subject: string;
   chapter: string[];

@@ -6,7 +6,7 @@ import type { LibraryItem } from "../lib/types";
 const item: LibraryItem = {
   fileId: "1", name: "raw.pdf", mimeType: "application/pdf", path: [], webViewLink: "https://drive/1",
   modifiedTime: "2026-01-01T00:00:00.000Z", isFolder: false, displayTitle: "Mécanique — Cours",
-  meta: { fileId: "1", level: "2ème Bac SM", type: "Cours", subject: "Physique", chapter: ["Mécanique"], title: "Mécanique — Cours", description: "Chapitre 1", tags: [], order: 0 },
+  meta: { fileId: "1", level: ["2ème Bac SM"], type: "Cours", subject: "Physique", chapter: ["Mécanique"], title: "Mécanique — Cours", description: "Chapitre 1", tags: [], order: 0 },
 };
 
 describe("FileCard", () => {

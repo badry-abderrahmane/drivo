@@ -6,7 +6,7 @@ export interface EditRow {
   name: string;
   mimeType: string; // display-only (drives the file-type icon); not sent on save
   path: string[]; // display-only (Drive folder path); not sent on save
-  level: string;
+  level: string[]; // multiple levels (multi-select) — shared across branches
   type: string;
   subject: string;
   chapter: string[]; // multiple chapters (multi-select combobox)
@@ -20,14 +20,16 @@ export function toEditRow(it: LibraryItem): EditRow {
   const m = it.meta;
   return {
     fileId: m.fileId, name: it.name, mimeType: it.mimeType, path: it.path,
-    level: m.level, type: m.type, subject: m.subject,
+    level: [...m.level], type: m.type, subject: m.subject,
     chapter: [...m.chapter], title: m.title, description: m.description, tags: m.tags.join(","), order: m.order,
   };
 }
 
 export function toSaveInput(r: EditRow): SaveInput {
   return {
-    fileId: r.fileId, level: r.level, type: r.type, subject: r.subject,
+    fileId: r.fileId,
+    level: r.level.join(";"), // ';' separator — multiple levels (shared across branches)
+    type: r.type, subject: r.subject,
     chapter: r.chapter.join(";"), // ';' separator — chapter titles may contain commas
     title: r.title, description: r.description, tags: r.tags, order: Number(r.order) || 0,
   };

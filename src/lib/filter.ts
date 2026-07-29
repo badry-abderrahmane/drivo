@@ -11,7 +11,7 @@ export interface Filters {
 export function applyFilters(items: LibraryItem[], f: Filters): LibraryItem[] {
   const q = (f.search ?? "").trim().toLowerCase();
   return items.filter((it) => {
-    if (f.level && it.meta.level !== f.level) return false;
+    if (f.level && !it.meta.level.includes(f.level)) return false;
     if (f.type && it.meta.type !== f.type) return false;
     if (f.subject && it.meta.subject !== f.subject) return false;
     if (f.chapter && !it.meta.chapter.includes(f.chapter)) return false;
@@ -33,16 +33,19 @@ export function sortItems(items: LibraryItem[]): LibraryItem[] {
 
 export function distinctValues(
   items: LibraryItem[],
-  key: "level" | "type" | "subject"
+  key: "type" | "subject"
 ): string[] {
   const set = new Set<string>();
   for (const it of items) if (it.meta[key]) set.add(it.meta[key]);
   return [...set].sort((a, b) => a.localeCompare(b, "fr"));
 }
 
-/** Distinct chapters across all items (chapter is a list per item). */
-export function distinctChapters(items: LibraryItem[]): string[] {
+/** Distinct values of a list-valued field across all items. */
+function distinctList(items: LibraryItem[], key: "level" | "chapter"): string[] {
   const set = new Set<string>();
-  for (const it of items) for (const c of it.meta.chapter) if (c) set.add(c);
+  for (const it of items) for (const v of it.meta[key]) if (v) set.add(v);
   return [...set].sort((a, b) => a.localeCompare(b, "fr"));
 }
+
+export const distinctChapters = (items: LibraryItem[]): string[] => distinctList(items, "chapter");
+export const distinctLevels = (items: LibraryItem[]): string[] => distinctList(items, "level");

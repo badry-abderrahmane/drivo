@@ -11,19 +11,19 @@ const mk = (
   fileId, name: fileId + ".pdf", mimeType: "application/pdf", path: [], webViewLink: "u",
   modifiedTime: "2026-01-01T00:00:00.000Z", isFolder: false, displayTitle: over.title ?? fileId,
   meta: {
-    fileId, level: over.level ?? "", type: over.type ?? "", subject: over.subject ?? "",
+    fileId, level: over.level ?? [], type: over.type ?? "", subject: over.subject ?? "",
     chapter: over.chapter ?? [], title: over.title ?? "", description: "", tags: [], order,
   },
 });
 
 const full = (fileId: string, over: Partial<LibraryItem["meta"]>, order = 0) =>
-  mk(fileId, { title: "T " + fileId, level: "2ème Bac SM", type: "Cours", subject: "Physique", chapter: ["Ondes mécaniques progressives"], ...over }, order);
+  mk(fileId, { title: "T " + fileId, level: ["2ème Bac SM"], type: "Cours", subject: "Physique", chapter: ["Ondes mécaniques progressives"], ...over }, order);
 
 describe("isMenuReady", () => {
   it("requires level, type, subject and a chapter — but NOT the display title", () => {
     expect(isMenuReady(full("1", {}))).toBe(true);
     expect(isMenuReady(full("1", { title: "" }))).toBe(true); // title not required
-    expect(isMenuReady(full("1", { level: "" }))).toBe(false);
+    expect(isMenuReady(full("1", { level: [] }))).toBe(false);
     expect(isMenuReady(full("1", { type: "" }))).toBe(false);
     expect(isMenuReady(full("1", { subject: "" }))).toBe(false);
     expect(isMenuReady(full("1", { chapter: [] }))).toBe(false);
@@ -92,7 +92,7 @@ describe("buildLevelMenu", () => {
     const items = [
       full("keep", { type: "Cours", chapter: ["Ondes mécaniques progressives"] }),
       full("offprog", { type: "Cours", chapter: ["Chapitre Inventé"] }),
-      full("other", { level: "2ème Bac PC", type: "Cours", chapter: ["Ondes mécaniques progressives"] }),
+      full("other", { level: ["2ème Bac PC"], type: "Cours", chapter: ["Ondes mécaniques progressives"] }),
     ];
     const menu = buildLevelMenu(items, "2ème Bac SM");
     const allFiles = menu.sections.flatMap((s) => s.rows.flatMap((r) => r.cells.flatMap((c) => c.files)));

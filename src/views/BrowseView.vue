@@ -204,7 +204,7 @@ import FilterBar from "../components/FilterBar.vue";
 import FileCard from "../components/FileCard.vue";
 import CourseGroups from "../components/CourseGroups.vue";
 import { useLibrary } from "../composables/useLibrary";
-import { applyFilters, sortItems, distinctValues, type Filters } from "../lib/filter";
+import { applyFilters, sortItems, distinctLevels, type Filters } from "../lib/filter";
 import { groupCourses } from "../lib/group";
 
 const { items, loading, stale, error, ensureLoaded } = useLibrary();
@@ -227,7 +227,7 @@ const currentLayoutMode = computed(() => {
 const shown = computed(() => sortItems(applyFilters(items.value, filters.value)));
 const sections = computed(() => groupCourses(shown.value));
 
-const allLevels = computed(() => distinctValues(items.value, "level"));
+const allLevels = computed(() => distinctLevels(items.value));
 
 function toggleLevel(lvl: string): void {
   if (filters.value.level === lvl) {

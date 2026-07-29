@@ -4,19 +4,21 @@ export function parseTags(s: string): string[] {
   return s ? s.split(",").map((t) => t.trim()).filter(Boolean) : [];
 }
 
-// Chapters use ';' as the separator (not ',') because several official chapter
-// titles contain commas, e.g. "Noyaux, masse et énergie".
+// Multi-value fields (chapter, level) use ';' as the separator (not ',') because
+// several official chapter titles contain commas, e.g. "Noyaux, masse et énergie".
 export function parseChapters(s: string): string[] {
   return s ? s.split(";").map((c) => c.trim()).filter(Boolean) : [];
 }
+export const parseLevels = parseChapters;
 
 export function normalizeMeta(raw: Partial<RawRow> & { fileId: string }): MetaRow {
   const rawTags = (raw as RawRow).tags;
   const rawChapter = (raw as RawRow).chapter;
+  const rawLevel = (raw as RawRow).level;
   const order = Number(raw.order);
   return {
     fileId: raw.fileId,
-    level: raw.level ?? "",
+    level: Array.isArray(rawLevel) ? rawLevel : parseLevels(rawLevel ?? ""),
     type: raw.type ?? "",
     subject: raw.subject ?? "",
     chapter: Array.isArray(rawChapter) ? rawChapter : parseChapters(rawChapter ?? ""),

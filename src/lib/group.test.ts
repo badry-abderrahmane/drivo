@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { levelOf, topicsOf, groupCourses } from "./group";
+import { levelsOf, topicsOf, groupCourses } from "./group";
 import type { LibraryItem } from "./types";
 
 const mk = (
@@ -11,20 +11,23 @@ const mk = (
   fileId, name: title, mimeType: "application/pdf", path, webViewLink: "u",
   modifiedTime: "2026-01-01T00:00:00.000Z", isFolder: false, displayTitle: title,
   meta: {
-    fileId, level: over.level ?? "", type: over.type ?? "", subject: over.subject ?? "",
+    fileId, level: over.level ?? [], type: over.type ?? "", subject: over.subject ?? "",
     chapter: over.chapter ?? [], title: over.title ?? "", description: "", tags: [], order: over.order ?? 0,
   },
 });
 
-describe("levelOf", () => {
-  it("uses metadata level when set", () => {
-    expect(levelOf(mk("1", { level: "2ème Bac SM" }, ["1BAC"]))).toBe("2ème Bac SM");
+describe("levelsOf", () => {
+  it("uses the metadata level list when set (supports multiple)", () => {
+    expect(levelsOf(mk("1", { level: ["2ème Bac SM", "2ème Bac PC"] }, ["1BAC"]))).toEqual([
+      "2ème Bac SM",
+      "2ème Bac PC",
+    ]);
   });
   it("falls back to the first folder path segment", () => {
-    expect(levelOf(mk("1", {}, ["1BAC", "CHIMIE"]))).toBe("1BAC");
+    expect(levelsOf(mk("1", {}, ["1BAC", "CHIMIE"]))).toEqual(["1BAC"]);
   });
   it("falls back to 'Non classé' when nothing is available", () => {
-    expect(levelOf(mk("1", {}, []))).toBe("Non classé");
+    expect(levelsOf(mk("1", {}, []))).toEqual(["Non classé"]);
   });
 });
 
@@ -49,8 +52,8 @@ describe("topicsOf", () => {
 describe("groupCourses", () => {
   it("places a multi-chapter file under each of its chapters", () => {
     const items = [
-      mk("1", { level: "2ème Bac SM", subject: "Physique", chapter: ["Mécanique", "Ondes"] }, [], "Examen"),
-      mk("2", { level: "2ème Bac SM", subject: "Physique", chapter: ["Mécanique"] }, [], "Cours"),
+      mk("1", { level: ["2ème Bac SM"], subject: "Physique", chapter: ["Mécanique", "Ondes"] }, [], "Examen"),
+      mk("2", { level: ["2ème Bac SM"], subject: "Physique", chapter: ["Mécanique"] }, [], "Cours"),
     ];
     const sections = groupCourses(items);
     expect(sections).toHaveLength(1);
@@ -60,9 +63,20 @@ describe("groupCourses", () => {
     expect(ondes.items.map((i) => i.fileId)).toEqual(["1"]);
   });
 
+  it("places a multi-level file under each of its levels", () => {
+    const items = [
+      mk("1", { level: ["2ème Bac SM", "2ème Bac PC"], subject: "Physique", chapter: ["Ondes"] }, [], "Cours"),
+    ];
+    const sections = groupCourses(items);
+    expect(sections.map((s) => s.level).sort()).toEqual(["2ème Bac PC", "2ème Bac SM"].sort());
+    for (const s of sections) {
+      expect(s.groups[0].items.map((i) => i.fileId)).toEqual(["1"]);
+    }
+  });
+
   it("counts a multi-chapter file once in the level total", () => {
     const items = [
-      mk("1", { level: "2ème Bac SM", chapter: ["A", "B", "C"] }, [], "Examen"),
+      mk("1", { level: ["2ème Bac SM"], chapter: ["A", "B", "C"] }, [], "Examen"),
     ];
     expect(groupCourses(items)[0].count).toBe(1);
   });
@@ -70,8 +84,8 @@ describe("groupCourses", () => {
   it("orders known levels first (config order), then others, then 'Non classé' last", () => {
     const items = [
       mk("1", {}, [], "x"),                       // Non classé
-      mk("2", { level: "2ème Bac SM" }, [], "y"),
-      mk("3", { level: "Tronc Commun" }, [], "z"),
+      mk("2", { level: ["2ème Bac SM"] }, [], "y"),
+      mk("3", { level: ["Tronc Commun"] }, [], "z"),
       mk("4", {}, ["2SM"], "w"),                  // path-derived "2SM" (other)
     ];
     const order = groupCourses(items).map((s) => s.level);

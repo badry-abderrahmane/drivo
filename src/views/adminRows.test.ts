@@ -5,13 +5,14 @@ import type { LibraryItem } from "../lib/types";
 const item: LibraryItem = {
   fileId: "1", name: "raw.pdf", mimeType: "application/pdf", path: ["1BAC", "CHIMIE"], webViewLink: "u",
   modifiedTime: "2026-01-01T00:00:00.000Z", isFolder: false, displayTitle: "raw.pdf",
-  meta: { fileId: "1", level: "2ème Bac SM", type: "Cours", subject: "Physique", chapter: ["Mécanique", "Ondes"], title: "T", description: "D", tags: ["a", "b"], order: 3 },
+  meta: { fileId: "1", level: ["2ème Bac SM"], type: "Cours", subject: "Physique", chapter: ["Mécanique", "Ondes"], title: "T", description: "D", tags: ["a", "b"], order: 3 },
 };
 
 describe("adminRows", () => {
   it("toEditRow copies fields incl. mimeType + path; tags as comma string, chapter as list", () => {
     const r = toEditRow(item);
-    expect(r).toMatchObject({ fileId: "1", name: "raw.pdf", mimeType: "application/pdf", level: "2ème Bac SM", type: "Cours", title: "T", tags: "a,b", order: 3 });
+    expect(r).toMatchObject({ fileId: "1", name: "raw.pdf", mimeType: "application/pdf", type: "Cours", title: "T", tags: "a,b", order: 3 });
+    expect(r.level).toEqual(["2ème Bac SM"]);
     expect(r.chapter).toEqual(["Mécanique", "Ondes"]);
     expect(r.path).toEqual(["1BAC", "CHIMIE"]);
   });
@@ -23,6 +24,11 @@ describe("adminRows", () => {
     expect(s).not.toHaveProperty("mimeType");
     expect(s).not.toHaveProperty("name");
     expect(s).not.toHaveProperty("path");
+  });
+
+  it("toSaveInput joins several levels with ';' (course shared across branches)", () => {
+    const r = toEditRow({ ...item, meta: { ...item.meta, level: ["2ème Bac SM", "2ème Bac PC"] } });
+    expect(toSaveInput(r).level).toBe("2ème Bac SM;2ème Bac PC");
   });
 
   it("changedRows returns only rows that differ from the baseline", () => {

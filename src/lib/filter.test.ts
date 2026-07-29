@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { applyFilters, sortItems, distinctValues, distinctChapters } from "./filter";
+import { applyFilters, sortItems, distinctValues, distinctChapters, distinctLevels } from "./filter";
 import type { LibraryItem } from "./types";
 
 const item = (over: Partial<LibraryItem["meta"]> & { fileId: string }, title = "t"): LibraryItem => ({
@@ -12,7 +12,7 @@ const item = (over: Partial<LibraryItem["meta"]> & { fileId: string }, title = "
   isFolder: false,
   displayTitle: title,
   meta: {
-    fileId: over.fileId, level: over.level ?? "", type: over.type ?? "",
+    fileId: over.fileId, level: over.level ?? [], type: over.type ?? "",
     subject: over.subject ?? "", chapter: over.chapter ?? [], title: over.title ?? "",
     description: "", tags: over.tags ?? [], order: over.order ?? 0,
   },
@@ -20,9 +20,9 @@ const item = (over: Partial<LibraryItem["meta"]> & { fileId: string }, title = "
 
 describe("applyFilters", () => {
   const items = [
-    item({ fileId: "1", level: "2 Bac SM", type: "Cours" }, "Mécanique"),
-    item({ fileId: "2", level: "2 Bac SM", type: "Exercices", tags: ["newton"] }, "TD1"),
-    item({ fileId: "3", level: "1 Bac", type: "Cours" }, "Optique"),
+    item({ fileId: "1", level: ["2 Bac SM"], type: "Cours" }, "Mécanique"),
+    item({ fileId: "2", level: ["2 Bac SM"], type: "Exercices", tags: ["newton"] }, "TD1"),
+    item({ fileId: "3", level: ["1 Bac"], type: "Cours" }, "Optique"),
   ];
   it("filters by a single field", () => {
     expect(applyFilters(items, { type: "Cours" }).map((i) => i.fileId)).toEqual(["1", "3"]);
@@ -76,11 +76,26 @@ describe("distinctChapters", () => {
 describe("distinctValues", () => {
   it("returns sorted unique non-empty values", () => {
     const items = [
-      item({ fileId: "1", level: "2 Bac SM" }),
-      item({ fileId: "2", level: "1 Bac" }),
-      item({ fileId: "3", level: "" }),
-      item({ fileId: "4", level: "2 Bac SM" }),
+      item({ fileId: "1", type: "Cours" }),
+      item({ fileId: "2", type: "Exercices" }),
+      item({ fileId: "3", type: "" }),
+      item({ fileId: "4", type: "Cours" }),
     ];
-    expect(distinctValues(items, "level")).toEqual(["1 Bac", "2 Bac SM"]);
+    expect(distinctValues(items, "type")).toEqual(["Cours", "Exercices"]);
+  });
+});
+
+describe("level filtering (level is a list per file)", () => {
+  const items = [
+    item({ fileId: "1", level: ["2 Bac SM", "2 Bac PC"] }, "Partagé"),
+    item({ fileId: "2", level: ["2 Bac PC"] }, "PC seul"),
+    item({ fileId: "3", level: [] }, "Non classé"),
+  ];
+  it("matches a file if the level is among its list", () => {
+    expect(applyFilters(items, { level: "2 Bac SM" }).map((i) => i.fileId)).toEqual(["1"]);
+    expect(applyFilters(items, { level: "2 Bac PC" }).map((i) => i.fileId)).toEqual(["1", "2"]);
+  });
+  it("distinctLevels flattens and de-duplicates levels across files, sorted", () => {
+    expect(distinctLevels(items)).toEqual(["2 Bac PC", "2 Bac SM"]);
   });
 });

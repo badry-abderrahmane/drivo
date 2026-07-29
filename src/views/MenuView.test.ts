@@ -7,7 +7,7 @@ const full = (fileId: string, over: Partial<LibraryItem["meta"]>): LibraryItem =
   fileId, name: fileId + ".pdf", mimeType: "application/pdf", path: [], webViewLink: "u",
   modifiedTime: "2026-01-01T00:00:00.000Z", isFolder: false, displayTitle: over.title ?? fileId,
   meta: {
-    fileId, title: "T " + fileId, level: "2ème Bac SM", type: "Cours", subject: "Physique",
+    fileId, title: "T " + fileId, level: ["2ème Bac SM"], type: "Cours", subject: "Physique",
     chapter: ["Ondes mécaniques progressives"], description: "", tags: [], order: 0, ...over,
   },
 });

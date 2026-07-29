@@ -105,7 +105,7 @@ const props = withDefaults(
 
 // Context line — chapters are shown separately as tags so they stay fully visible.
 const subtitle = computed(() =>
-  [props.item.meta.level, props.item.meta.subject].filter(Boolean).join(" · ")
+  [...props.item.meta.level, props.item.meta.subject].filter(Boolean).join(" · ")
 );
 
 const kind = computed(() => fileKind(props.item.name, props.item.mimeType));
