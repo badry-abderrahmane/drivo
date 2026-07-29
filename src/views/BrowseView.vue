@@ -84,6 +84,17 @@
           <v-chip v-if="filtering" size="x-small" color="primary" variant="tonal">
             Filtré
           </v-chip>
+          <!-- Shown while a cached page refreshes behind the scenes, so nothing on screen is
+               silently out of date. -->
+          <v-chip
+            v-if="refreshing"
+            size="x-small"
+            variant="tonal"
+            data-test="refreshing"
+            prepend-icon="mdi-sync"
+          >
+            Mise à jour…
+          </v-chip>
         </div>
 
         <!-- View Mode Switcher -->
@@ -223,7 +234,7 @@ import { applyFilters, sortItems, distinctLevels, type Filters } from "../lib/fi
 import { groupCourses } from "../lib/group";
 import { isClassified } from "../lib/classification";
 
-const { items, loading, stale, error, ensureLoaded } = useLibrary();
+const { items, loading, refreshing, stale, error, ensureLoaded } = useLibrary();
 
 /**
  * Only classified files are shown to students: a file needs its Niveau, Type, Matière and

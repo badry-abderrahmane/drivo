@@ -15,7 +15,10 @@ const full = (fileId: string, over: Partial<LibraryItem["meta"]>): LibraryItem =
 beforeEach(() => vi.resetModules());
 
 async function mountMenu(items: LibraryItem[]) {
-  vi.doMock("../lib/loadLibrary", () => ({ loadLibrary: vi.fn().mockResolvedValue({ items, stale: false }) }));
+  vi.doMock("../lib/loadLibrary", () => ({
+    loadLibrary: vi.fn().mockResolvedValue({ items, stale: false }),
+    readFreshCache: () => null,
+  }));
   const MenuView = (await import("./MenuView.vue")).default;
   const w = mountWithVuetify(MenuView);
   await flushPromises();

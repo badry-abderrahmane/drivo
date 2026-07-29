@@ -18,7 +18,7 @@ async function mountAdmin() {
   const saveMeta = vi.fn().mockResolvedValue({ ok: true });
   const reindex = vi.fn().mockResolvedValue({ ok: true, count: 1 });
   const loadLibrary = vi.fn().mockResolvedValue({ items: [item], stale: false });
-  vi.doMock("../lib/loadLibrary", () => ({ loadLibrary }));
+  vi.doMock("../lib/loadLibrary", () => ({ loadLibrary, readFreshCache: () => null }));
   vi.doMock("../api", () => ({ saveMeta, reindex }));
   const AdminView = (await import("./AdminView.vue")).default;
   const w = mountWithVuetify(AdminView);
@@ -122,7 +122,7 @@ describe("AdminView", () => {
     let resolveLoad: (v: { items: LibraryItem[]; stale: boolean }) => void = () => {};
     const loadLibrary = vi.fn(() => new Promise((r) => { resolveLoad = r; }));
     const saveMeta = vi.fn().mockResolvedValue({ ok: true });
-    vi.doMock("../lib/loadLibrary", () => ({ loadLibrary }));
+    vi.doMock("../lib/loadLibrary", () => ({ loadLibrary, readFreshCache: () => null }));
     vi.doMock("../api", () => ({ saveMeta, reindex: vi.fn() }));
     const AdminView = (await import("./AdminView.vue")).default;
     const w = mountWithVuetify(AdminView);
@@ -164,7 +164,10 @@ describe("AdminView", () => {
       base("2", { level: ["2ème Bac SM"], type: "Cours", subject: "Physique", chapter: [] }),          // not classified
     ];
     sessionStorage.setItem("drivo:admin_pw", "secret"); // skip the gate
-    vi.doMock("../lib/loadLibrary", () => ({ loadLibrary: vi.fn().mockResolvedValue({ items, stale: false }) }));
+    vi.doMock("../lib/loadLibrary", () => ({
+      loadLibrary: vi.fn().mockResolvedValue({ items, stale: false }),
+      readFreshCache: () => null,
+    }));
     vi.doMock("../api", () => ({ saveMeta: vi.fn().mockResolvedValue({ ok: true }), reindex: vi.fn() }));
     const AdminView = (await import("./AdminView.vue")).default;
     const w = mountWithVuetify(AdminView);
@@ -203,6 +206,7 @@ async function mountAdminWith(items: LibraryItem[]) {
   const saveMeta = vi.fn().mockResolvedValue({ ok: true });
   vi.doMock("../lib/loadLibrary", () => ({
     loadLibrary: vi.fn().mockResolvedValue({ items, stale: false }),
+    readFreshCache: () => null,
   }));
   vi.doMock("../api", () => ({ saveMeta, reindex: vi.fn() }));
   sessionStorage.setItem("drivo:admin_pw", "secret"); // skip the gate
@@ -334,6 +338,44 @@ describe("AdminView row selection", () => {
   it("hides the selection bar when nothing is selected", async () => {
     const { w } = await mountAdminWith([fileAt("a1", ["A"])]);
     expect(w.find('[data-test="selection-bar"]').exists()).toBe(false);
+  });
+});
+
+describe("AdminView background refresh", () => {
+  it("keeps unsaved edits when refreshed data arrives", async () => {
+    const { w } = await mountAdminWith([fileAt("a1", ["A"])]);
+
+    // Edit a row without saving.
+    await w.get('[data-test="edit-row"]').trigger("click");
+    await flushPromises();
+    const input = document.querySelector('[data-test="modal-title"] input') as HTMLInputElement;
+    input.value = "Mon titre";
+    input.dispatchEvent(new Event("input"));
+    await flushPromises();
+    (document.querySelector('[data-test="apply-edit"]') as HTMLButtonElement).click();
+    await flushPromises();
+    expect(w.text()).toContain("1 modification non enregistrée");
+
+    // A background refresh replaces the library while the edit is still pending.
+    const { items } = (await import("../composables/useLibrary")).useLibrary();
+    items.value = [fileAt("a1", ["A"])];
+    await flushPromises();
+
+    // The edit survived: rows were not rebuilt from the incoming data.
+    expect(w.text()).toContain("Mon titre");
+    expect(w.text()).toContain("1 modification non enregistrée");
+  });
+
+  it("adopts refreshed data when there is nothing unsaved", async () => {
+    const { w } = await mountAdminWith([fileAt("a1", ["A"])]);
+    expect(w.text()).toContain("a1.pdf");
+
+    const { items } = (await import("../composables/useLibrary")).useLibrary();
+    items.value = [fileAt("b2", ["A"])];
+    await flushPromises();
+
+    expect(w.text()).toContain("b2.pdf");
+    expect(w.text()).not.toContain("a1.pdf");
   });
 });
 

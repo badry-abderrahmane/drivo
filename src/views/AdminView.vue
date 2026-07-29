@@ -72,7 +72,13 @@
       </v-card>
 
       <!-- Progress Indicators & Alerts -->
-      <v-progress-linear v-if="loading" indeterminate color="primary" class="rounded-pill mb-4" data-test="loading" />
+      <v-progress-linear
+        v-if="loading || refreshing"
+        indeterminate
+        color="primary"
+        class="rounded-pill mb-4"
+        data-test="loading"
+      />
 
       <div v-if="loading && rows.length === 0" class="d-flex flex-column align-center pa-12 ga-3 text-medium-emphasis">
         <v-progress-circular indeterminate color="primary" size="48" />
@@ -585,7 +591,7 @@ function kindOf(r: EditRow) {
   return fileKind(r.name, r.mimeType);
 }
 
-const { items, loading, error, stale, ensureLoaded, reload } = useLibrary();
+const { items, loading, refreshing, error, stale, ensureLoaded, reload } = useLibrary();
 // Reactive so that updating it after a save re-triggers the "unsaved changes" badge
 // (a plain Map's mutations wouldn't invalidate the computed that reads it).
 const baseline = reactive(new Map<string, string>());
@@ -673,11 +679,20 @@ function rebuildRows(): void {
   baseline.clear();
   for (const r of rows.value) baseline.set(r.fileId, saveKey(r));
 }
-watch(items, rebuildRows);
-
 const pendingChangesCount = computed(() => {
   if (rows.value.length === 0) return 0;
   return changedRows(rows.value, baseline).length;
+});
+
+// The library can arrive twice now: once from the local cache for an instant render, then
+// again from the background refresh. Rebuilding rows discards unsaved edits, so a refresh
+// that lands mid-edit must leave the editor alone — the alternative is silently losing work.
+watch(items, () => {
+  if (pendingChangesCount.value > 0) {
+    notify("Données actualisées en arrière-plan — vos modifications ont été conservées.", "info");
+    return;
+  }
+  rebuildRows();
 });
 
 // Progress for the folder currently in view ("Tout" = the whole library). Reads rows, so

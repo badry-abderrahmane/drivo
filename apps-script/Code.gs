@@ -29,6 +29,7 @@ function doPost(e) {
   if (body.action === 'reindex') {
     var fresh = buildManifest_(true); // reindex is the only interactive path that (re)shares files
     putCache_(fresh);
+    writeManifestStore_(fresh);
     return json_({ ok: true, count: fresh.files.length });
   }
   return json_({ ok: false, error: 'unknown_action' });
@@ -37,7 +38,9 @@ function doPost(e) {
 // Background refresh — installed as a time-driven trigger (see setupTrigger) so the
 // cache is re-walked periodically and students almost never hit a cold rebuild.
 function refreshCache() {
-  putCache_(buildManifest_(true));
+  var fresh = buildManifest_(true);
+  putCache_(fresh);
+  writeManifestStore_(fresh); // keep the durable copy in step with the fast one
 }
 
 // Run this ONCE from the Apps Script editor to install the periodic refresh.
@@ -50,11 +53,21 @@ function setupTrigger() {
   refreshCache(); // warm it immediately
 }
 
+// Three tiers, cheapest first. A CacheService miss must NOT cost a Drive walk: chunked
+// cache entries are lost often (see ManifestStore.gs), and the walk takes ~50s.
 function getManifestCached_() {
   var cached = getCachedManifest_();
   if (cached) return cached;
+
+  var stored = readManifestStore_();
+  if (stored) {
+    putCache_(stored); // refill the fast tier so the next request is ~0.4s again
+    return stored;
+  }
+
   var fresh = buildManifest_(false); // public GET reads only — never re-shares files
   putCache_(fresh);
+  writeManifestStore_(fresh);
   return fresh;
 }
 
@@ -99,12 +112,12 @@ function putCache_(payload) {
   }
 }
 
-// Merge saved rows into the cached manifest's meta array and re-cache. No-op if the
-// cache is cold (next GET rebuilds it anyway).
+// Merge saved rows into the manifest's meta array and re-write both tiers, so a metadata
+// edit is never lost by falling back to the durable copy after the cache is evicted.
 function patchMetaInCache_(rows) {
   if (!rows || !rows.length) return;
-  var manifest = getCachedManifest_();
-  if (!manifest) return;
+  var manifest = getCachedManifest_() || readManifestStore_();
+  if (!manifest) return; // both tiers cold — the next GET rebuilds from the sheet anyway
   var byId = {};
   for (var i = 0; i < manifest.meta.length; i++) byId[manifest.meta[i].fileId] = manifest.meta[i];
   for (var j = 0; j < rows.length; j++) {
@@ -116,6 +129,7 @@ function patchMetaInCache_(rows) {
     }
   }
   putCache_(manifest);
+  writeManifestStore_(manifest);
 }
 
 function json_(obj) {

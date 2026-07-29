@@ -31,7 +31,10 @@ beforeEach(() => vi.resetModules());
 
 // doMock injects loadLibrary into the fresh module graph (resetModules + dynamic import).
 async function mountView(items: LibraryItem[]) {
-  vi.doMock("../lib/loadLibrary", () => ({ loadLibrary: vi.fn().mockResolvedValue({ items, stale: false }) }));
+  vi.doMock("../lib/loadLibrary", () => ({
+    loadLibrary: vi.fn().mockResolvedValue({ items, stale: false }),
+    readFreshCache: () => null, // tests exercise the network path, not the cached one
+  }));
   const BrowseView = (await import("./BrowseView.vue")).default;
   const w = mountWithVuetify(BrowseView);
   await flushPromises();
