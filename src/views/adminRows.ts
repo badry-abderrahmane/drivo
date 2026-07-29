@@ -46,6 +46,26 @@ export function changedRows(rows: EditRow[], baseline: Map<string, string>): Edi
 }
 
 /**
+ * Suggestions for the display title. Titles are nearly always a chapter name, sometimes
+ * with the document type appended, so offer both shapes for the chapters assigned to this
+ * file — falling back to the level's official programme when no chapter is set yet.
+ */
+export function titleSuggestions(
+  chapters: string[],
+  type: string,
+  programme: string[]
+): string[] {
+  const base = chapters.length > 0 ? chapters : programme;
+  const out: string[] = [];
+  for (const c of base) {
+    if (!c) continue;
+    out.push(c);
+    if (type) out.push(`${c} — ${type}`);
+  }
+  return [...new Set(out)];
+}
+
+/**
  * A bulk edit. An ABSENT key means "ne pas changer"; a PRESENT key is applied even when
  * its value is empty, which is how "vider ce champ" is expressed. Never branch on
  * truthiness here — that would make clearing a field impossible.

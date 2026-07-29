@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { toEditRow, toSaveInput, saveKey, changedRows, applyBulkPatch } from "./adminRows";
+import {
+  toEditRow, toSaveInput, saveKey, changedRows, applyBulkPatch, titleSuggestions,
+} from "./adminRows";
 import type { LibraryItem } from "../lib/types";
 
 const item: LibraryItem = {
@@ -43,6 +45,39 @@ describe("adminRows", () => {
   it("changedRows treats a row missing from the baseline as changed", () => {
     const a = toEditRow(item);
     expect(changedRows([a], new Map())).toEqual([a]);
+  });
+});
+
+describe("titleSuggestions", () => {
+  it("offers each assigned chapter plain and combined with the type", () => {
+    expect(titleSuggestions(["Ondes mécaniques"], "Cours", [])).toEqual([
+      "Ondes mécaniques",
+      "Ondes mécaniques — Cours",
+    ]);
+  });
+
+  it("covers every assigned chapter", () => {
+    expect(titleSuggestions(["A", "B"], "TD", [])).toEqual(["A", "A — TD", "B", "B — TD"]);
+  });
+
+  it("omits the combined form when no type is set", () => {
+    expect(titleSuggestions(["A"], "", [])).toEqual(["A"]);
+  });
+
+  it("falls back to the programme when the file has no chapter yet", () => {
+    expect(titleSuggestions([], "Cours", ["P1"])).toEqual(["P1", "P1 — Cours"]);
+  });
+
+  it("prefers the file's own chapters over the programme", () => {
+    expect(titleSuggestions(["Mine"], "", ["P1", "P2"])).toEqual(["Mine"]);
+  });
+
+  it("is empty when there is nothing to suggest", () => {
+    expect(titleSuggestions([], "Cours", [])).toEqual([]);
+  });
+
+  it("drops empty chapter entries and de-duplicates", () => {
+    expect(titleSuggestions(["A", "", "A"], "", [])).toEqual(["A"]);
   });
 });
 

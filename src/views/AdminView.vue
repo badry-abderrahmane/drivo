@@ -388,17 +388,22 @@
 
         <v-card-text class="pt-2">
           <v-row dense>
-            <!-- Title Field -->
+            <!-- Title Field: suggests this file's chapters (a title is nearly always one),
+                 while still accepting anything typed freely. -->
             <v-col cols="12">
-              <v-text-field
+              <v-combobox
                 v-model="editForm.title"
                 data-test="modal-title"
                 label="Titre d'affichage"
+                :items="titleOptions"
                 placeholder="Ex: Cours de Mécanique - Chapitre 1"
+                :hint="titleOptions.length ? 'Suggestions d’après les chapitres du fichier — ou saisissez le vôtre' : 'Choisissez un chapitre pour voir des suggestions'"
+                persistent-hint
                 variant="outlined"
                 density="comfortable"
                 prepend-inner-icon="mdi-format-title"
                 class="rounded-lg mb-2"
+                :menu-props="{ maxHeight: 300 }"
               />
             </v-col>
 
@@ -571,7 +576,7 @@ import FolderTree from "../components/FolderTree.vue";
 import { buildFolderTree, filesUnder } from "../lib/folderTree";
 import { chaptersFor } from "../data/chapters";
 import {
-  toEditRow, toSaveInput, saveKey, changedRows, applyBulkPatch,
+  toEditRow, toSaveInput, saveKey, changedRows, applyBulkPatch, titleSuggestions,
   type EditRow, type BulkPatch,
 } from "./adminRows";
 import BulkClassifyDialog from "../components/BulkClassifyDialog.vue";
@@ -697,6 +702,11 @@ const chapterOptions = computed(() => {
   const merged = editForm.level.flatMap((l) => chaptersFor(l, editForm.subject));
   return [...new Set(merged)];
 });
+
+// Display-title suggestions: this file's chapters, plain and with the type appended.
+const titleOptions = computed(() =>
+  titleSuggestions(editForm.chapter, editForm.type, chapterOptions.value)
+);
 
 function applyModalEdits(): void {
   if (!editingRow.value) return;
