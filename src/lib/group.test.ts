@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { levelsOf, topicsOf, groupCourses } from "./group";
+import { levelsOf, subjectOf, chaptersOf, groupCourses } from "./group";
 import type { LibraryItem } from "./types";
 
 const mk = (
@@ -31,21 +31,27 @@ describe("levelsOf", () => {
   });
 });
 
-describe("topicsOf", () => {
-  it("returns one 'subject · chapter' per chapter", () => {
-    expect(topicsOf(mk("1", { subject: "Physique", chapter: ["Mécanique", "Ondes"] }))).toEqual([
-      "Physique · Mécanique",
-      "Physique · Ondes",
+describe("subjectOf", () => {
+  it("uses the metadata subject", () => {
+    expect(subjectOf(mk("1", { subject: "Chimie" }))).toBe("Chimie");
+  });
+  it("falls back to 'Autres' when unset", () => {
+    expect(subjectOf(mk("1", {}))).toBe("Autres");
+  });
+});
+
+describe("chaptersOf", () => {
+  it("returns one label per chapter", () => {
+    expect(chaptersOf(mk("1", { chapter: ["Mécanique", "Ondes"] }))).toEqual([
+      "Mécanique",
+      "Ondes",
     ]);
   });
-  it("uses just the subject when there are no chapters", () => {
-    expect(topicsOf(mk("1", { subject: "Chimie" }))).toEqual(["Chimie"]);
+  it("falls back to the folder path below the level segment", () => {
+    expect(chaptersOf(mk("1", {}, ["1BAC", "CHIMIE", "COURS"]))).toEqual(["CHIMIE / COURS"]);
   });
-  it("falls back to folder path below the level segment", () => {
-    expect(topicsOf(mk("1", {}, ["1BAC", "CHIMIE", "COURS"]))).toEqual(["CHIMIE / COURS"]);
-  });
-  it("falls back to 'Général' when no topic info exists", () => {
-    expect(topicsOf(mk("1", {}, ["1BAC"]))).toEqual(["Général"]);
+  it("falls back to 'Général' when nothing else is available", () => {
+    expect(chaptersOf(mk("1", {}, ["1BAC"]))).toEqual(["Général"]);
   });
 });
 
@@ -57,10 +63,43 @@ describe("groupCourses", () => {
     ];
     const sections = groupCourses(items);
     expect(sections).toHaveLength(1);
-    const meca = sections[0].groups.find((g) => g.label === "Physique · Mécanique")!;
-    const ondes = sections[0].groups.find((g) => g.label === "Physique · Ondes")!;
+    const phys = sections[0].subjects.find((s) => s.subject === "Physique")!;
+    const meca = phys.groups.find((g) => g.label === "Mécanique")!;
+    const ondes = phys.groups.find((g) => g.label === "Ondes")!;
     expect(meca.items.map((i) => i.fileId).sort()).toEqual(["1", "2"]);
     expect(ondes.items.map((i) => i.fileId)).toEqual(["1"]);
+  });
+
+  it("divides a level into one block per matière", () => {
+    const items = [
+      mk("1", { level: ["2ème Bac SM"], subject: "Physique", chapter: ["Ondes"] }, [], "a"),
+      mk("2", { level: ["2ème Bac SM"], subject: "Chimie", chapter: ["Acides"] }, [], "b"),
+      mk("3", { level: ["2ème Bac SM"], subject: "Chimie", chapter: ["Piles"] }, [], "c"),
+    ];
+    const [section] = groupCourses(items);
+    // SUBJECTS config order: Physique before Chimie.
+    expect(section.subjects.map((s) => s.subject)).toEqual(["Physique", "Chimie"]);
+    const chimie = section.subjects.find((s) => s.subject === "Chimie")!;
+    expect(chimie.groups.map((g) => g.label)).toEqual(["Acides", "Piles"]);
+    expect(chimie.count).toBe(2);
+  });
+
+  it("counts a file once per matière even across several of its chapters", () => {
+    const items = [
+      mk("1", { level: ["2ème Bac SM"], subject: "Physique", chapter: ["A", "B"] }, [], "a"),
+    ];
+    expect(groupCourses(items)[0].subjects[0].count).toBe(1);
+  });
+
+  it("puts an unknown matière after the configured ones", () => {
+    const items = [
+      mk("1", { level: ["2ème Bac SM"], subject: "Astronomie", chapter: ["X"] }, [], "a"),
+      mk("2", { level: ["2ème Bac SM"], subject: "Chimie", chapter: ["Y"] }, [], "b"),
+    ];
+    expect(groupCourses(items)[0].subjects.map((s) => s.subject)).toEqual([
+      "Chimie",
+      "Astronomie",
+    ]);
   });
 
   it("places a multi-level file under each of its levels", () => {
@@ -70,7 +109,7 @@ describe("groupCourses", () => {
     const sections = groupCourses(items);
     expect(sections.map((s) => s.level).sort()).toEqual(["2ème Bac PC", "2ème Bac SM"].sort());
     for (const s of sections) {
-      expect(s.groups[0].items.map((i) => i.fileId)).toEqual(["1"]);
+      expect(s.subjects[0].groups[0].items.map((i) => i.fileId)).toEqual(["1"]);
     }
   });
 
@@ -99,7 +138,9 @@ describe("groupCourses", () => {
     ];
     const sections = groupCourses(items);
     expect(sections.map((s) => s.level)).toEqual(["2ème Bac SM"]);
-    const allFiles = sections.flatMap((s) => s.groups.flatMap((g) => g.items.map((i) => i.fileId)));
+    const allFiles = sections.flatMap((s) =>
+      s.subjects.flatMap((sub) => sub.groups.flatMap((g) => g.items.map((i) => i.fileId)))
+    );
     expect(allFiles).toEqual(["1"]);
   });
 
