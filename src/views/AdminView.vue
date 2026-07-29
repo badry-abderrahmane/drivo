@@ -86,7 +86,17 @@
         Hors ligne — données en cache.
       </v-alert>
 
-      <!-- Classification progress -->
+      <v-row class="ma-0">
+        <!-- Folder sidebar (md and up) -->
+        <v-col cols="12" md="3" class="pa-0 pr-md-4 d-none d-md-block">
+          <v-card class="rounded-xl border pa-2 folder-pane" elevation="0">
+            <div class="text-overline px-2 pb-1 text-medium-emphasis">Dossiers</div>
+            <FolderTree :node="tree" :selected="selectedPath" @select="onSelectFolder" />
+          </v-card>
+        </v-col>
+
+        <v-col cols="12" md="9" class="pa-0">
+      <!-- Classification progress (scoped to the selected folder) -->
       <v-card v-show="rows.length > 0" class="rounded-xl border pa-4 mb-4" elevation="0" data-test="progress">
         <div class="d-flex align-center justify-space-between mb-2 flex-wrap ga-2">
           <span class="text-body-2 font-weight-medium d-flex align-center ga-2">
@@ -106,11 +116,55 @@
         />
       </v-card>
 
+      <!-- Breadcrumb + scope toggle -->
+      <v-card v-show="rows.length > 0" class="rounded-xl border pa-3 mb-4" elevation="0">
+        <div class="d-flex align-center justify-space-between flex-wrap ga-3">
+          <div data-test="breadcrumb" class="d-flex align-center flex-wrap ga-1">
+            <v-btn size="small" variant="text" class="rounded-pill px-2" @click="onSelectFolder([])">
+              <v-icon icon="mdi-folder-home-outline" size="16" class="mr-1" />
+              Tout
+            </v-btn>
+            <template v-for="(seg, i) in selectedPath" :key="i">
+              <span class="text-disabled">/</span>
+              <v-btn
+                size="small"
+                variant="text"
+                class="rounded-pill px-2"
+                @click="onSelectFolder(selectedPath.slice(0, i + 1))"
+              >
+                {{ seg }}
+              </v-btn>
+            </template>
+          </div>
+
+          <div class="d-flex align-center ga-3">
+            <v-btn
+              class="d-md-none rounded-pill"
+              size="small"
+              variant="tonal"
+              prepend-icon="mdi-folder-outline"
+              @click="folderDrawer = true"
+            >
+              Dossiers
+            </v-btn>
+            <v-switch
+              v-model="recursive"
+              data-test="folder-recursive"
+              label="Inclure les sous-dossiers"
+              color="primary"
+              density="compact"
+              hide-details
+              class="flex-grow-0"
+            />
+          </div>
+        </div>
+      </v-card>
+
       <!-- Data Table Card -->
       <v-card v-show="rows.length > 0" class="rounded-2xl border pa-2 overflow-hidden shadow-sm" elevation="0">
         <v-data-table
           :headers="headers"
-          :items="rows"
+          :items="scopedRows"
           :search="search"
           :loading="loading"
           item-value="fileId"
@@ -204,6 +258,31 @@
           </template>
         </v-data-table>
       </v-card>
+        </v-col>
+      </v-row>
+
+      <!-- Folder picker on small screens. A dialog rather than a navigation-drawer: the
+           drawer needs an injected v-layout from an ancestor, which this view cannot
+           guarantee on its own. -->
+      <v-dialog v-model="folderDrawer" max-width="420" scrollable>
+        <v-card class="rounded-2xl">
+          <v-card-title class="text-subtitle-1 font-weight-bold d-flex align-center ga-2">
+            <v-icon icon="mdi-folder-outline" size="20" />
+            Dossiers
+          </v-card-title>
+          <v-divider />
+          <v-card-text class="pa-2" style="max-height: 60vh">
+            <FolderTree :node="tree" :selected="selectedPath" @select="onSelectFolder" />
+          </v-card-text>
+          <v-divider />
+          <v-card-actions class="pa-3">
+            <v-spacer />
+            <v-btn variant="text" class="rounded-pill px-4" @click="folderDrawer = false">
+              Fermer
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </div>
 
     <!-- File Preview Modal (in-app, no leaving the app) -->
@@ -418,6 +497,8 @@ import { loadAdminPassword, saveAdminPassword, clearAdminPassword } from "../lib
 import { fileKind } from "../lib/fileKind";
 import FilePreview from "../components/FilePreview.vue";
 import { classificationStats } from "../lib/classification";
+import FolderTree from "../components/FolderTree.vue";
+import { buildFolderTree, filesUnder } from "../lib/folderTree";
 import { chaptersFor } from "../data/chapters";
 import { toEditRow, toSaveInput, saveKey, changedRows, type EditRow } from "./adminRows";
 
@@ -435,6 +516,23 @@ const saving = ref(false);
 const reindexing = ref(false);
 const rows = ref<EditRow[]>([]);
 const snack = reactive({ show: false, text: "", color: "success" });
+
+// Folder navigation. An empty path is the synthetic "Tout" root.
+const selectedPath = ref<string[]>([]);
+const recursive = ref(true);
+const folderDrawer = ref(false); // mobile only
+
+// The tree is built from `rows`, not `items`, so its percentages move as you classify
+// and before you save — matching the global progress bar.
+const tree = computed(() => buildFolderTree(rows.value));
+
+/** Rows under the selected folder, before status filtering. */
+const scopedRows = computed(() => filesUnder(rows.value, selectedPath.value, recursive.value));
+
+function onSelectFolder(path: string[]): void {
+  selectedPath.value = path;
+  folderDrawer.value = false;
+}
 
 // In-app file preview state
 const previewDialog = ref(false);
@@ -482,8 +580,9 @@ const pendingChangesCount = computed(() => {
   return changedRows(rows.value, baseline).length;
 });
 
-// Live classification progress (reflects unsaved edits too, since it reads rows).
-const stats = computed(() => classificationStats(rows.value));
+// Progress for the folder currently in view ("Tout" = the whole library). Reads rows, so
+// it reflects unsaved edits too.
+const stats = computed(() => classificationStats(scopedRows.value));
 
 function openEditModal(row: EditRow): void {
   editingRow.value = row;
@@ -582,6 +681,12 @@ async function doReindex(): Promise<void> {
 </script>
 
 <style scoped>
+.folder-pane {
+  position: sticky;
+  top: 96px;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+}
 .admin-view {
   max-width: 1500px;
 }

@@ -183,3 +183,82 @@ describe("AdminView", () => {
     expect(sessionStorage.getItem("drivo:admin_pw")).toBeNull();
   });
 });
+
+// A row at `path`, classified when `done`.
+const fileAt = (fileId: string, path: string[], done = false): LibraryItem => ({
+  fileId, name: fileId + ".pdf", mimeType: "application/pdf", path,
+  webViewLink: "u", modifiedTime: "2026-01-01T00:00:00.000Z", isFolder: false,
+  displayTitle: fileId + ".pdf",
+  meta: {
+    fileId,
+    level: done ? ["2ème Bac SM"] : [],
+    type: done ? "Cours" : "",
+    subject: done ? "Physique" : "",
+    chapter: done ? ["Ondes"] : [],
+    title: "", description: "", tags: [], order: 0,
+  },
+});
+
+async function mountAdminWith(items: LibraryItem[]) {
+  const saveMeta = vi.fn().mockResolvedValue({ ok: true });
+  vi.doMock("../lib/loadLibrary", () => ({
+    loadLibrary: vi.fn().mockResolvedValue({ items, stale: false }),
+  }));
+  vi.doMock("../api", () => ({ saveMeta, reindex: vi.fn() }));
+  sessionStorage.setItem("drivo:admin_pw", "secret"); // skip the gate
+  const AdminView = (await import("./AdminView.vue")).default;
+  const w = mountWithVuetify(AdminView);
+  await flushPromises();
+  return { w, saveMeta };
+}
+
+// Click the tree row whose text contains `name`.
+async function openFolder(w: ReturnType<typeof mountWithVuetify>, name: string) {
+  const node = w.findAll('[data-test="folder-node"]').find((n) => n.text().includes(name))!;
+  await node.trigger("click");
+  await flushPromises();
+}
+
+describe("AdminView folder navigation", () => {
+  const drive = [
+    fileAt("meca1", ["2BAC-SM", "PHYSIQUE", "Mécanique"]),
+    fileAt("ondes1", ["2BAC-SM", "PHYSIQUE", "Ondes"]),
+    fileAt("chimie1", ["2BAC-SM", "CHIMIE"]),
+    fileAt("dump1", ["TELECHARGEMENTS"]),
+  ];
+
+  it("lists the top-level folders with their file counts", async () => {
+    const { w } = await mountAdminWith(drive);
+    const names = w.findAll('[data-test="folder-node"]').map((n) => n.text());
+    expect(names.some((t) => t.includes("2BAC-SM"))).toBe(true);
+    expect(names.some((t) => t.includes("TELECHARGEMENTS"))).toBe(true);
+  });
+
+  it("shows every file before a folder is chosen", async () => {
+    const { w } = await mountAdminWith(drive);
+    expect(w.text()).toContain("meca1.pdf");
+    expect(w.text()).toContain("dump1.pdf");
+  });
+
+  it("scopes the table to the chosen folder, recursively", async () => {
+    const { w } = await mountAdminWith(drive);
+    await openFolder(w, "2BAC-SM");
+    await openFolder(w, "PHYSIQUE");
+    expect(w.text()).toContain("meca1.pdf");
+    expect(w.text()).toContain("ondes1.pdf"); // subfolder file included
+    expect(w.text()).not.toContain("chimie1.pdf");
+    expect(w.text()).not.toContain("dump1.pdf");
+  });
+
+  it("shows the folder progress for the selected folder", async () => {
+    const { w } = await mountAdminWith([fileAt("a", ["A"], true), fileAt("b", ["A"], false)]);
+    await openFolder(w, "A");
+    expect(w.get('[data-test="progress"]').text()).toContain("1 / 2");
+  });
+
+  it("shows the selected path as a breadcrumb", async () => {
+    const { w } = await mountAdminWith(drive);
+    await openFolder(w, "2BAC-SM");
+    expect(w.get('[data-test="breadcrumb"]').text()).toContain("2BAC-SM");
+  });
+});
