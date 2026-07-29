@@ -3,10 +3,28 @@ import { mountWithVuetify } from "../test/setup";
 import { flushPromises } from "@vue/test-utils";
 import type { LibraryItem } from "../lib/types";
 
+const base = (id: string, title: string) => ({
+  fileId: id, name: title, mimeType: "application/pdf", path: [],
+  webViewLink: "https://drive/" + id, modifiedTime: "2026-01-01T00:00:00.000Z",
+  isFolder: false, displayTitle: title,
+});
+
+/** A fully classified file — the only kind students are meant to see. */
 const mk = (id: string, level: string[], title: string): LibraryItem => ({
-  fileId: id, name: title, mimeType: "application/pdf", path: [], webViewLink: "https://drive/" + id,
-  modifiedTime: "2026-01-01T00:00:00.000Z", isFolder: false, displayTitle: title,
-  meta: { fileId: id, level, type: "Cours", subject: "", chapter: [], title, description: "", tags: [], order: Number(id) },
+  ...base(id, title),
+  meta: {
+    fileId: id, level, type: "Cours", subject: "Physique", chapter: [title],
+    title, description: "", tags: [], order: Number(id),
+  },
+});
+
+/** A file still missing its classification fields. */
+const unclassified = (id: string, title: string): LibraryItem => ({
+  ...base(id, title),
+  meta: {
+    fileId: id, level: [], type: "", subject: "", chapter: [],
+    title, description: "", tags: [], order: Number(id),
+  },
 });
 
 beforeEach(() => vi.resetModules());
@@ -27,14 +45,28 @@ describe("BrowseView", () => {
     expect(w.text()).toContain("1ère Bac");
   });
 
-  it("explains the empty grouped view when no file has a niveau, and can switch to grid", async () => {
-    const w = await mountView([mk("1", [], "Mécanique"), mk("2", [], "Optique")]);
-    expect(w.get('[data-test="nothing-grouped"]').text()).toContain("Classement en cours");
-    // The files are not lost — the grid view still lists them.
-    await w.get('[data-test="nothing-grouped"] button').trigger("click");
-    await flushPromises();
+  it("hides unclassified files from the grouped view, the grid and the search", async () => {
+    const w = await mountView([mk("1", ["2ème Bac SM"], "Mécanique"), unclassified("2", "Brouillon")]);
     expect(w.text()).toContain("Mécanique");
-    expect(w.text()).toContain("Optique");
+    expect(w.text()).not.toContain("Brouillon");
+
+    // Not merely ungrouped — absent from the flat views too.
+    await w.get('[data-test="search"] input').setValue("Brouillon");
+    await flushPromises();
+    expect(w.text()).not.toContain("Brouillon");
+    expect(w.text()).toContain("Aucun résultat");
+  });
+
+  it("counts only classified files as available resources", async () => {
+    const w = await mountView([mk("1", ["2ème Bac SM"], "Mécanique"), unclassified("2", "Brouillon")]);
+    expect(w.text()).toContain("1 Ressource disponible");
+  });
+
+  it("says the library is being prepared when nothing is classified yet", async () => {
+    const w = await mountView([unclassified("1", "Brouillon"), unclassified("2", "Autre")]);
+    expect(w.get('[data-test="nothing-published"]').text()).toContain("Bibliothèque en préparation");
+    // Not the filter-reset empty state — no filter is responsible for this.
+    expect(w.text()).not.toContain("Réinitialiser les filtres");
   });
 
   it("switches to a flat card grid when searching", async () => {

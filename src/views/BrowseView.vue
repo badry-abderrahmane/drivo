@@ -32,7 +32,7 @@
       <div class="d-inline-flex align-center ga-2 px-3 py-1 mb-3 rounded-pill bg-primary-subtle border">
         <v-icon icon="mdi-book-open-page-variant" color="primary" size="18" />
         <span class="text-caption font-weight-bold text-primary">
-          {{ items.length }} Ressource{{ items.length > 1 ? "s" : "" }} disponible{{ items.length > 1 ? "s" : "" }}
+          {{ published.length }} Ressource{{ published.length > 1 ? "s" : "" }} disponible{{ published.length > 1 ? "s" : "" }}
         </span>
       </div>
 
@@ -73,7 +73,7 @@
     <!-- Main Content -->
     <template v-else-if="!error">
       <!-- Filter Bar -->
-      <FilterBar :items="items" v-model="filters" />
+      <FilterBar :items="published" v-model="filters" />
 
       <!-- View Controls & Results Counter Header -->
       <div class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4 px-1">
@@ -122,8 +122,23 @@
         </div>
       </div>
 
+      <!-- Nothing published yet: distinct from "your filters match nothing", so it does not
+           offer a filter reset that would change nothing. -->
+      <v-card
+        v-if="published.length === 0"
+        data-test="nothing-published"
+        class="text-center py-12 px-4 rounded-2xl border-0 shadow-sm"
+        elevation="0"
+      >
+        <v-icon icon="mdi-folder-clock-outline" size="64" color="medium-emphasis" class="mb-4" />
+        <h3 class="text-h6 font-weight-bold mb-1">Bibliothèque en préparation</h3>
+        <p class="text-body-2 text-medium-emphasis max-w-400 mx-auto">
+          Les ressources sont en cours de classement et seront publiées prochainement.
+        </p>
+      </v-card>
+
       <!-- Empty State -->
-      <v-card v-if="shown.length === 0" class="text-center py-12 px-4 rounded-2xl border-0 shadow-sm" elevation="0">
+      <v-card v-else-if="shown.length === 0" class="text-center py-12 px-4 rounded-2xl border-0 shadow-sm" elevation="0">
         <v-icon icon="mdi-file-search-outline" size="64" color="medium-emphasis" class="mb-4" />
         <h3 class="text-h6 font-weight-bold mb-1">Aucun résultat trouvé</h3>
         <p class="text-body-2 text-medium-emphasis mb-6 max-w-400 mx-auto">
@@ -137,32 +152,6 @@
           @click="resetFilters"
         >
           Réinitialiser les filtres
-        </v-btn>
-      </v-card>
-
-      <!-- Grouped view, but nothing is classified yet: the grouped view only shows files
-           that have a niveau, so without this the panel list would render blank while the
-           counter above still reports results. -->
-      <v-card
-        v-else-if="currentLayoutMode === 'grouped' && sections.length === 0"
-        data-test="nothing-grouped"
-        class="text-center py-12 px-4 rounded-2xl border-0 shadow-sm"
-        elevation="0"
-      >
-        <v-icon icon="mdi-folder-clock-outline" size="64" color="medium-emphasis" class="mb-4" />
-        <h3 class="text-h6 font-weight-bold mb-1">Classement en cours</h3>
-        <p class="text-body-2 text-medium-emphasis mb-6 max-w-400 mx-auto">
-          Ces ressources n'ont pas encore été rangées par niveau. Elles restent accessibles en
-          vue Grille ou Liste, et par la recherche.
-        </p>
-        <v-btn
-          color="primary"
-          variant="tonal"
-          prepend-icon="mdi-grid"
-          class="rounded-pill"
-          @click="userViewMode = 'grid'"
-        >
-          Voir en grille
         </v-btn>
       </v-card>
 
@@ -232,8 +221,17 @@ import CourseGroups from "../components/CourseGroups.vue";
 import { useLibrary } from "../composables/useLibrary";
 import { applyFilters, sortItems, distinctLevels, type Filters } from "../lib/filter";
 import { groupCourses } from "../lib/group";
+import { isClassified } from "../lib/classification";
 
 const { items, loading, stale, error, ensureLoaded } = useLibrary();
+
+/**
+ * Only classified files are shown to students: a file needs its Niveau, Type, Matière and
+ * at least one Chapitre before it appears anywhere in this view. Everything downstream
+ * (counts, filters, grouping) reads this, never the raw library. The admin still sees all
+ * files — it reads useLibrary directly.
+ */
+const published = computed(() => items.value.filter((it) => isClassified(it.meta)));
 const filters = ref<Filters>({});
 const userViewMode = ref<"grouped" | "grid" | "list">("grouped");
 
@@ -250,10 +248,10 @@ const currentLayoutMode = computed(() => {
   return userViewMode.value;
 });
 
-const shown = computed(() => sortItems(applyFilters(items.value, filters.value)));
+const shown = computed(() => sortItems(applyFilters(published.value, filters.value)));
 const sections = computed(() => groupCourses(shown.value));
 
-const allLevels = computed(() => distinctLevels(items.value));
+const allLevels = computed(() => distinctLevels(published.value));
 
 function toggleLevel(lvl: string): void {
   if (filters.value.level === lvl) {
