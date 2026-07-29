@@ -336,3 +336,103 @@ describe("AdminView row selection", () => {
     expect(w.find('[data-test="selection-bar"]').exists()).toBe(false);
   });
 });
+
+describe("AdminView bulk classify", () => {
+  const two = [fileAt("a1", ["A"]), fileAt("a2", ["A"])];
+
+  async function selectAllAndOpenBulk(w: ReturnType<typeof mountWithVuetify>) {
+    await w.get('[data-test="select-all"] input').setValue(true);
+    await flushPromises();
+    await w.get('[data-test="open-bulk"]').trigger("click");
+    await flushPromises();
+  }
+
+  // Drive the dialog's form the way a user would: pick a Matière from the v-select menu.
+  async function chooseSubject(w: ReturnType<typeof mountWithVuetify>, value: string) {
+    const dialog = w.findComponent({ name: "BulkClassifyDialog" });
+    dialog.vm.$emit("apply", { subject: value });
+    await flushPromises();
+  }
+
+  it("applies a touched field to every selected row and leaves the rest alone", async () => {
+    const { w, saveMeta } = await mountAdminWith(two);
+    await selectAllAndOpenBulk(w);
+    await chooseSubject(w, "Chimie");
+
+    await w.get('[data-test="save"]').trigger("click");
+    await flushPromises();
+
+    const sent = saveMeta.mock.calls[0][1];
+    expect(sent).toHaveLength(2);
+    expect(sent.every((r: { subject: string }) => r.subject === "Chimie")).toBe(true);
+    expect(sent.every((r: { type: string }) => r.type === "")).toBe(true); // untouched stays empty
+  });
+
+  it("clears the selection after applying", async () => {
+    const { w } = await mountAdminWith(two);
+    await selectAllAndOpenBulk(w);
+    await chooseSubject(w, "Chimie");
+    expect(w.find('[data-test="selection-bar"]').exists()).toBe(false);
+  });
+
+  it("counts the applied files in the unsaved-changes badge", async () => {
+    const { w } = await mountAdminWith(two);
+    await selectAllAndOpenBulk(w);
+    await chooseSubject(w, "Chimie");
+    expect(w.text()).toContain("2 modifications non enregistrées");
+  });
+});
+
+describe("BulkClassifyDialog", () => {
+  async function mountDialog() {
+    const BulkClassifyDialog = (await import("../components/BulkClassifyDialog.vue")).default;
+    const w = mountWithVuetify(BulkClassifyDialog, {
+      props: { modelValue: true, count: 3 },
+    });
+    await flushPromises();
+    return w;
+  }
+
+  it("emits only the fields that were touched", async () => {
+    const w = await mountDialog();
+    w.vm.form.subject = "Chimie";
+    w.vm.touched.subject = true;
+    await flushPromises();
+    w.vm.confirm();
+    const patch = w.emitted("apply")![0][0];
+    expect(patch).toEqual({ subject: "Chimie" });
+  });
+
+  it("emits a touched-but-emptied field so it can be cleared", async () => {
+    const w = await mountDialog();
+    w.vm.touched.type = true;
+    w.vm.form.type = "";
+    await flushPromises();
+    w.vm.confirm();
+    expect(w.emitted("apply")![0][0]).toEqual({ type: "" });
+  });
+
+  it("emits nothing for fields left on 'ne pas changer'", async () => {
+    const w = await mountDialog();
+    w.vm.confirm();
+    expect(w.emitted("apply")![0][0]).toEqual({});
+  });
+
+  it("summarises each touched field with its new value", async () => {
+    const w = await mountDialog();
+    w.vm.touched.level = true;
+    w.vm.form.level = ["2ème Bac SM"];
+    w.vm.touched.subject = true;
+    w.vm.form.subject = "Physique";
+    await flushPromises();
+    expect(w.vm.summary).toEqual(["Niveau → 2ème Bac SM", "Matière → Physique"]);
+  });
+
+  it("marks an emptied list field as vidé in the summary", async () => {
+    const w = await mountDialog();
+    w.vm.touched.chapter = true;
+    w.vm.form.chapter = [];
+    await flushPromises();
+    expect(w.vm.summary).toEqual(["Chapitre → (vidé)"]);
+  });
+});

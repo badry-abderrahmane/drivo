@@ -544,6 +544,9 @@
       </v-card>
     </v-dialog>
 
+    <!-- Bulk Classify Dialog -->
+    <BulkClassifyDialog v-model="bulkDialog" :count="selectedIds.length" @apply="onBulkApply" />
+
     <!-- Global Feedback Snackbar -->
     <v-snackbar
       v-model="snack.show"
@@ -575,7 +578,11 @@ import { isClassified, classificationStats, missingFields } from "../lib/classif
 import FolderTree from "../components/FolderTree.vue";
 import { buildFolderTree, filesUnder } from "../lib/folderTree";
 import { chaptersFor } from "../data/chapters";
-import { toEditRow, toSaveInput, saveKey, changedRows, type EditRow } from "./adminRows";
+import {
+  toEditRow, toSaveInput, saveKey, changedRows, applyBulkPatch,
+  type EditRow, type BulkPatch,
+} from "./adminRows";
+import BulkClassifyDialog from "../components/BulkClassifyDialog.vue";
 
 function kindOf(r: EditRow) {
   return fileKind(r.name, r.mimeType);
@@ -707,6 +714,12 @@ function applyModalEdits(): void {
     Object.assign(target, editForm, { level: [...editForm.level], chapter: [...editForm.chapter] });
   }
   closeEditModal();
+}
+
+function onBulkApply(patch: BulkPatch): void {
+  const n = applyBulkPatch(rows.value, new Set(selectedIds.value), patch);
+  selectedIds.value = [];
+  notify(`Appliqué à ${n} fichier${n > 1 ? "s" : ""} ✓`, "success");
 }
 
 onMounted(async () => {
