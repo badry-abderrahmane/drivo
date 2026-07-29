@@ -298,14 +298,6 @@
             </div>
           </template>
 
-          <!-- Chapter Column: one chapter per line -->
-          <template #item.chapter="{ item }">
-            <div v-if="item.chapter.length" class="d-flex flex-column ga-1 py-1">
-              <span v-for="ch in item.chapter" :key="ch" class="chapter-pill">{{ ch }}</span>
-            </div>
-            <span v-else class="text-caption text-disabled">—</span>
-          </template>
-
           <!-- Actions Column (Preview + Edit) -->
           <template #item.actions="{ item }">
             <div class="d-flex align-center justify-end ga-1">
@@ -668,7 +660,6 @@ const editForm = reactive<EditRow>({
 const headers = [
   { title: "Fichier", key: "name", sortable: true },
   { title: "Niveau / Type", key: "level", sortable: true },
-  { title: "Chapitres", key: "chapter", sortable: false },
   { title: "Actions", key: "actions", sortable: false, align: "end" as const },
 ];
 
@@ -816,18 +807,5 @@ async function doReindex(): Promise<void> {
 
 .table-input :deep(.v-field) {
   border-radius: 8px !important;
-}
-
-/* One chapter per line, wrapping long titles, as a subtle pill. */
-.chapter-pill {
-  display: inline-block;
-  max-width: 240px;
-  padding: 2px 8px;
-  border-radius: 6px;
-  background: rgba(var(--v-theme-primary), 0.08);
-  color: rgb(var(--v-theme-primary));
-  font-size: 0.72rem;
-  line-height: 1.25;
-  white-space: normal;
 }
 </style>
