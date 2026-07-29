@@ -308,3 +308,31 @@ describe("AdminView status filter", () => {
     expect(w.text()).toContain("Chapitre");
   });
 });
+
+describe("AdminView row selection", () => {
+  // 30 unclassified files in one folder: more than one page at 25 per page.
+  const many = Array.from({ length: 30 }, (_, i) => fileAt(`f${i}`, ["A"], false));
+
+  it("selects every row in the filtered scope, not just the visible page", async () => {
+    const { w } = await mountAdminWith(many);
+    await w.get('[data-test="select-all"] input').setValue(true);
+    await flushPromises();
+    expect(w.get('[data-test="selection-bar"]').text()).toContain("30");
+  });
+
+  it("clears the selection when the folder changes", async () => {
+    const { w } = await mountAdminWith([fileAt("a1", ["A"]), fileAt("b1", ["B"])]);
+    await openFolder(w, "A");
+    await w.get('[data-test="select-all"] input').setValue(true);
+    await flushPromises();
+    expect(w.find('[data-test="selection-bar"]').exists()).toBe(true);
+
+    await openFolder(w, "B");
+    expect(w.find('[data-test="selection-bar"]').exists()).toBe(false);
+  });
+
+  it("hides the selection bar when nothing is selected", async () => {
+    const { w } = await mountAdminWith([fileAt("a1", ["A"])]);
+    expect(w.find('[data-test="selection-bar"]').exists()).toBe(false);
+  });
+});

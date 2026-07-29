@@ -182,20 +182,62 @@
         </v-btn-toggle>
       </v-card>
 
+      <!-- Selection bar -->
+      <v-card
+        v-if="selectedIds.length > 0"
+        data-test="selection-bar"
+        class="rounded-xl border pa-3 mb-4 d-flex align-center flex-wrap ga-3"
+        color="primary"
+        variant="tonal"
+        elevation="0"
+      >
+        <span class="font-weight-bold">
+          {{ selectedIds.length }} fichier{{ selectedIds.length > 1 ? "s" : "" }}
+          sélectionné{{ selectedIds.length > 1 ? "s" : "" }}
+        </span>
+        <v-spacer />
+        <v-btn
+          color="primary"
+          variant="flat"
+          size="small"
+          class="rounded-pill px-4 font-weight-bold"
+          prepend-icon="mdi-tag-multiple-outline"
+          data-test="open-bulk"
+          @click="bulkDialog = true"
+        >
+          Classer la sélection
+        </v-btn>
+        <v-btn size="small" variant="text" class="rounded-pill" @click="selectedIds = []">
+          Désélectionner
+        </v-btn>
+      </v-card>
+
       <!-- Data Table Card -->
       <v-card v-show="rows.length > 0" class="rounded-2xl border pa-2 overflow-hidden shadow-sm" elevation="0">
         <v-data-table
+          v-model="selectedIds"
           :headers="headers"
           :items="visibleRows"
           :search="search"
           :loading="loading"
           item-value="fileId"
+          show-select
+          select-strategy="all"
           :items-per-page="25"
           :items-per-page-options="[10, 25, 50, 100]"
           density="comfortable"
           hover
           class="admin-table"
         >
+          <!-- Select-all: overridden to give the checkbox a stable test hook. -->
+          <template #header.data-table-select="{ allSelected, selectAll }">
+            <v-checkbox-btn
+              data-test="select-all"
+              :model-value="allSelected"
+              @update:model-value="selectAll(!allSelected)"
+            />
+          </template>
+
           <!-- File Column: display title above filename + folder path (read-only) -->
           <template #item.name="{ item }">
             <div class="d-flex align-center ga-2 py-2">
@@ -562,8 +604,13 @@ const tree = computed(() => buildFolderTree(rows.value));
 /** Rows under the selected folder, before status filtering. */
 const scopedRows = computed(() => filesUnder(rows.value, selectedPath.value, recursive.value));
 
+const selectedIds = ref<string[]>([]);
+const bulkDialog = ref(false);
+
 function onSelectFolder(path: string[]): void {
   selectedPath.value = path;
+  // A stale selection must never be bulk-applied to files that are no longer on screen.
+  selectedIds.value = [];
   folderDrawer.value = false;
 }
 
