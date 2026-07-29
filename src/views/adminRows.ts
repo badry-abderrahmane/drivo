@@ -44,3 +44,33 @@ export function saveKey(r: EditRow): string {
 export function changedRows(rows: EditRow[], baseline: Map<string, string>): EditRow[] {
   return rows.filter((r) => baseline.get(r.fileId) !== saveKey(r));
 }
+
+/**
+ * A bulk edit. An ABSENT key means "ne pas changer"; a PRESENT key is applied even when
+ * its value is empty, which is how "vider ce champ" is expressed. Never branch on
+ * truthiness here — that would make clearing a field impossible.
+ */
+export interface BulkPatch {
+  level?: string[];
+  type?: string;
+  subject?: string;
+  chapter?: string[];
+}
+
+/**
+ * Apply `patch` to every row whose fileId is in `ids`, in place. List fields are replaced
+ * (never merged) and cloned, so patched rows never share an array. Returns the number of
+ * rows touched.
+ */
+export function applyBulkPatch(rows: EditRow[], ids: Set<string>, patch: BulkPatch): number {
+  let touched = 0;
+  for (const r of rows) {
+    if (!ids.has(r.fileId)) continue;
+    if (patch.level !== undefined) r.level = [...patch.level];
+    if (patch.type !== undefined) r.type = patch.type;
+    if (patch.subject !== undefined) r.subject = patch.subject;
+    if (patch.chapter !== undefined) r.chapter = [...patch.chapter];
+    touched++;
+  }
+  return touched;
+}
