@@ -27,6 +27,16 @@ describe("BrowseView", () => {
     expect(w.text()).toContain("1ère Bac");
   });
 
+  it("explains the empty grouped view when no file has a niveau, and can switch to grid", async () => {
+    const w = await mountView([mk("1", [], "Mécanique"), mk("2", [], "Optique")]);
+    expect(w.get('[data-test="nothing-grouped"]').text()).toContain("Classement en cours");
+    // The files are not lost — the grid view still lists them.
+    await w.get('[data-test="nothing-grouped"] button').trigger("click");
+    await flushPromises();
+    expect(w.text()).toContain("Mécanique");
+    expect(w.text()).toContain("Optique");
+  });
+
   it("switches to a flat card grid when searching", async () => {
     const w = await mountView([mk("1", ["2ème Bac SM"], "Mécanique"), mk("2", ["1ère Bac"], "Optique")]);
     const input = w.get('[data-test="search"] input');

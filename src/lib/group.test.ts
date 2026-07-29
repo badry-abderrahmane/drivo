@@ -23,11 +23,11 @@ describe("levelsOf", () => {
       "2ème Bac PC",
     ]);
   });
-  it("falls back to the first folder path segment", () => {
-    expect(levelsOf(mk("1", {}, ["1BAC", "CHIMIE"]))).toEqual(["1BAC"]);
+  it("does not fall back to the folder path — an unset niveau yields no level", () => {
+    expect(levelsOf(mk("1", {}, ["1BAC", "CHIMIE"]))).toEqual([]);
   });
-  it("falls back to 'Non classé' when nothing is available", () => {
-    expect(levelsOf(mk("1", {}, []))).toEqual(["Non classé"]);
+  it("yields no level when nothing is set", () => {
+    expect(levelsOf(mk("1", {}, []))).toEqual([]);
   });
 });
 
@@ -81,14 +81,29 @@ describe("groupCourses", () => {
     expect(groupCourses(items)[0].count).toBe(1);
   });
 
-  it("orders known levels first (config order), then others, then 'Non classé' last", () => {
+  it("orders known levels in config order, any other level after them", () => {
     const items = [
-      mk("1", {}, [], "x"),                       // Non classé
-      mk("2", { level: ["2ème Bac SM"] }, [], "y"),
-      mk("3", { level: ["Tronc Commun"] }, [], "z"),
-      mk("4", {}, ["2SM"], "w"),                  // path-derived "2SM" (other)
+      mk("1", { level: ["2ème Bac SM"] }, [], "y"),
+      mk("2", { level: ["Tronc Commun"] }, [], "z"),
+      mk("3", { level: ["2SM"] }, [], "w"), // not in config — sorts after the known ones
     ];
     const order = groupCourses(items).map((s) => s.level);
-    expect(order).toEqual(["Tronc Commun", "2ème Bac SM", "2SM", "Non classé"]);
+    expect(order).toEqual(["Tronc Commun", "2ème Bac SM", "2SM"]);
+  });
+
+  it("omits files with no niveau instead of grouping them under a folder name", () => {
+    const items = [
+      mk("1", { level: ["2ème Bac SM"], chapter: ["Ondes"] }, [], "classé"),
+      mk("2", {}, ["1BAC", "CHIMIE"], "sans niveau"), // would have become a "1BAC" section
+      mk("3", {}, [], "sans rien"), // would have become "Non classé"
+    ];
+    const sections = groupCourses(items);
+    expect(sections.map((s) => s.level)).toEqual(["2ème Bac SM"]);
+    const allFiles = sections.flatMap((s) => s.groups.flatMap((g) => g.items.map((i) => i.fileId)));
+    expect(allFiles).toEqual(["1"]);
+  });
+
+  it("returns no sections when nothing is classified", () => {
+    expect(groupCourses([mk("1", {}, ["DOSSIER"], "x")])).toEqual([]);
   });
 });

@@ -2,7 +2,6 @@ import type { LibraryItem } from "./types";
 import { sortItems } from "./filter";
 import { LEVELS } from "../config";
 
-const UNCLASSIFIED = "Non classé";
 const GENERAL = "Général";
 
 export interface CourseGroup {
@@ -17,11 +16,13 @@ export interface LevelSection {
   groups: CourseGroup[];
 }
 
-/** Grouping levels: metadata `level` list, else the top folder-path segment, else
- *  Non classé. A file with several levels is grouped under each. */
+/**
+ * Grouping levels: the metadata `level` list, and nothing else. A file with several levels
+ * is grouped under each; a file with no niveau yields none and is left out of the grouped
+ * view entirely, rather than inventing a section from its Drive folder name.
+ */
 export function levelsOf(it: LibraryItem): string[] {
-  if (it.meta.level.length > 0) return it.meta.level;
-  return [it.path[0] || UNCLASSIFIED];
+  return it.meta.level;
 }
 
 /** Sub-group labels: one "subject · chapter" per chapter (a file with multiple
@@ -39,9 +40,7 @@ export function topicsOf(it: LibraryItem): string[] {
 
 function levelRank(level: string): number {
   const i = LEVELS.indexOf(level);
-  if (i >= 0) return i; // known curriculum levels first, in config order
-  if (level === UNCLASSIFIED) return 1000; // always last
-  return 500; // path-derived / other levels in between
+  return i >= 0 ? i : 500; // known curriculum levels first in config order, others after
 }
 
 export function groupCourses(items: LibraryItem[]): LevelSection[] {

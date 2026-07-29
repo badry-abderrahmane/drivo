@@ -140,6 +140,32 @@
         </v-btn>
       </v-card>
 
+      <!-- Grouped view, but nothing is classified yet: the grouped view only shows files
+           that have a niveau, so without this the panel list would render blank while the
+           counter above still reports results. -->
+      <v-card
+        v-else-if="currentLayoutMode === 'grouped' && sections.length === 0"
+        data-test="nothing-grouped"
+        class="text-center py-12 px-4 rounded-2xl border-0 shadow-sm"
+        elevation="0"
+      >
+        <v-icon icon="mdi-folder-clock-outline" size="64" color="medium-emphasis" class="mb-4" />
+        <h3 class="text-h6 font-weight-bold mb-1">Classement en cours</h3>
+        <p class="text-body-2 text-medium-emphasis mb-6 max-w-400 mx-auto">
+          Ces ressources n'ont pas encore été rangées par niveau. Elles restent accessibles en
+          vue Grille ou Liste, et par la recherche.
+        </p>
+        <v-btn
+          color="primary"
+          variant="tonal"
+          prepend-icon="mdi-grid"
+          class="rounded-pill"
+          @click="userViewMode = 'grid'"
+        >
+          Voir en grille
+        </v-btn>
+      </v-card>
+
       <!-- Grouped View (Default when not filtering) -->
       <CourseGroups
         v-else-if="currentLayoutMode === 'grouped'"
