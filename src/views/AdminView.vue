@@ -8,6 +8,7 @@
         <div class="d-flex align-center justify-space-between flex-wrap ga-3">
           <v-text-field
             v-model="search"
+            data-test="search"
             placeholder="Rechercher par fichier, titre, niveau..."
             prepend-inner-icon="mdi-magnify"
             hide-details
@@ -158,13 +159,34 @@
             />
           </div>
         </div>
+
+        <v-divider class="my-3" />
+
+        <v-btn-toggle
+          v-model="statusFilter"
+          mandatory
+          density="compact"
+          variant="outlined"
+          divided
+          class="rounded-pill"
+        >
+          <v-btn value="todo" size="small" data-test="status-todo" class="px-3">
+            À classer ({{ statusCounts.todo }})
+          </v-btn>
+          <v-btn value="done" size="small" data-test="status-done" class="px-3">
+            Classés ({{ statusCounts.done }})
+          </v-btn>
+          <v-btn value="all" size="small" data-test="status-all" class="px-3">
+            Tous ({{ statusCounts.all }})
+          </v-btn>
+        </v-btn-toggle>
       </v-card>
 
       <!-- Data Table Card -->
       <v-card v-show="rows.length > 0" class="rounded-2xl border pa-2 overflow-hidden shadow-sm" elevation="0">
         <v-data-table
           :headers="headers"
-          :items="scopedRows"
+          :items="visibleRows"
           :search="search"
           :loading="loading"
           item-value="fileId"
@@ -219,7 +241,18 @@
               <v-chip v-if="item.type" size="x-small" color="secondary" variant="tonal" class="font-weight-medium align-self-start">
                 {{ item.type }}
               </v-chip>
-              <span v-if="!item.level.length && !item.type" class="text-caption text-disabled">—</span>
+              <div v-if="missingFields(item).length" class="d-flex flex-wrap ga-1 mt-1">
+                <v-chip
+                  v-for="f in missingFields(item)"
+                  :key="f"
+                  size="x-small"
+                  color="warning"
+                  variant="tonal"
+                  prepend-icon="mdi-alert-outline"
+                >
+                  {{ f }}
+                </v-chip>
+              </div>
             </div>
           </template>
 
@@ -496,7 +529,7 @@ import { LEVELS, TYPES, SUBJECTS } from "../config";
 import { loadAdminPassword, saveAdminPassword, clearAdminPassword } from "../lib/adminAuth";
 import { fileKind } from "../lib/fileKind";
 import FilePreview from "../components/FilePreview.vue";
-import { classificationStats } from "../lib/classification";
+import { isClassified, classificationStats, missingFields } from "../lib/classification";
 import FolderTree from "../components/FolderTree.vue";
 import { buildFolderTree, filesUnder } from "../lib/folderTree";
 import { chaptersFor } from "../data/chapters";
@@ -533,6 +566,23 @@ function onSelectFolder(path: string[]): void {
   selectedPath.value = path;
   folderDrawer.value = false;
 }
+
+// Sticky across folder changes: the workflow is moving folder to folder hunting
+// unclassified files, so resetting this on every hop would fight the user.
+const statusFilter = ref<"todo" | "done" | "all">("todo");
+
+/** Counts for the three buttons: scoped to the folder, deliberately ignoring `search`. */
+const statusCounts = computed(() => {
+  const done = scopedRows.value.filter(isClassified).length;
+  return { todo: scopedRows.value.length - done, done, all: scopedRows.value.length };
+});
+
+/** Rows actually shown: folder scope narrowed by status. `search` is applied by the table. */
+const visibleRows = computed(() => {
+  if (statusFilter.value === "all") return scopedRows.value;
+  const wantClassified = statusFilter.value === "done";
+  return scopedRows.value.filter((r) => isClassified(r) === wantClassified);
+});
 
 // In-app file preview state
 const previewDialog = ref(false);

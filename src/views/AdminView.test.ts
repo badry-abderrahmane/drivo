@@ -262,3 +262,49 @@ describe("AdminView folder navigation", () => {
     expect(w.get('[data-test="breadcrumb"]').text()).toContain("2BAC-SM");
   });
 });
+
+describe("AdminView status filter", () => {
+  const mixed = [fileAt("done1", ["A"], true), fileAt("todo1", ["A"], false)];
+
+  it("defaults to 'À classer' and hides classified rows", async () => {
+    const { w } = await mountAdminWith(mixed);
+    expect(w.text()).toContain("todo1.pdf");
+    expect(w.text()).not.toContain("done1.pdf");
+  });
+
+  it("shows classified rows under 'Classés' and both under 'Tous'", async () => {
+    const { w } = await mountAdminWith(mixed);
+    await w.get('[data-test="status-done"]').trigger("click");
+    await flushPromises();
+    expect(w.text()).toContain("done1.pdf");
+    expect(w.text()).not.toContain("todo1.pdf");
+
+    await w.get('[data-test="status-all"]').trigger("click");
+    await flushPromises();
+    expect(w.text()).toContain("done1.pdf");
+    expect(w.text()).toContain("todo1.pdf");
+  });
+
+  it("keeps the chosen status when moving to another folder", async () => {
+    const { w } = await mountAdminWith([...mixed, fileAt("done2", ["B"], true)]);
+    await w.get('[data-test="status-done"]').trigger("click");
+    await flushPromises();
+    await openFolder(w, "B");
+    expect(w.text()).toContain("done2.pdf"); // still on "Classés", not reset to "À classer"
+  });
+
+  it("counts the folder scope and ignores the search box", async () => {
+    const { w } = await mountAdminWith(mixed);
+    const before = w.get('[data-test="status-todo"]').text();
+    expect(before).toContain("1");
+    await w.get('[data-test="search"] input').setValue("zzz-no-match");
+    await flushPromises();
+    expect(w.get('[data-test="status-todo"]').text()).toBe(before);
+  });
+
+  it("names the fields an unclassified row is missing", async () => {
+    const { w } = await mountAdminWith([fileAt("todo1", ["A"], false)]);
+    expect(w.text()).toContain("Niveau");
+    expect(w.text()).toContain("Chapitre");
+  });
+});
