@@ -9,10 +9,10 @@
       <v-app-bar-title class="d-flex align-center">
         <router-link :to="{ name: 'browse' }" class="d-flex align-center ga-2 text-decoration-none color-inherit">
           <div class="brand-avatar rounded-lg d-flex align-center justify-center">
-            <v-icon icon="mdi-atom" color="primary" size="24" />
+            <span class="brand-pi">π</span>
           </div>
           <span class="font-weight-bold text-subtitle-1 text-md-h6 brand-title">
-            Bibliothèque Physique
+            PIPC
           </span>
         </router-link>
       </v-app-bar-title>
@@ -98,8 +98,15 @@ function toggleTheme(): void {
 
 .brand-avatar {
   background: rgba(var(--v-theme-primary), 0.1);
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
+}
+
+.brand-pi {
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+  color: rgb(var(--v-theme-primary));
 }
 
 .color-inherit {
@@ -107,7 +114,10 @@ function toggleTheme(): void {
 }
 
 .brand-title {
-  letter-spacing: -0.3px;
+  font-family: "Orbitron", sans-serif;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: rgb(var(--v-theme-primary));
 }
 
 .bg-surface-variant-subtle {
