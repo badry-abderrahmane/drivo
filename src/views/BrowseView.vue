@@ -27,17 +27,6 @@
       Impossible de charger la bibliothèque de cours. Veuillez vérifier votre connexion et réessayer.
     </v-alert>
 
-    <!-- Hero Header -->
-    <div class="text-center py-4 px-4 mb-4">
-      <h1 class="text-h4 text-md-h3 font-weight-black tracking-tight mb-2 text-gradient">
-        Bibliothèque de Cours
-      </h1>
-      <p class="text-body-2 text-medium-emphasis mx-auto">
-        {{ published.length }} Ressource{{ published.length > 1 ? "s" : "" }} disponible{{ published.length > 1 ? "s" : "" }}
-        — organisées par niveau et chapitre.
-      </p>
-    </div>
-
     <!-- Skeleton Loading State -->
     <div v-if="loading" class="py-4">
       <v-row>
@@ -251,17 +240,7 @@ onMounted(ensureLoaded);
   max-width: 1400px;
 }
 
-.text-gradient {
-  background: linear-gradient(135deg, var(--v-theme-primary) 0%, #00897B 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
 .max-w-400 {
   max-width: 400px;
-}
-
-.tracking-tight {
-  letter-spacing: -0.5px;
 }
 </style>

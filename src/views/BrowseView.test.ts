@@ -50,6 +50,7 @@ describe("BrowseView", () => {
 
   it("hides unclassified files from the grouped view, the grid and the search", async () => {
     const w = await mountView([mk("1", ["2ème Bac SM"], "Mécanique"), unclassified("2", "Brouillon")]);
+    await w.get(".v-expansion-panel-title").trigger("click");
     expect(w.text()).toContain("Mécanique");
     expect(w.text()).not.toContain("Brouillon");
 
@@ -58,11 +59,6 @@ describe("BrowseView", () => {
     await flushPromises();
     expect(w.text()).not.toContain("Brouillon");
     expect(w.text()).toContain("Aucun résultat");
-  });
-
-  it("counts only classified files as available resources", async () => {
-    const w = await mountView([mk("1", ["2ème Bac SM"], "Mécanique"), unclassified("2", "Brouillon")]);
-    expect(w.text()).toContain("1 Ressource disponible");
   });
 
   it("says the library is being prepared when nothing is classified yet", async () => {
