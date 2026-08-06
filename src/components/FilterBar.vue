@@ -112,33 +112,7 @@
       <v-expand-transition>
         <div v-show="showAdvanced" class="pt-4 mt-3 border-t">
           <v-row dense>
-            <v-col cols="12" sm="6" md="3">
-              <v-select
-                label="Niveau"
-                :items="levels"
-                v-model="local.level"
-                clearable
-                hide-details
-                density="comfortable"
-                variant="outlined"
-                prepend-inner-icon="mdi-school-outline"
-                @update:model-value="emitChange"
-              />
-            </v-col>
-            <v-col cols="12" sm="6" md="3">
-              <v-select
-                label="Type"
-                :items="types"
-                v-model="local.type"
-                clearable
-                hide-details
-                density="comfortable"
-                variant="outlined"
-                prepend-inner-icon="mdi-file-document-outline"
-                @update:model-value="emitChange"
-              />
-            </v-col>
-            <v-col cols="12" sm="6" md="3">
+            <v-col cols="12" sm="6" md="6">
               <v-select
                 label="Matière"
                 :items="subjects"
@@ -151,7 +125,7 @@
                 @update:model-value="emitChange"
               />
             </v-col>
-            <v-col cols="12" sm="6" md="3">
+            <v-col cols="12" sm="6" md="6">
               <v-select
                 label="Chapitre"
                 :items="chapters"

@@ -36,4 +36,15 @@ describe("FilterBar", () => {
     const events = w.emitted("update:modelValue") as Filters[][];
     expect(events[events.length - 1][0].level).toBeUndefined();
   });
+
+  it("no longer shows Niveau or Type selects in Filtres avancés (covered by quick pills)", async () => {
+    const w = mountWithVuetify(FilterBar, { props: { items, modelValue: {} as Filters } });
+    const toggle = w.findAll("button").find((b) => b.text().includes("Filtres avancés"))!;
+    await toggle.trigger("click");
+    const labels = w.findAll("label").map((l) => l.text());
+    expect(labels).not.toContain("Niveau");
+    expect(labels).not.toContain("Type");
+    expect(labels).toContain("Matière");
+    expect(labels).toContain("Chapitre");
+  });
 });
