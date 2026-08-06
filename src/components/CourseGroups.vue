@@ -87,11 +87,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref } from "vue";
 import FileCard from "./FileCard.vue";
 import type { LevelSection } from "../lib/group";
 
-const props = withDefaults(
+withDefaults(
   defineProps<{
     sections: LevelSection[];
     mode?: "grid" | "list";
@@ -101,15 +101,8 @@ const props = withDefaults(
   }
 );
 
-// Open the first section by default so the page never looks empty
+// All level panels start closed; the student opens whichever one they need.
 const open = ref<string[]>([]);
-watch(
-  () => props.sections,
-  (s) => {
-    if (open.value.length === 0 && s.length > 0) open.value = [s[0].level];
-  },
-  { immediate: true }
-);
 </script>
 
 <style scoped>

@@ -34,13 +34,22 @@ describe("CourseGroups", () => {
     expect(w.text()).toContain("1");
   });
 
-  it("divides an opened level into one block per matière", () => {
+  it("starts with every level panel closed", () => {
+    const sections = groupCourses([
+      mk("1", ["2ème Bac SM"], "a", "Physique", ["Ondes"]),
+      mk("2", ["1ère Bac"], "b", "Chimie", ["Acides"]),
+    ]);
+    const w = mountWithVuetify(CourseGroups, { props: { sections } });
+    expect(w.findAll('[data-test="subject-block"]')).toHaveLength(0);
+  });
+
+  it("divides an opened level into one block per matière", async () => {
     const sections = groupCourses([
       mk("1", ["2ème Bac SM"], "a", "Physique", ["Ondes"]),
       mk("2", ["2ème Bac SM"], "b", "Chimie", ["Acides"]),
     ]);
     const w = mountWithVuetify(CourseGroups, { props: { sections } });
-    // The first level opens by default, so its matière blocks are mounted.
+    await w.get(".v-expansion-panel-title").trigger("click");
     const blocks = w.findAll('[data-test="subject-block"]');
     expect(blocks).toHaveLength(2);
     expect(blocks.map((b) => b.text())).toEqual([
