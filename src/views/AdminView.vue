@@ -479,46 +479,64 @@
               />
             </v-col>
 
-            <!-- Tags Field -->
-            <v-col cols="12" sm="8">
-              <v-text-field
-                v-model="editForm.tags"
-                label="Mots-clés (séparés par des virgules)"
-                placeholder="physique, mecanique, bac2026"
-                variant="outlined"
-                density="comfortable"
-                prepend-inner-icon="mdi-tag-outline"
-                class="rounded-lg mb-2"
-              />
-            </v-col>
-
-            <!-- Order Field -->
-            <v-col cols="12" sm="4">
-              <v-text-field
-                v-model.number="editForm.order"
-                type="number"
-                label="Ordre d'affichage"
-                variant="outlined"
-                density="comfortable"
-                prepend-inner-icon="mdi-sort-numeric-ascending"
-                class="rounded-lg mb-2"
-              />
-            </v-col>
-
-            <!-- Description Field -->
-            <v-col cols="12">
-              <v-textarea
-                v-model="editForm.description"
-                label="Description"
-                placeholder="Brève description du contenu de la ressource..."
-                variant="outlined"
-                density="comfortable"
-                rows="3"
-                prepend-inner-icon="mdi-text-box-outline"
-                class="rounded-lg mb-2"
-              />
+            <!-- Advanced Fields Toggle -->
+            <v-col cols="12" class="d-flex justify-end">
+              <v-btn
+                size="small"
+                variant="tonal"
+                :color="showAdvanced ? 'primary' : 'default'"
+                :append-icon="showAdvanced ? 'mdi-chevron-up' : 'mdi-chevron-down'"
+                prepend-icon="mdi-tune-variant"
+                @click="showAdvanced = !showAdvanced"
+              >
+                Paramètres avancés
+              </v-btn>
             </v-col>
           </v-row>
+
+          <v-expand-transition>
+            <v-row v-show="showAdvanced" dense>
+              <!-- Tags Field -->
+              <v-col cols="12" sm="8">
+                <v-text-field
+                  v-model="editForm.tags"
+                  label="Mots-clés (séparés par des virgules)"
+                  placeholder="physique, mecanique, bac2026"
+                  variant="outlined"
+                  density="comfortable"
+                  prepend-inner-icon="mdi-tag-outline"
+                  class="rounded-lg mb-2"
+                />
+              </v-col>
+
+              <!-- Order Field -->
+              <v-col cols="12" sm="4">
+                <v-text-field
+                  v-model.number="editForm.order"
+                  type="number"
+                  label="Ordre d'affichage"
+                  variant="outlined"
+                  density="comfortable"
+                  prepend-inner-icon="mdi-sort-numeric-ascending"
+                  class="rounded-lg mb-2"
+                />
+              </v-col>
+
+              <!-- Description Field -->
+              <v-col cols="12">
+                <v-textarea
+                  v-model="editForm.description"
+                  label="Description"
+                  placeholder="Brève description du contenu de la ressource..."
+                  variant="outlined"
+                  density="comfortable"
+                  rows="3"
+                  prepend-inner-icon="mdi-text-box-outline"
+                  class="rounded-lg mb-2"
+                />
+              </v-col>
+            </v-row>
+          </v-expand-transition>
         </v-card-text>
 
         <v-divider class="my-1" />
@@ -653,6 +671,7 @@ function openPreview(row: EditRow): void {
 // Modal editing state
 const editDialog = ref(false);
 const editingRow = ref<EditRow | null>(null);
+const showAdvanced = ref(false);
 const editForm = reactive<EditRow>({
   fileId: "",
   name: "",
@@ -703,6 +722,7 @@ function openEditModal(row: EditRow): void {
   editingRow.value = row;
   // Clone list fields so editing the modal doesn't mutate the row until "Appliquer".
   Object.assign(editForm, { ...row, level: [...row.level], chapter: [...row.chapter] });
+  showAdvanced.value = false;
   editDialog.value = true;
 }
 
