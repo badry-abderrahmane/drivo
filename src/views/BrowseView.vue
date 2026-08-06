@@ -28,37 +28,14 @@
     </v-alert>
 
     <!-- Hero Header -->
-    <div class="hero-section text-center py-6 px-4 mb-6 rounded-2xl">
-      <div class="d-inline-flex align-center ga-2 px-3 py-1 mb-3 rounded-pill bg-primary-subtle border">
-        <v-icon icon="mdi-book-open-page-variant" color="primary" size="18" />
-        <span class="text-caption font-weight-bold text-primary">
-          {{ published.length }} Ressource{{ published.length > 1 ? "s" : "" }} disponible{{ published.length > 1 ? "s" : "" }}
-        </span>
-      </div>
-
+    <div class="text-center py-4 px-4 mb-4">
       <h1 class="text-h4 text-md-h3 font-weight-black tracking-tight mb-2 text-gradient">
         Bibliothèque de Cours
       </h1>
-      <p class="text-body-1 text-medium-emphasis max-w-600 mx-auto mb-6">
-        Retrouvez tous vos cours, exercices corrigés, devoirs et résumés organisés par niveau et chapitre.
+      <p class="text-body-2 text-medium-emphasis mx-auto">
+        {{ published.length }} Ressource{{ published.length > 1 ? "s" : "" }} disponible{{ published.length > 1 ? "s" : "" }}
+        — organisées par niveau et chapitre.
       </p>
-
-      <!-- Quick Level Pills -->
-      <div v-if="allLevels.length > 0" class="d-flex align-center justify-center flex-wrap ga-2">
-        <v-chip
-          v-for="lvl in allLevels"
-          :key="lvl"
-          size="small"
-          variant="tonal"
-          :color="filters.level === lvl ? 'primary' : 'default'"
-          :class="{ 'font-weight-bold': filters.level === lvl }"
-          class="level-pill px-3"
-          @click="toggleLevel(lvl)"
-        >
-          <v-icon icon="mdi-school-outline" size="14" class="mr-1" />
-          {{ lvl }}
-        </v-chip>
-      </div>
     </div>
 
     <!-- Skeleton Loading State -->
@@ -230,7 +207,7 @@ import FilterBar from "../components/FilterBar.vue";
 import FileCard from "../components/FileCard.vue";
 import CourseGroups from "../components/CourseGroups.vue";
 import { useLibrary } from "../composables/useLibrary";
-import { applyFilters, sortItems, distinctLevels, type Filters } from "../lib/filter";
+import { applyFilters, sortItems, type Filters } from "../lib/filter";
 import { groupCourses } from "../lib/group";
 import { isClassified } from "../lib/classification";
 
@@ -262,16 +239,6 @@ const currentLayoutMode = computed(() => {
 const shown = computed(() => sortItems(applyFilters(published.value, filters.value)));
 const sections = computed(() => groupCourses(shown.value));
 
-const allLevels = computed(() => distinctLevels(published.value));
-
-function toggleLevel(lvl: string): void {
-  if (filters.value.level === lvl) {
-    filters.value = { ...filters.value, level: undefined };
-  } else {
-    filters.value = { ...filters.value, level: lvl };
-  }
-}
-
 function resetFilters(): void {
   filters.value = {};
 }
@@ -284,36 +251,14 @@ onMounted(ensureLoaded);
   max-width: 1400px;
 }
 
-.hero-section {
-  background: linear-gradient(135deg, rgba(var(--v-theme-primary), 0.05) 0%, rgba(var(--v-theme-surface), 1) 100%);
-  border: 1px solid rgba(var(--v-border-color), 0.08);
-}
-
 .text-gradient {
   background: linear-gradient(135deg, var(--v-theme-primary) 0%, #00897B 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-.bg-primary-subtle {
-  background-color: rgba(var(--v-theme-primary), 0.08);
-}
-
-.max-w-600 {
-  max-width: 600px;
-}
-
 .max-w-400 {
   max-width: 400px;
-}
-
-.level-pill {
-  transition: all 0.2s ease;
-  cursor: pointer;
-}
-
-.level-pill:hover {
-  transform: translateY(-1px);
 }
 
 .tracking-tight {

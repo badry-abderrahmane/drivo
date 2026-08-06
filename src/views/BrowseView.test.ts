@@ -72,6 +72,12 @@ describe("BrowseView", () => {
     expect(w.text()).not.toContain("Réinitialiser les filtres");
   });
 
+  it("has no standalone hero-level control (level selection lives in FilterBar)", async () => {
+    const w = await mountView([mk("1", ["2ème Bac SM"], "Mécanique"), mk("2", ["1ère Bac"], "Optique")]);
+    expect(w.find(".level-pill").exists()).toBe(false);
+    expect(w.find(".hero-section").exists()).toBe(false);
+  });
+
   it("switches to a flat card grid when searching", async () => {
     const w = await mountView([mk("1", ["2ème Bac SM"], "Mécanique"), mk("2", ["1ère Bac"], "Optique")]);
     const input = w.get('[data-test="search"] input');
