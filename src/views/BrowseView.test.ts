@@ -42,19 +42,22 @@ async function mountView(items: LibraryItem[]) {
 }
 
 describe("BrowseView", () => {
-  it("groups by level by default (section titles visible)", async () => {
+  it("shows a level card per niveau by default (UnfoldingCards)", async () => {
     const w = await mountView([mk("1", ["2ème Bac SM"], "Mécanique"), mk("2", ["1ère Bac"], "Optique")]);
     expect(w.text()).toContain("2ème Bac SM");
     expect(w.text()).toContain("1ère Bac");
   });
 
-  it("hides unclassified files from the grouped view, the grid and the search", async () => {
+  it("hides unclassified files from browsing (level -> chapter) and from search", async () => {
     const w = await mountView([mk("1", ["2ème Bac SM"], "Mécanique"), unclassified("2", "Brouillon")]);
-    await w.get(".v-expansion-panel-title").trigger("click");
+    // Excluded from `published` before UnfoldingCards ever sees it.
+    expect(w.text()).not.toContain("Brouillon");
+
+    await w.get('[data-test="unfold-level-2ème Bac SM"]').trigger("click");
     expect(w.text()).toContain("Mécanique");
     expect(w.text()).not.toContain("Brouillon");
 
-    // Not merely ungrouped — absent from the flat views too.
+    // Not merely excluded from browsing — absent from search results too.
     await w.get('[data-test="search"] input').setValue("Brouillon");
     await flushPromises();
     expect(w.text()).not.toContain("Brouillon");

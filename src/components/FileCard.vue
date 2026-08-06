@@ -6,7 +6,7 @@
     :href="item.webViewLink"
     target="_blank"
     rel="noopener"
-    class="course-card list-mode rounded-lg pa-3 d-flex align-center ga-3 w-100"
+    class="course-card list-mode rounded-xl pa-3 d-flex align-center ga-3 w-100 border"
   >
     <div
       class="icon-wrapper flex-shrink-0 d-flex align-center justify-center rounded-lg"
@@ -18,7 +18,7 @@
     <div class="flex-grow-1 overflow-hidden">
       <div class="d-flex align-center ga-2 flex-wrap mb-1">
         <span class="text-subtitle-2 font-weight-bold text-truncate">{{ item.displayTitle }}</span>
-        <v-chip v-if="item.meta.type" size="x-small" color="primary" variant="tonal" class="font-weight-medium">
+        <v-chip v-if="item.meta.type" size="x-small" color="primary" variant="tonal" class="font-weight-medium rounded-pill">
           {{ item.meta.type }}
         </v-chip>
       </div>
@@ -27,11 +27,13 @@
 
       <div v-if="item.meta.chapter.length" class="d-flex flex-wrap ga-1 mt-1">
         <span v-for="ch in item.meta.chapter" :key="ch" class="chapter-tag">
-          <v-icon icon="mdi-bookmark-outline" size="12" />
+          <v-icon icon="mdi-atom" size="12" />
           {{ ch }}
         </span>
       </div>
     </div>
+
+    <v-icon icon="mdi-open-in-new" size="18" class="text-medium-emphasis flex-shrink-0 mr-2" />
   </v-card>
 
   <!-- Grid Layout Mode (Default) -->
@@ -41,17 +43,19 @@
     :href="item.webViewLink"
     target="_blank"
     rel="noopener"
-    class="course-card grid-mode h-100 d-flex flex-column rounded-xl border pa-4"
+    class="course-card grid-mode h-100 d-flex flex-column rounded-2xl border pa-5 position-relative overflow-hidden"
   >
-    <div class="d-flex align-center justify-space-between mb-3">
+    <div class="card-glow-accent"></div>
+
+    <div class="d-flex align-center justify-space-between mb-3 z-index-1">
       <div
         class="icon-wrapper d-flex align-center justify-center rounded-xl pa-2"
-        :style="{ backgroundColor: `${kind.color}15`, color: kind.color }"
+        :style="{ backgroundColor: `${kind.color}18`, color: kind.color }"
       >
         <v-icon :icon="kind.icon" size="26" />
       </div>
 
-      <v-chip v-if="item.meta.type" size="small" color="primary" variant="tonal" class="font-weight-semibold">
+      <v-chip v-if="item.meta.type" size="small" color="primary" variant="tonal" class="font-weight-semibold rounded-pill px-3">
         {{ item.meta.type }}
       </v-chip>
     </div>
@@ -60,30 +64,37 @@
       {{ item.displayTitle }}
     </h3>
 
-    <p v-if="subtitle" class="text-caption text-medium-emphasis mb-2">{{ subtitle }}</p>
+    <p v-if="subtitle" class="text-caption text-medium-emphasis mb-2 font-weight-medium">{{ subtitle }}</p>
 
     <!-- All chapters, fully visible (wrapping tags) -->
-    <div v-if="item.meta.chapter.length" class="d-flex flex-wrap ga-1 mb-2">
+    <div v-if="item.meta.chapter.length" class="d-flex flex-wrap ga-1 mb-3">
       <span v-for="ch in item.meta.chapter" :key="ch" class="chapter-tag">
         <v-icon icon="mdi-bookmark-outline" size="13" />
         {{ ch }}
       </span>
     </div>
 
-    <p v-if="item.meta.description" class="text-body-2 text-medium-emphasis line-clamp-2 mb-2">
+    <p v-if="item.meta.description" class="text-body-2 text-medium-emphasis line-clamp-2 mb-3">
       {{ item.meta.description }}
     </p>
 
-    <div v-if="item.meta.tags && item.meta.tags.length > 0" class="d-flex flex-wrap ga-1">
-      <v-chip
-        v-for="tag in item.meta.tags.slice(0, 3)"
-        :key="tag"
-        size="x-small"
-        variant="outlined"
-        class="text-caption"
-      >
-        #{{ tag }}
-      </v-chip>
+    <v-spacer />
+
+    <div class="d-flex align-center justify-space-between pt-2 border-t mt-2">
+      <div v-if="item.meta.tags && item.meta.tags.length > 0" class="d-flex flex-wrap ga-1">
+        <v-chip
+          v-for="tag in item.meta.tags.slice(0, 2)"
+          :key="tag"
+          size="x-small"
+          variant="tonal"
+          class="text-caption rounded-pill"
+        >
+          #{{ tag }}
+        </v-chip>
+      </div>
+      <div v-else class="text-caption text-medium-emphasis">Drive PDF</div>
+
+      <v-icon icon="mdi-arrow-right" size="18" color="primary" class="card-arrow-icon" />
     </div>
   </v-card>
 </template>
@@ -114,16 +125,20 @@ const kind = computed(() => fileKind(props.item.name, props.item.mimeType));
 <style scoped>
 .course-card {
   background: rgb(var(--v-theme-surface));
-  border: 1px solid rgba(var(--v-border-color), 0.12) !important;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(var(--v-border-color), 0.1) !important;
+  transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
   text-decoration: none;
   color: inherit;
 }
 
 .course-card.grid-mode:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.08) !important;
-  border-color: rgba(var(--v-theme-primary), 0.3) !important;
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.08) !important;
+  border-color: rgba(var(--v-theme-primary), 0.4) !important;
+}
+
+.course-card.grid-mode:hover .card-arrow-icon {
+  transform: translateX(3px);
 }
 
 .course-card.list-mode:hover {
@@ -137,6 +152,7 @@ const kind = computed(() => fileKind(props.item.name, props.item.mimeType));
 }
 
 .title-text {
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
   line-height: 1.35;
   color: rgb(var(--v-theme-on-surface));
 }
@@ -152,14 +168,19 @@ const kind = computed(() => fileKind(props.item.name, props.item.mimeType));
 .chapter-tag {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   max-width: 100%;
-  padding: 2px 8px;
-  border-radius: 8px;
+  padding: 3px 10px;
+  border-radius: 12px;
   background: rgba(var(--v-theme-primary), 0.08);
   color: rgb(var(--v-theme-primary));
-  font-size: 0.7rem;
+  font-size: 0.72rem;
+  font-weight: 500;
   line-height: 1.25;
   white-space: normal;
+}
+
+.card-arrow-icon {
+  transition: transform 0.2s ease;
 }
 </style>

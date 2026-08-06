@@ -1,24 +1,32 @@
 <template>
-  <div class="menu-view max-width-xl mx-auto py-6 px-4">
-    <div v-if="loading" class="d-flex justify-center pa-8">
-      <v-progress-circular indeterminate color="primary" />
+  <div class="menu-view max-width-xl mx-auto py-8 px-4 px-md-6">
+    <div v-if="loading" class="d-flex justify-center pa-12">
+      <v-progress-circular indeterminate color="primary" size="48" width="4" />
     </div>
 
-    <v-alert v-else-if="error" type="error" variant="tonal" class="ma-4">
+    <v-alert v-else-if="error" type="error" variant="tonal" class="ma-4 rounded-xl">
       Impossible de charger la bibliothèque. Réessayez plus tard.
     </v-alert>
 
     <template v-else>
-      <v-alert v-if="stale" type="warning" variant="tonal" class="mb-4 rounded-xl">Hors ligne — données en cache.</v-alert>
+      <v-alert v-if="stale" type="warning" variant="tonal" class="mb-6 rounded-xl">Hors ligne — données en cache.</v-alert>
 
       <!-- Level picker -->
       <template v-if="!selectedLevel">
-        <h1 class="text-h5 font-weight-bold mb-1">Menu thématique</h1>
-        <p class="text-body-2 text-medium-emphasis mb-6">
-          Choisissez un niveau pour voir ses ressources organisées par thème.
-        </p>
+        <div class="mb-8">
+          <div class="d-flex align-center ga-2 mb-2">
+            <v-chip color="primary" variant="tonal" size="small" class="font-weight-bold">
+              <v-icon icon="mdi-format-list-checks" size="14" class="mr-1" />
+              Programme Officiel
+            </v-chip>
+          </div>
+          <h1 class="text-h4 font-weight-black font-heading mb-2">Menu Thématique</h1>
+          <p class="text-body-1 text-medium-emphasis">
+            Sélectionnez votre niveau scolaire pour accéder au programme structuré et consulter l'ensemble des fiches et chapitres.
+          </p>
+        </div>
 
-        <div v-if="levels.length === 0" class="text-medium-emphasis pa-8 text-center">
+        <div v-if="levels.length === 0" class="text-medium-emphasis pa-12 text-center bg-surface rounded-2xl border">
           Aucun niveau n'a encore de ressources complètement classées.
         </div>
 
@@ -26,20 +34,29 @@
           <v-col v-for="lvl in levels" :key="lvl.level" cols="12" sm="6" md="4">
             <v-card
               variant="flat"
-              class="level-card rounded-xl border pa-5 h-100"
+              class="level-card rounded-2xl border pa-6 h-100 d-flex flex-column justify-space-between"
               data-test="level-card"
               @click="selectedLevel = lvl.level"
             >
-              <div class="d-flex align-center ga-3 mb-2">
-                <div class="lvl-icon rounded-lg d-flex align-center justify-center pa-2">
-                  <v-icon icon="mdi-view-list-outline" color="primary" size="24" />
+              <div>
+                <div class="d-flex align-center justify-space-between mb-4">
+                  <div class="lvl-icon rounded-xl d-flex align-center justify-center pa-3">
+                    <v-icon :icon="getLevelIcon(lvl.level)" color="primary" size="28" />
+                  </div>
+                  <v-chip size="small" color="primary" variant="tonal" class="font-weight-bold rounded-pill">
+                    {{ lvl.count }} ressource{{ lvl.count > 1 ? "s" : "" }}
+                  </v-chip>
                 </div>
-                <span class="text-h6 font-weight-bold">{{ lvl.level }}</span>
+                <h3 class="text-h5 font-weight-bold font-heading mb-1">{{ lvl.level }}</h3>
+                <p class="text-caption text-medium-emphasis mb-4">
+                  Programme officiel de Physique-Chimie
+                </p>
               </div>
-              <div class="text-caption text-medium-emphasis">
-                {{ lvl.count }} ressource{{ lvl.count > 1 ? "s" : "" }} classée{{ lvl.count > 1 ? "s" : "" }}
+
+              <div class="d-flex align-center justify-space-between pt-3 border-t">
+                <span class="text-caption font-weight-semibold color-primary">Voir les thèmes</span>
+                <v-icon icon="mdi-arrow-right" class="arrow" color="primary" />
               </div>
-              <v-icon icon="mdi-arrow-right" class="arrow" color="primary" />
             </v-card>
           </v-col>
         </v-row>
@@ -47,13 +64,13 @@
 
       <!-- Selected level table -->
       <template v-else>
-        <div class="d-flex align-center ga-3 mb-4">
-          <v-btn variant="text" prepend-icon="mdi-arrow-left" class="rounded-pill" data-test="back" @click="selectedLevel = null">
-            Retour
+        <div class="d-flex align-center ga-3 mb-6">
+          <v-btn variant="tonal" color="primary" prepend-icon="mdi-arrow-left" class="rounded-pill px-4" data-test="back" @click="selectedLevel = null">
+            Retour aux niveaux
           </v-btn>
-          <h1 class="text-h5 font-weight-bold">Menu thématique — {{ selectedLevel }}</h1>
+          <h1 class="text-h5 font-weight-bold font-heading">Menu thématique — {{ selectedLevel }}</h1>
         </div>
-        <v-alert v-if="currentMenu.types.length === 0" type="info" variant="tonal" class="mb-4 rounded-xl">
+        <v-alert v-if="currentMenu.types.length === 0" type="info" variant="tonal" class="mb-6 rounded-xl">
           Aucune ressource classée pour ce niveau pour le moment — le programme complet est affiché ci-dessous.
         </v-alert>
         <MenuTable :menu="currentMenu" @preview="openPreview" />
@@ -75,6 +92,12 @@ import type { LibraryItem } from "../lib/types";
 const { items, loading, stale, error, ensureLoaded } = useLibrary();
 
 const selectedLevel = ref<string | null>(null);
+
+function getLevelIcon(level: string): string {
+  if (level.includes("2BAC")) return "mdi-atom";
+  if (level.includes("1BAC")) return "mdi-lightning-bolt-outline";
+  return "mdi-telescope";
+}
 
 // All official program levels are always shown; the count is how many of that
 // level's files are fully tagged so far.
@@ -105,20 +128,25 @@ onMounted(ensureLoaded);
 .level-card {
   position: relative;
   cursor: pointer;
-  transition: all 0.2s ease;
+  background: rgb(var(--v-theme-surface));
+  border: 1px solid rgba(var(--v-border-color), 0.1) !important;
+  transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .level-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(var(--v-theme-primary), 0.35) !important;
-  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.1) !important;
+  transform: translateY(-4px);
+  border-color: rgba(var(--v-theme-primary), 0.4) !important;
+  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.08) !important;
+}
+.level-card:hover .arrow {
+  transform: translateX(4px);
 }
 .lvl-icon {
-  background: rgba(var(--v-theme-primary), 0.08);
+  background: rgba(var(--v-theme-primary), 0.1);
 }
 .arrow {
-  position: absolute;
-  right: 16px;
-  bottom: 16px;
-  opacity: 0.6;
+  transition: transform 0.2s ease;
+}
+.color-primary {
+  color: rgb(var(--v-theme-primary));
 }
 </style>

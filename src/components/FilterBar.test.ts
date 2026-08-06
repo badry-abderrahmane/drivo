@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterEach } from "vitest";
 import { mountWithVuetify } from "../test/setup";
 import FilterBar from "./FilterBar.vue";
 import type { LibraryItem } from "../lib/types";
@@ -11,15 +11,15 @@ const mk = (id: string, level: string[], type: string): LibraryItem => ({
 });
 const items = [mk("1", ["2ème Bac SM"], "Cours"), mk("2", ["1ère Bac"], "Exercices")];
 
-const withChapter = (id: string, level: string[], chapter: string): LibraryItem => ({
-  fileId: id, name: id, mimeType: "application/pdf", path: [], webViewLink: "u",
-  modifiedTime: "2026-01-01T00:00:00.000Z", isFolder: false, displayTitle: id,
-  meta: { fileId: id, level, type: "Cours", subject: "", chapter: [chapter], title: "", description: "", tags: [], order: 0 },
+// Vuetify's display composable reads window.innerWidth once, synchronously, when its
+// Vuetify instance is created — so this must run before mountWithVuetify, not after.
+function setViewportWidth(width: number): void {
+  Object.defineProperty(window, "innerWidth", { writable: true, configurable: true, value: width });
+}
+
+afterEach(() => {
+  setViewportWidth(1024); // back to jsdom's default-ish desktop width
 });
-const chapterItems = [
-  withChapter("a", ["2ème Bac SM"], "Mécanique"),
-  withChapter("b", ["1ère Bac"], "Optique"),
-];
 
 describe("FilterBar", () => {
   it("emits updated filters when search changes", async () => {
@@ -31,52 +31,36 @@ describe("FilterBar", () => {
     expect(events[events.length - 1][0].search).toBe("newton");
   });
 
-  it("emits the selected level when a Niveau quick-pill is clicked", async () => {
+  it("shows filters inline on desktop-width screens (no trigger button)", () => {
+    setViewportWidth(1280);
     const w = mountWithVuetify(FilterBar, { props: { items, modelValue: {} as Filters } });
-    await w.get('[data-test="level-2ème Bac SM"]').trigger("click");
-    const events = w.emitted("update:modelValue") as Filters[][];
-    expect(events[events.length - 1][0].level).toBe("2ème Bac SM");
+    expect(w.find('[data-test="level-all"]').exists()).toBe(true);
+    expect(w.find('[data-test="mobile-filters-trigger"]').exists()).toBe(false);
   });
 
-  it("clears the level when the Niveau 'Tous' pill is clicked", async () => {
+  it("hides filters behind a trigger button on mobile-width screens", () => {
+    setViewportWidth(375);
+    const w = mountWithVuetify(FilterBar, { props: { items, modelValue: {} as Filters } });
+    expect(w.find('[data-test="level-all"]').exists()).toBe(false);
+    expect(w.find('[data-test="mobile-filters-trigger"]').exists()).toBe(true);
+  });
+
+  it("opens a bottom sheet with the filters when the mobile trigger is tapped", async () => {
+    setViewportWidth(375);
+    document.body.innerHTML = ""; // v-bottom-sheet content teleports to <body>
+    const w = mountWithVuetify(FilterBar, { props: { items, modelValue: {} as Filters } });
+    await w.get('[data-test="mobile-filters-trigger"]').trigger("click");
+    await w.vm.$nextTick();
+
+    const sheetLevelAll = document.querySelector('[data-test="mobile-filters-sheet"] [data-test="level-all"]');
+    expect(sheetLevelAll).not.toBeNull();
+  });
+
+  it("shows an active-filter count badge on the mobile trigger once a level is set", () => {
+    setViewportWidth(375);
     const w = mountWithVuetify(FilterBar, {
       props: { items, modelValue: { level: "2ème Bac SM" } as Filters },
     });
-    await w.get('[data-test="level-all"]').trigger("click");
-    const events = w.emitted("update:modelValue") as Filters[][];
-    expect(events[events.length - 1][0].level).toBeUndefined();
-  });
-
-  it("no longer shows Niveau or Type selects in Filtres avancés (covered by quick pills)", async () => {
-    const w = mountWithVuetify(FilterBar, { props: { items, modelValue: {} as Filters } });
-    const toggle = w.findAll("button").find((b) => b.text().includes("Filtres avancés"))!;
-    await toggle.trigger("click");
-    const labels = w.findAll("label").map((l) => l.text());
-    expect(labels).not.toContain("Niveau");
-    expect(labels).not.toContain("Type");
-    expect(labels).toContain("Matière");
-    expect(labels).toContain("Chapitre");
-  });
-
-  it("narrows Chapitre options to the selected Niveau's chapters", async () => {
-    const w = mountWithVuetify(FilterBar, { props: { items: chapterItems, modelValue: {} as Filters } });
-    const chapterSelect = () => w.findAllComponents({ name: "VSelect" }).find((c) => c.props("label") === "Chapitre")!;
-
-    await w.findAll("button").find((b) => b.text().includes("Filtres avancés"))!.trigger("click");
-    expect(chapterSelect().props("items")).toEqual(["Mécanique", "Optique"]);
-
-    await w.get('[data-test="level-2ème Bac SM"]').trigger("click");
-    expect(chapterSelect().props("items")).toEqual(["Mécanique"]);
-  });
-
-  it("clears an already-selected chapter that no longer matches the new Niveau", async () => {
-    const w = mountWithVuetify(FilterBar, {
-      props: { items: chapterItems, modelValue: { level: "1ère Bac", chapter: "Optique" } as Filters },
-    });
-    await w.get('[data-test="level-2ème Bac SM"]').trigger("click");
-    const events = w.emitted("update:modelValue") as Filters[][];
-    const last = events[events.length - 1][0];
-    expect(last.level).toBe("2ème Bac SM");
-    expect(last.chapter).toBeUndefined();
+    expect(w.get('[data-test="mobile-filters-trigger"]').text()).toContain("1");
   });
 });

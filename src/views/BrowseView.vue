@@ -38,69 +38,47 @@
 
     <!-- Main Content -->
     <template v-else-if="!error">
+      <!-- PIPC Physics Hero Banner -->
+      <!-- <div class="hero-banner entrance-block rounded-xl pa-6 pa-md-8 mb-8 border relative overflow-hidden">
+        <div class="quantum-bg-glow"></div>
+        <v-row align="center">
+          <v-col cols="12" md="8">
+            <div class="d-flex align-center ga-2 mb-3">
+              <v-chip color="primary" variant="flat" size="small" class="font-weight-bold">
+                <v-icon icon="mdi-atom" size="14" class="mr-1" />
+                Portail Académique
+              </v-chip>
+              <v-chip color="secondary" variant="tonal" size="small" class="font-weight-medium">
+                Moroccan Physics Curriculum
+              </v-chip>
+            </div>
+            <h1 class="text-h4 text-md-h3 font-weight-black hero-title mb-3">
+              Ressources de <span class="text-gradient">Physique & Chimie</span>
+            </h1>
+            <p class="d-none d-md-block text-body-1 text-medium-emphasis mb-4 max-w-600">
+              Explorez les cours, exercices corrigés, travaux pratiques et examens classés par niveau et chapitre.
+            </p>
+            <div class="d-flex flex-wrap ga-3">
+              <div class="hero-stat-pill rounded-pill px-3 py-1 bg-surface border text-caption font-weight-bold d-flex align-center ga-1">
+                <v-icon icon="mdi-book-open-page-variant-outline" size="14" color="primary" />
+                <span>{{ published.length }} Documents de cours</span>
+              </div>
+              <div class="hero-stat-pill rounded-pill px-3 py-1 bg-surface border text-caption font-weight-bold d-flex align-center ga-1">
+                <v-icon icon="mdi-school-outline" size="14" color="secondary" />
+                <span>2BAC · 1BAC · Tronc Commun</span>
+              </div>
+            </div>
+          </v-col>
+        </v-row>
+      </div> -->
+
       <!-- Filter Bar -->
-      <FilterBar :items="published" v-model="filters" />
-
-      <!-- View Controls & Results Counter Header -->
-      <div class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4 px-1">
-        <div class="d-flex align-center ga-2">
-          <span class="text-subtitle-2 font-weight-bold">
-            {{ shown.length }} résultat{{ shown.length > 1 ? "s" : "" }}
-          </span>
-          <v-chip v-if="filtering" size="x-small" color="primary" variant="tonal">
-            Filtré
-          </v-chip>
-          <!-- Shown while a cached page refreshes behind the scenes, so nothing on screen is
-               silently out of date. -->
-          <v-chip
-            v-if="refreshing"
-            size="x-small"
-            variant="tonal"
-            data-test="refreshing"
-            prepend-icon="mdi-sync"
-          >
-            Mise à jour…
-          </v-chip>
-        </div>
-
-        <!-- View Mode Switcher -->
-        <div class="d-flex align-center ga-1 bg-surface rounded-pill border pa-1">
-          <v-btn
-            size="x-small"
-            :variant="currentLayoutMode === 'grouped' ? 'flat' : 'text'"
-            :color="currentLayoutMode === 'grouped' ? 'primary' : 'default'"
-            class="rounded-pill px-3"
-            prepend-icon="mdi-view-agenda-outline"
-            :disabled="filtering"
-            @click="userViewMode = 'grouped'"
-          >
-            Groupé
-          </v-btn>
-          <v-btn
-            size="x-small"
-            :variant="currentLayoutMode === 'grid' ? 'flat' : 'text'"
-            :color="currentLayoutMode === 'grid' ? 'primary' : 'default'"
-            class="rounded-pill px-3"
-            prepend-icon="mdi-grid"
-            @click="userViewMode = 'grid'"
-          >
-            Grille
-          </v-btn>
-          <v-btn
-            size="x-small"
-            :variant="currentLayoutMode === 'list' ? 'flat' : 'text'"
-            :color="currentLayoutMode === 'list' ? 'primary' : 'default'"
-            class="rounded-pill px-3"
-            prepend-icon="mdi-format-list-bulleted"
-            @click="userViewMode = 'list'"
-          >
-            Liste
-          </v-btn>
-        </div>
+      <div class="entrance-block entrance-filter">
+        <FilterBar :items="published" v-model="filters" />
       </div>
 
       <!-- Nothing published yet: distinct from "your filters match nothing", so it does not
-           offer a filter reset that would change nothing. -->
+           offer a filter reset that would change nothing. Independent of filtering state. -->
       <v-card
         v-if="published.length === 0"
         data-test="nothing-published"
@@ -114,78 +92,125 @@
         </p>
       </v-card>
 
-      <!-- Empty State -->
-      <v-card v-else-if="shown.length === 0" class="text-center py-12 px-4 rounded-2xl border-0 shadow-sm" elevation="0">
-        <v-icon icon="mdi-file-search-outline" size="64" color="medium-emphasis" class="mb-4" />
-        <h3 class="text-h6 font-weight-bold mb-1">Aucun résultat trouvé</h3>
-        <p class="text-body-2 text-medium-emphasis mb-6 max-w-400 mx-auto">
-          Aucun document ne correspond à vos critères de recherche. Essayez de modifier ou de réinitialiser vos filtres.
-        </p>
-        <v-btn
-          color="primary"
-          variant="tonal"
-          prepend-icon="mdi-refresh"
-          class="rounded-pill"
-          @click="resetFilters"
-        >
-          Réinitialiser les filtres
-        </v-btn>
-      </v-card>
-
-      <!-- Grouped View (Default when not filtering) -->
-      <CourseGroups
-        v-else-if="currentLayoutMode === 'grouped'"
-        :sections="sections"
-        :mode="userViewMode === 'list' ? 'list' : 'grid'"
-      />
-
-      <!-- Flat Paginated View (Grid or List Mode) -->
-      <v-data-iterator v-else :items="shown" :items-per-page="24">
-        <template #default="{ items: page }">
-          <div v-if="currentLayoutMode === 'list'" class="d-flex flex-column ga-3">
-            <FileCard
-              v-for="row in page"
-              :key="row.raw.fileId"
-              :item="row.raw"
-              mode="list"
-            />
-          </div>
-
-          <v-row v-else class="match-height">
-            <v-col
-              v-for="row in page"
-              :key="row.raw.fileId"
-              cols="12"
-              sm="6"
-              md="4"
-              lg="3"
-              class="d-flex"
+      <!-- Actively filtering/searching: flat results view. UnfoldingCards is a pure
+           click-through browser (level -> chapter -> docs) with no concept of search
+           results, so filtered results still need this flat, filterable rendering. -->
+      <template v-else-if="filtering">
+        <div class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4 px-1">
+          <div class="d-flex align-center ga-2">
+            <span class="text-subtitle-2 font-weight-bold">
+              {{ shown.length }} résultat{{ shown.length > 1 ? "s" : "" }}
+            </span>
+            <v-chip size="x-small" color="primary" variant="tonal">
+              Filtré
+            </v-chip>
+            <!-- Shown while a cached page refreshes behind the scenes, so nothing on screen is
+                 silently out of date. -->
+            <v-chip
+              v-if="refreshing"
+              size="x-small"
+              variant="tonal"
+              data-test="refreshing"
+              prepend-icon="mdi-sync"
             >
-              <FileCard :item="row.raw" mode="grid" />
-            </v-col>
-          </v-row>
-        </template>
-
-        <template #footer="{ page, pageCount, prevPage, nextPage }">
-          <div v-if="pageCount > 1" class="d-flex align-center justify-center ga-4 pa-6">
-            <v-btn
-              icon="mdi-chevron-left"
-              variant="tonal"
-              size="small"
-              :disabled="page === 1"
-              @click="prevPage"
-            />
-            <span class="text-body-2 font-weight-medium px-2">Page {{ page }} sur {{ pageCount }}</span>
-            <v-btn
-              icon="mdi-chevron-right"
-              variant="tonal"
-              size="small"
-              :disabled="page === pageCount"
-              @click="nextPage"
-            />
+              Mise à jour…
+            </v-chip>
           </div>
-        </template>
-      </v-data-iterator>
+
+          <!-- View Mode Switcher -->
+          <div class="d-flex align-center ga-1 bg-surface rounded-pill border pa-1">
+            <v-btn
+              size="x-small"
+              :variant="userViewMode === 'grid' ? 'flat' : 'text'"
+              :color="userViewMode === 'grid' ? 'primary' : 'default'"
+              class="rounded-pill px-3"
+              prepend-icon="mdi-grid"
+              @click="userViewMode = 'grid'"
+            >
+              Grille
+            </v-btn>
+            <v-btn
+              size="x-small"
+              :variant="userViewMode === 'list' ? 'flat' : 'text'"
+              :color="userViewMode === 'list' ? 'primary' : 'default'"
+              class="rounded-pill px-3"
+              prepend-icon="mdi-format-list-bulleted"
+              @click="userViewMode = 'list'"
+            >
+              Liste
+            </v-btn>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <v-card v-if="shown.length === 0" class="text-center py-12 px-4 rounded-2xl border-0 shadow-sm" elevation="0">
+          <v-icon icon="mdi-file-search-outline" size="64" color="medium-emphasis" class="mb-4" />
+          <h3 class="text-h6 font-weight-bold mb-1">Aucun résultat trouvé</h3>
+          <p class="text-body-2 text-medium-emphasis mb-6 max-w-400 mx-auto">
+            Aucun document ne correspond à vos critères de recherche. Essayez de modifier ou de réinitialiser vos filtres.
+          </p>
+          <v-btn
+            color="primary"
+            variant="tonal"
+            prepend-icon="mdi-refresh"
+            class="rounded-pill"
+            @click="resetFilters"
+          >
+            Réinitialiser les filtres
+          </v-btn>
+        </v-card>
+
+        <!-- Flat Paginated View (Grid or List Mode) -->
+        <v-data-iterator v-else :items="shown" :items-per-page="24">
+          <template #default="{ items: page }">
+            <div v-if="userViewMode === 'list'" class="d-flex flex-column ga-3">
+              <FileCard
+                v-for="row in page"
+                :key="row.raw.fileId"
+                :item="row.raw"
+                mode="list"
+              />
+            </div>
+
+            <v-row v-else class="match-height">
+              <v-col
+                v-for="row in page"
+                :key="row.raw.fileId"
+                cols="12"
+                sm="6"
+                md="4"
+                lg="3"
+                class="d-flex"
+              >
+                <FileCard :item="row.raw" mode="grid" />
+              </v-col>
+            </v-row>
+          </template>
+
+          <template #footer="{ page, pageCount, prevPage, nextPage }">
+            <div v-if="pageCount > 1" class="d-flex align-center justify-center ga-4 pa-6">
+              <v-btn
+                icon="mdi-chevron-left"
+                variant="tonal"
+                size="small"
+                :disabled="page === 1"
+                @click="prevPage"
+              />
+              <span class="text-body-2 font-weight-medium px-2">Page {{ page }} sur {{ pageCount }}</span>
+              <v-btn
+                icon="mdi-chevron-right"
+                variant="tonal"
+                size="small"
+                :disabled="page === pageCount"
+                @click="nextPage"
+              />
+            </div>
+          </template>
+        </v-data-iterator>
+      </template>
+
+      <!-- Not filtering: browse by level -> chapter -> docs -->
+      <UnfoldingCards v-else :items="published" />
     </template>
   </v-container>
 </template>
@@ -194,10 +219,9 @@
 import { ref, computed, onMounted } from "vue";
 import FilterBar from "../components/FilterBar.vue";
 import FileCard from "../components/FileCard.vue";
-import CourseGroups from "../components/CourseGroups.vue";
+import UnfoldingCards from "../components/UnfoldingCards.vue";
 import { useLibrary } from "../composables/useLibrary";
 import { applyFilters, sortItems, type Filters } from "../lib/filter";
-import { groupCourses } from "../lib/group";
 import { isClassified } from "../lib/classification";
 
 const { items, loading, refreshing, stale, error, ensureLoaded } = useLibrary();
@@ -210,23 +234,14 @@ const { items, loading, refreshing, stale, error, ensureLoaded } = useLibrary();
  */
 const published = computed(() => items.value.filter((it) => isClassified(it.meta)));
 const filters = ref<Filters>({});
-const userViewMode = ref<"grouped" | "grid" | "list">("grouped");
+const userViewMode = ref<"grid" | "list">("grid");
 
 const filtering = computed(() => {
   const f = filters.value;
   return !!(f.level || f.type || f.subject || f.chapter || (f.search && f.search.trim()));
 });
 
-// If user is actively filtering, default layout switches to flat grid/list unless overridden
-const currentLayoutMode = computed(() => {
-  if (filtering.value) {
-    return userViewMode.value === "list" ? "list" : "grid";
-  }
-  return userViewMode.value;
-});
-
 const shown = computed(() => sortItems(applyFilters(published.value, filters.value)));
-const sections = computed(() => groupCourses(shown.value));
 
 function resetFilters(): void {
   filters.value = {};
@@ -242,5 +257,65 @@ onMounted(ensureLoaded);
 
 .max-w-400 {
   max-width: 400px;
+}
+
+.max-w-600 {
+  max-width: 600px;
+}
+
+.hero-banner {
+  background: linear-gradient(135deg, rgba(var(--v-theme-surface), 0.9), rgba(var(--v-theme-surface-variant), 0.4));
+  border: 1px solid rgba(var(--v-border-color), 0.12) !important;
+  position: relative;
+  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.04);
+}
+
+.hero-title {
+  font-family: 'Space Grotesk', sans-serif;
+  line-height: 1.15;
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, rgb(var(--v-theme-primary)), rgb(var(--v-theme-secondary)));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.quantum-bg-glow {
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, rgba(var(--v-theme-primary), 0.15) 0%, transparent 70%);
+  pointer-events: none;
+  border-radius: 50%;
+}
+
+.hero-stat-pill {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+/* Page-load entrance: hero, then filter bar, cascade in with a blur-to-focus reveal. */
+.entrance-block {
+  opacity: 0;
+  animation: entranceFocusIn 0.6s ease forwards;
+}
+
+.entrance-filter {
+  animation-delay: 150ms;
+}
+
+@keyframes entranceFocusIn {
+  from {
+    opacity: 0;
+    filter: blur(6px);
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: scale(1);
+  }
 }
 </style>

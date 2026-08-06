@@ -1,160 +1,89 @@
 <template>
-  <div class="filter-container mb-6">
-    <!-- Main Search & Quick Filters Card -->
-    <div class="rounded-xl border-0 shadow-sm pa-4 filter-card">
+  <div class="filter-container  mb-6">
+    <!-- Main Search Card -->
+    <div class="rounded-2xl border  pa-5 filter-card rounded-xl elevation-1">
       <!-- Search Input -->
       <v-text-field
         data-test="search"
         v-model="local.search"
-        placeholder="Rechercher par titre, chapitre ou mot-clé..."
+        placeholder="Rechercher par titre de cours, formule, chapitre ou mot-clé..."
         variant="solo-filled"
         flat
         density="comfortable"
         clearable
         hide-details
         prepend-inner-icon="mdi-magnify"
-        class="search-input rounded-lg mb-4"
+        class="search-input rounded-xl"
+        :class="{ 'mb-4': !mobile }"
         @update:model-value="emitChange"
       />
 
-      <!-- Quick Niveau Filter Chips -->
-      <div v-if="levels.length > 0" class="d-flex align-center flex-wrap ga-2 mb-3">
-        <span class="text-caption text-medium-emphasis font-weight-medium mr-1 d-none d-sm-inline">
-          Niveau :
-        </span>
-        <v-chip
-          size="small"
+      <!-- Desktop / wide screens: filters stay inline, right under search -->
+      <FilterControlsPanel
+        v-if="!mobile"
+        :items="items"
+        :model-value="local"
+        @update:model-value="onControlsChange"
+      />
+
+      <!-- Mobile: filters live behind a button, so search isn't buried under chips -->
+      <template v-else>
+        <v-btn
           variant="tonal"
-          :color="!local.level ? 'primary' : 'default'"
-          :class="{ 'font-weight-bold': !local.level }"
-          class="filter-chip"
-          data-test="level-all"
-          @click="selectLevel('')"
+          color="primary"
+          class="rounded-pill mt-4"
+          prepend-icon="mdi-tune-variant"
+          data-test="mobile-filters-trigger"
+          @click="sheetOpen = true"
         >
-          Tous
-        </v-chip>
-        <v-chip
-          v-for="lvl in levels"
-          :key="lvl"
-          size="small"
-          variant="tonal"
-          :color="local.level === lvl ? 'primary' : 'default'"
-          :class="{ 'font-weight-bold': local.level === lvl }"
-          class="filter-chip"
-          :data-test="`level-${lvl}`"
-          @click="selectLevel(lvl)"
-        >
-          <v-icon icon="mdi-school-outline" size="14" class="mr-1" />
-          {{ lvl }}
-        </v-chip>
-      </div>
-
-      <!-- Quick Type Filter Chips & Advanced Toggle -->
-      <div class="d-flex align-center justify-space-between flex-wrap ga-3">
-        <!-- Quick Type Pills -->
-        <div v-if="types.length > 0" class="d-flex align-center flex-wrap ga-2">
-          <span class="text-caption text-medium-emphasis font-weight-medium mr-1 d-none d-sm-inline">
-            Type :
-          </span>
+          Filtres
           <v-chip
-            size="small"
-            variant="tonal"
-            :color="!local.type ? 'primary' : 'default'"
-            :class="{ 'font-weight-bold': !local.type }"
-            class="filter-chip"
-            @click="selectType('')"
+            v-if="mobileFilterCount > 0"
+            size="x-small"
+            color="primary"
+            variant="flat"
+            class="ml-2 font-weight-bold"
           >
-            Tous
+            {{ mobileFilterCount }}
           </v-chip>
-          <v-chip
-            v-for="t in types"
-            :key="t"
-            size="small"
-            variant="tonal"
-            :color="local.type === t ? 'primary' : 'default'"
-            :class="{ 'font-weight-bold': local.type === t }"
-            class="filter-chip"
-            @click="selectType(t)"
-          >
-            {{ t }}
-          </v-chip>
-        </div>
+        </v-btn>
 
-        <v-spacer />
-
-        <!-- Actions: Advanced Filter Toggle & Reset -->
-        <div class="d-flex align-center ga-2">
-          <v-btn
-            v-if="hasActiveFilters"
-            size="small"
-            variant="text"
-            color="error"
-            prepend-icon="mdi-filter-remove-outline"
-            @click="clearFilters"
-          >
-            Réinitialiser ({{ activeCount }})
-          </v-btn>
-
-          <v-btn
-            size="small"
-            variant="tonal"
-            :color="showAdvanced ? 'primary' : 'default'"
-            :append-icon="showAdvanced ? 'mdi-chevron-up' : 'mdi-chevron-down'"
-            prepend-icon="mdi-tune-variant"
-            @click="showAdvanced = !showAdvanced"
-          >
-            Filtres avancés
-          </v-btn>
-        </div>
-      </div>
-
-      <!-- Advanced Expandable Dropdown Filters -->
-      <v-expand-transition>
-        <div v-show="showAdvanced" class="pt-4 mt-3 border-t">
-          <v-row dense>
-            <v-col cols="12" sm="6" md="6">
-              <v-select
-                label="Matière"
-                :items="subjects"
-                v-model="local.subject"
-                clearable
-                hide-details
-                density="comfortable"
-                variant="outlined"
-                prepend-inner-icon="mdi-book-open-variant"
-                @update:model-value="emitChange"
-              />
-            </v-col>
-            <v-col cols="12" sm="6" md="6">
-              <v-select
-                label="Chapitre"
-                :items="chapters"
-                v-model="local.chapter"
-                clearable
-                hide-details
-                density="comfortable"
-                variant="outlined"
-                prepend-inner-icon="mdi-bookmark-outline"
-                @update:model-value="emitChange"
-              />
-            </v-col>
-          </v-row>
-        </div>
-      </v-expand-transition>
+        <v-bottom-sheet v-model="sheetOpen">
+          <v-card class="rounded-t-xl pa-4" data-test="mobile-filters-sheet">
+            <FilterControlsPanel
+              :items="items"
+              :model-value="local"
+              @update:model-value="onControlsChange"
+            />
+          </v-card>
+        </v-bottom-sheet>
+      </template>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from "vue";
-import { distinctValues, distinctChapters, distinctLevels, type Filters } from "../lib/filter";
+import { useDisplay } from "vuetify";
+import FilterControlsPanel from "./FilterControlsPanel.vue";
+import type { Filters } from "../lib/filter";
 import type { LibraryItem } from "../lib/types";
 
 const props = defineProps<{ items: LibraryItem[]; modelValue: Filters }>();
 const emit = defineEmits<{ "update:modelValue": [Filters] }>();
 
-const showAdvanced = ref(false);
+const { mobile } = useDisplay();
+const sheetOpen = ref(false);
+
 const local = reactive<Filters>({ ...props.modelValue });
+
+watch(
+  local,
+  () => {
+    emitChange();
+  },
+  { deep: true }
+);
 
 watch(
   () => props.modelValue,
@@ -168,76 +97,48 @@ function emitChange(): void {
   emit("update:modelValue", { ...local });
 }
 
-function selectType(t: string): void {
-  local.type = t || undefined;
+// FilterControlsPanel manages level/type/subject/chapter (and passes search through
+// untouched) with the exact same v-model contract this component has with its own
+// parent — so a "reset everything" from inside the panel also clears search here.
+function onControlsChange(val: Filters): void {
+  Object.assign(local, val);
   emitChange();
 }
 
-function selectLevel(lvl: string): void {
-  local.level = lvl || undefined;
-  emitChange();
-}
-
-function clearFilters(): void {
-  local.level = undefined;
-  local.type = undefined;
-  local.subject = undefined;
-  local.chapter = undefined;
-  local.search = undefined;
-  emitChange();
-}
-
-const activeCount = computed(() => {
+// Badge on the mobile "Filtres" button — search isn't counted, it has its own visible box.
+const mobileFilterCount = computed(() => {
   let count = 0;
   if (local.level) count++;
   if (local.type) count++;
   if (local.subject) count++;
   if (local.chapter) count++;
-  if (local.search && local.search.trim()) count++;
   return count;
 });
-
-const hasActiveFilters = computed(() => activeCount.value > 0);
-
-const levels = computed(() => distinctLevels(props.items));
-const types = computed(() => distinctValues(props.items, "type"));
-const subjects = computed(() => distinctValues(props.items, "subject"));
-const chapters = computed(() => {
-  const scoped = local.level
-    ? props.items.filter((it) => it.meta.level.includes(local.level!))
-    : props.items;
-  return distinctChapters(scoped);
-});
-
-watch(
-  () => local.level,
-  () => {
-    if (local.chapter && !chapters.value.includes(local.chapter)) {
-      local.chapter = undefined;
-      emitChange();
-    }
-  }
-);
 </script>
 
 <style scoped>
 .filter-card {
-  background: rgba(var(--v-theme-surface), 0.9);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(var(--v-border-color), 0.12) !important;
+  background: rgba(var(--v-theme-surface), 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(var(--v-border-color), 0.1) !important;
 }
 
 .search-input :deep(.v-field) {
-  border-radius: 12px !important;
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  border-radius: 16px !important;
+  transition: box-shadow 0.25s ease, border-color 0.25s ease;
+  background: rgba(var(--v-theme-surface-variant), 0.3) !important;
+}
+
+.search-input :deep(.v-field--focused) {
+  box-shadow: 0 0 0 2px rgba(var(--v-theme-primary), 0.4) !important;
 }
 
 .filter-chip {
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .filter-chip:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 </style>

@@ -4,7 +4,7 @@
 
     <div v-else class="max-width-xl mx-auto py-6 px-4">
       <!-- Admin Toolbar Card -->
-      <v-card class="rounded-xl border mb-6 pa-3 filter-toolbar sticky-toolbar" elevation="0">
+      <v-card class="rounded-2xl border mb-6 pa-4 filter-toolbar sticky-toolbar elevation-1" elevation="0">
         <div class="d-flex align-center justify-space-between flex-wrap ga-3">
           <v-text-field
             v-model="search"
@@ -12,12 +12,12 @@
             placeholder="Rechercher par fichier, titre, niveau..."
             prepend-inner-icon="mdi-magnify"
             hide-details
-            density="compact"
+            density="comfortable"
             variant="solo-filled"
             flat
             clearable
-            class="search-input rounded-lg flex-grow-1"
-            style="max-width: 360px"
+            class="search-input rounded-xl flex-grow-1"
+            style="max-width: 380px"
           />
 
           <!-- Unsaved changes status badge -->
@@ -104,22 +104,27 @@
 
         <v-col cols="12" md="9" class="pa-0">
       <!-- Classification progress (scoped to the selected folder) -->
-      <v-card v-show="rows.length > 0" class="rounded-xl border pa-4 mb-4" elevation="0" data-test="progress">
-        <div class="d-flex align-center justify-space-between mb-2 flex-wrap ga-2">
-          <span class="text-body-2 font-weight-medium d-flex align-center ga-2">
-            <v-icon icon="mdi-progress-check" size="18" color="primary" />
-            Fichiers classés (Niveau · Type · Matière · Chapitre)
+      <v-card v-show="rows.length > 0" class="rounded-2xl border pa-5 mb-4 shadow-sm" elevation="0" data-test="progress">
+        <div class="d-flex align-center justify-space-between mb-3 flex-wrap ga-2">
+          <span class="text-body-1 font-weight-bold d-flex align-center ga-2">
+            <v-icon icon="mdi-progress-check" size="20" color="primary" />
+            Progression du classement (Niveau · Type · Matière · Chapitre)
           </span>
-          <span class="text-body-2 font-weight-bold">
-            {{ stats.classified }} / {{ stats.total }}
-            <span :class="stats.percent === 100 ? 'text-success' : 'text-primary'">({{ stats.percent }}%)</span>
-          </span>
+          <v-chip
+            size="small"
+            :color="stats.percent === 100 ? 'success' : 'primary'"
+            variant="flat"
+            class="font-weight-bold rounded-pill px-3"
+          >
+            {{ stats.classified }} / {{ stats.total }} ({{ stats.percent }}%)
+          </v-chip>
         </div>
         <v-progress-linear
           :model-value="stats.percent"
           :color="stats.percent === 100 ? 'success' : 'primary'"
-          height="8"
+          height="10"
           rounded
+          class="rounded-pill"
         />
       </v-card>
 
