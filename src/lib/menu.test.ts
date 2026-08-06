@@ -88,6 +88,35 @@ describe("buildLevelMenu", () => {
     expect(inRc.files.map((f) => f.fileId)).toEqual(["x"]);
   });
 
+  it("matches a shared chapter across 2ème Bac SM/PC/SVT despite each level's own article-prefixed wording having been aligned", () => {
+    const item = full("shared", { level: ["2ème Bac SM", "2ème Bac PC", "2ème Bac SVT"], chapter: ["Dipôle RL"] });
+    for (const level of ["2ème Bac SM", "2ème Bac PC", "2ème Bac SVT"]) {
+      const phys = buildLevelMenu([item], level).sections[0];
+      const row = phys.rows.find((r) => r.chapter === "Dipôle RL")!;
+      expect(row.cells.find((c) => c.type === "Cours")!.files.map((f) => f.fileId)).toEqual(["shared"]);
+    }
+  });
+
+  it("matches the other chapters verified as identical across 2ème Bac SM/PC/SVT", () => {
+    const shared = [
+      { chapter: "Oscillations libres d'un circuit RLC en série", subject: "Physique" },
+      { chapter: "Oscillateurs mécaniques", subject: "Physique" },
+      { chapter: "Transformations chimiques s'effectuant dans les deux sens", subject: "Chimie" },
+    ];
+    for (const { chapter, subject } of shared) {
+      const item = full("shared-" + chapter, {
+        level: ["2ème Bac SM", "2ème Bac PC", "2ème Bac SVT"],
+        subject,
+        chapter: [chapter],
+      });
+      for (const level of ["2ème Bac SM", "2ème Bac PC", "2ème Bac SVT"]) {
+        const section = buildLevelMenu([item], level).sections.find((s) => s.subject === subject)!;
+        const row = section.rows.find((r) => r.chapter === chapter)!;
+        expect(row.cells.find((c) => c.type === "Cours")!.files.map((f) => f.fileId)).toEqual([item.fileId]);
+      }
+    }
+  });
+
   it("ignores off-program chapters and other levels", () => {
     const items = [
       full("keep", { type: "Cours", chapter: ["Ondes mécaniques progressives"] }),
