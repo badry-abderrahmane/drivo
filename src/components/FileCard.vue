@@ -113,7 +113,7 @@ const kind = computed(() => fileKind(props.item.name, props.item.mimeType));
 
 <style scoped>
 .course-card {
-  background: var(--v-theme-surface);
+  background: rgb(var(--v-theme-surface));
   border: 1px solid rgba(var(--v-border-color), 0.12) !important;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   text-decoration: none;
@@ -138,7 +138,7 @@ const kind = computed(() => fileKind(props.item.name, props.item.mimeType));
 
 .title-text {
   line-height: 1.35;
-  color: var(--v-theme-on-surface);
+  color: rgb(var(--v-theme-on-surface));
 }
 
 .line-clamp-2 {

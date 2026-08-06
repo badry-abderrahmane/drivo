@@ -107,7 +107,7 @@ const open = ref<string[]>([]);
 
 <style scoped>
 .group-panel {
-  background: var(--v-theme-surface);
+  background: rgb(var(--v-theme-surface));
   border: 1px solid rgba(var(--v-border-color), 0.12) !important;
   overflow: hidden;
   transition: border-color 0.2s ease;
