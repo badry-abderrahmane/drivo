@@ -86,6 +86,7 @@ export interface BulkPatch {
   type?: string;
   subject?: string;
   chapter?: string[];
+  title?: string;
 }
 
 /**
@@ -97,6 +98,7 @@ export function applyBulkPatch(rows: EditRow[], ids: Set<string>, patch: BulkPat
   let touched = 0;
   for (const r of rows) {
     if (!ids.has(r.fileId)) continue;
+    if (patch.title !== undefined) r.title = patch.title;
     if (patch.level !== undefined) r.level = [...patch.level];
     if (patch.type !== undefined) r.type = patch.type;
     if (patch.subject !== undefined) r.subject = patch.subject;

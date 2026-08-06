@@ -112,6 +112,14 @@ describe("applyBulkPatch", () => {
     expect(rs[1].subject).toBe("Physique"); // unselected row untouched
   });
 
+  it("applies a bulk title to the selected rows only", () => {
+    const rs = rows();
+    const n = applyBulkPatch(rs, new Set(["1"]), { title: "Nouveau titre" });
+    expect(n).toBe(1);
+    expect(rs[0].title).toBe("Nouveau titre");
+    expect(rs[1].title).toBe("T"); // unselected row untouched
+  });
+
   it("replaces list fields rather than merging them", () => {
     const rs = rows();
     applyBulkPatch(rs, new Set(["1"]), { level: ["1ère Bac SM"], chapter: ["Optique"] });
@@ -121,9 +129,10 @@ describe("applyBulkPatch", () => {
 
   it("treats a present-but-empty value as an instruction to clear the field", () => {
     const rs = rows();
-    applyBulkPatch(rs, new Set(["1"]), { type: "", level: [] });
+    applyBulkPatch(rs, new Set(["1"]), { type: "", level: [], title: "" });
     expect(rs[0].type).toBe("");
     expect(rs[0].level).toEqual([]);
+    expect(rs[0].title).toBe("");
   });
 
   it("clones list values so patched rows never share an array", () => {
