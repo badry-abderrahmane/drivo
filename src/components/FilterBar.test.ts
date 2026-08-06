@@ -20,4 +20,20 @@ describe("FilterBar", () => {
     expect(events.length).toBeGreaterThan(0);
     expect(events[events.length - 1][0].search).toBe("newton");
   });
+
+  it("emits the selected level when a Niveau quick-pill is clicked", async () => {
+    const w = mountWithVuetify(FilterBar, { props: { items, modelValue: {} as Filters } });
+    await w.get('[data-test="level-2ème Bac SM"]').trigger("click");
+    const events = w.emitted("update:modelValue") as Filters[][];
+    expect(events[events.length - 1][0].level).toBe("2ème Bac SM");
+  });
+
+  it("clears the level when the Niveau 'Tous' pill is clicked", async () => {
+    const w = mountWithVuetify(FilterBar, {
+      props: { items, modelValue: { level: "2ème Bac SM" } as Filters },
+    });
+    await w.get('[data-test="level-all"]').trigger("click");
+    const events = w.emitted("update:modelValue") as Filters[][];
+    expect(events[events.length - 1][0].level).toBeUndefined();
+  });
 });

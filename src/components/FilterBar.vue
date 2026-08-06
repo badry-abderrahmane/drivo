@@ -17,6 +17,38 @@
         @update:model-value="emitChange"
       />
 
+      <!-- Quick Niveau Filter Chips -->
+      <div v-if="levels.length > 0" class="d-flex align-center flex-wrap ga-2 mb-3">
+        <span class="text-caption text-medium-emphasis font-weight-medium mr-1 d-none d-sm-inline">
+          Niveau :
+        </span>
+        <v-chip
+          size="small"
+          variant="tonal"
+          :color="!local.level ? 'primary' : 'default'"
+          :class="{ 'font-weight-bold': !local.level }"
+          class="filter-chip"
+          data-test="level-all"
+          @click="selectLevel('')"
+        >
+          Tous
+        </v-chip>
+        <v-chip
+          v-for="lvl in levels"
+          :key="lvl"
+          size="small"
+          variant="tonal"
+          :color="local.level === lvl ? 'primary' : 'default'"
+          :class="{ 'font-weight-bold': local.level === lvl }"
+          class="filter-chip"
+          :data-test="`level-${lvl}`"
+          @click="selectLevel(lvl)"
+        >
+          <v-icon icon="mdi-school-outline" size="14" class="mr-1" />
+          {{ lvl }}
+        </v-chip>
+      </div>
+
       <!-- Quick Type Filter Chips & Advanced Toggle -->
       <div class="d-flex align-center justify-space-between flex-wrap ga-3">
         <!-- Quick Type Pills -->
@@ -164,6 +196,11 @@ function emitChange(): void {
 
 function selectType(t: string): void {
   local.type = t || undefined;
+  emitChange();
+}
+
+function selectLevel(lvl: string): void {
+  local.level = lvl || undefined;
   emitChange();
 }
 
