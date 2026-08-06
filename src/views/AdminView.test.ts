@@ -410,6 +410,20 @@ describe("AdminView bulk classify", () => {
     expect(sent.every((r: { type: string }) => r.type === "")).toBe(true); // untouched stays empty
   });
 
+  it("applies a bulk title to every selected row", async () => {
+    const { w, saveMeta } = await mountAdminWith(two);
+    await selectAllAndOpenBulk(w);
+    const dialog = w.findComponent({ name: "BulkClassifyDialog" });
+    dialog.vm.$emit("apply", { title: "Chapitre 1" });
+    await flushPromises();
+
+    await w.get('[data-test="save"]').trigger("click");
+    await flushPromises();
+
+    const sent = saveMeta.mock.calls[0][1];
+    expect(sent.every((r: { title: string }) => r.title === "Chapitre 1")).toBe(true);
+  });
+
   it("clears the selection after applying", async () => {
     const { w } = await mountAdminWith(two);
     await selectAllAndOpenBulk(w);
@@ -476,5 +490,43 @@ describe("BulkClassifyDialog", () => {
     w.vm.form.chapter = [];
     await flushPromises();
     expect(w.vm.summary).toEqual(["Chapitre → (vidé)"]);
+  });
+
+  it("emits a touched title", async () => {
+    const w = await mountDialog();
+    w.vm.form.title = "Nouveau titre";
+    w.vm.touched.title = true;
+    await flushPromises();
+    w.vm.confirm();
+    expect(w.emitted("apply")![0][0]).toEqual({ title: "Nouveau titre" });
+  });
+
+  it("emits a touched-but-emptied title so it can be cleared", async () => {
+    const w = await mountDialog();
+    w.vm.touched.title = true;
+    w.vm.form.title = "";
+    await flushPromises();
+    w.vm.confirm();
+    expect(w.emitted("apply")![0][0]).toEqual({ title: "" });
+  });
+
+  it("summarises a touched title with its new value, and marks an emptied one as vidé", async () => {
+    const w = await mountDialog();
+    w.vm.touched.title = true;
+    w.vm.form.title = "Mécanique — Cours";
+    await flushPromises();
+    expect(w.vm.summary).toEqual(["Titre → Mécanique — Cours"]);
+
+    w.vm.form.title = "";
+    await flushPromises();
+    expect(w.vm.summary).toEqual(["Titre → (vidé)"]);
+  });
+
+  it("suggests titles from the chapter(s) chosen in this dialog, never from a file name", async () => {
+    const w = await mountDialog();
+    w.vm.form.chapter = ["Mécanique"];
+    w.vm.form.type = "Cours";
+    await flushPromises();
+    expect(w.vm.titleOptions).toEqual(["Mécanique", "Mécanique — Cours"]);
   });
 });

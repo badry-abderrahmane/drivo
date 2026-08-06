@@ -15,6 +15,35 @@
 
         <v-card-text class="pt-2">
           <v-row dense>
+            <v-col cols="12">
+              <v-combobox
+                v-model="form.title"
+                data-test="bulk-title"
+                label="Titre d'affichage"
+                :items="titleOptions"
+                :placeholder="untouchedLabel"
+                persistent-placeholder
+                :hint="titleOptions.length ? 'Suggestions d’après le(s) chapitre(s) choisi(s) ci-dessous — ou saisissez le vôtre' : 'Choisissez un chapitre pour voir des suggestions'"
+                persistent-hint
+                variant="outlined"
+                density="comfortable"
+                prepend-inner-icon="mdi-format-title"
+                class="rounded-lg mb-2"
+                :menu-props="{ maxHeight: 300 }"
+                @update:model-value="touched.title = true"
+              />
+              <v-btn
+                v-if="touched.title"
+                size="x-small"
+                variant="text"
+                class="mb-2"
+                data-test="reset-title"
+                @click="reset('title')"
+              >
+                Ne pas changer
+              </v-btn>
+            </v-col>
+
             <v-col cols="12" sm="6">
               <v-select
                 v-model="form.level"
@@ -197,7 +226,7 @@
 </template>
 
 <script setup lang="ts">
-// Bulk edit of the four classification fields.
+// Bulk edit of the title and the four classification fields.
 //
 // A field is emitted ONLY when it has been touched. "Touched but empty" is a real
 // instruction ("vider ce champ") and is still emitted — which is why the patch is built
@@ -205,6 +234,7 @@
 import { ref, reactive, computed, watch } from "vue";
 import { LEVELS, TYPES, SUBJECTS } from "../config";
 import { chaptersFor } from "../data/chapters";
+import { titleSuggestions } from "../views/adminRows";
 import type { BulkPatch } from "../views/adminRows";
 
 const props = defineProps<{ modelValue: boolean; count: number }>();
@@ -215,8 +245,8 @@ const emit = defineEmits<{
 
 const untouchedLabel = "— ne pas changer —";
 
-const form = reactive({ level: [] as string[], type: "", subject: "", chapter: [] as string[] });
-const touched = reactive({ level: false, type: false, subject: false, chapter: false });
+const form = reactive({ title: "", level: [] as string[], type: "", subject: "", chapter: [] as string[] });
+const touched = reactive({ title: false, level: false, type: false, subject: false, chapter: false });
 const confirming = ref(false);
 
 type Field = keyof typeof touched;
@@ -248,9 +278,16 @@ const chapterOptions = computed(() => [
   ...new Set(form.level.flatMap((l) => chaptersFor(l, form.subject))),
 ]);
 
+// Suggestions for this dialog's title field: driven by whatever chapter(s)/type are chosen
+// here, never by any single file's name (a bulk selection spans files with different names).
+const titleOptions = computed(() =>
+  titleSuggestions("", form.chapter, form.type, chapterOptions.value)
+);
+
 const summary = computed(() => {
   const lines: string[] = [];
   const show = (v: string) => (v === "" ? "(vidé)" : v);
+  if (touched.title) lines.push(`Titre → ${show(form.title)}`);
   if (touched.level) lines.push(`Niveau → ${form.level.length ? form.level.join(", ") : "(vidé)"}`);
   if (touched.type) lines.push(`Type → ${show(form.type)}`);
   if (touched.subject) lines.push(`Matière → ${show(form.subject)}`);
@@ -266,6 +303,7 @@ function close(): void {
 
 function confirm(): void {
   const patch: BulkPatch = {};
+  if (touched.title) patch.title = form.title ?? "";
   if (touched.level) patch.level = [...form.level];
   if (touched.type) patch.type = form.type ?? "";
   if (touched.subject) patch.subject = form.subject ?? "";
@@ -275,5 +313,5 @@ function confirm(): void {
 }
 
 // Exposed so the mount tests can drive the form without fighting Vuetify's menus in jsdom.
-defineExpose({ form, touched, summary, confirm });
+defineExpose({ form, touched, summary, confirm, titleOptions });
 </script>
