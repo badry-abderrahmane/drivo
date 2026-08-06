@@ -64,6 +64,15 @@ the existing visual identity (gradient title) for polish.
   already read `local.level` generically, so no behavior changes there
   beyond the UI that sets it.
 - `hasActiveFilters`/reset button behavior unaffected.
+- **Chapitre options depend on the selected Niveau.** The `chapters` computed
+  currently runs `distinctChapters(props.items)` over the full item set; it
+  changes to filter `props.items` down to items whose `meta.level` includes
+  `local.level` first when a level is selected (unfiltered when no level is
+  selected), so the Chapitre dropdown only lists chapters that actually exist
+  for that level. If the currently-selected `local.chapter` is no longer in
+  the recomputed list after a level change, it's cleared (via `emitChange`)
+  so the filter state never points at a chapter invisible in its own
+  dropdown. Matière is unaffected by level (no such dependency requested).
 
 ## Unaffected
 
@@ -90,7 +99,9 @@ the existing visual identity (gradient title) for polish.
 - Extend `FilterBar` component tests: clicking a level quick-pill sets
   `local.level`/emits it the same way the type pills already are tested;
   clicking "Tous" for level clears it; advanced panel no longer renders
-  Niveau/Type selects.
+  Niveau/Type selects; selecting a level narrows the Chapitre options to
+  that level's chapters; selecting a level that invalidates the currently
+  chosen chapter clears `local.chapter`.
 - `BrowseView.test.ts` has no existing coverage of the hero level pills
   (verified — no test references `toggleLevel`/`.level-pill`), so no test
   needs to move; removing `toggleLevel`/`allLevels` from `BrowseView.vue`
