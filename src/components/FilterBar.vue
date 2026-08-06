@@ -202,7 +202,22 @@ const hasActiveFilters = computed(() => activeCount.value > 0);
 const levels = computed(() => distinctLevels(props.items));
 const types = computed(() => distinctValues(props.items, "type"));
 const subjects = computed(() => distinctValues(props.items, "subject"));
-const chapters = computed(() => distinctChapters(props.items));
+const chapters = computed(() => {
+  const scoped = local.level
+    ? props.items.filter((it) => it.meta.level.includes(local.level!))
+    : props.items;
+  return distinctChapters(scoped);
+});
+
+watch(
+  () => local.level,
+  () => {
+    if (local.chapter && !chapters.value.includes(local.chapter)) {
+      local.chapter = undefined;
+      emitChange();
+    }
+  }
+);
 </script>
 
 <style scoped>
