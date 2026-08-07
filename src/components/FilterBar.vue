@@ -34,7 +34,7 @@
           class="rounded-pill mt-4"
           prepend-icon="mdi-tune-variant"
           data-test="mobile-filters-trigger"
-          @click="sheetOpen = true"
+          @click="openSheet"
         >
           Filtres
           <v-chip
@@ -52,9 +52,32 @@
           <v-card class="rounded-t-xl pa-4" data-test="mobile-filters-sheet">
             <FilterControlsPanel
               :items="items"
-              :model-value="local"
-              @update:model-value="onControlsChange"
+              :model-value="draft"
+              chip-size="large"
+              show-divider
+              @update:model-value="onDraftChange"
             />
+
+            <div class="d-flex ga-3 mt-4">
+              <v-btn
+                variant="outlined"
+                color="default"
+                class="rounded-pill flex-grow-1"
+                data-test="mobile-filters-cancel"
+                @click="cancelDraft"
+              >
+                Annuler
+              </v-btn>
+              <v-btn
+                variant="flat"
+                color="primary"
+                class="rounded-pill flex-grow-1"
+                data-test="mobile-filters-apply"
+                @click="applyDraft"
+              >
+                Filtrer
+              </v-btn>
+            </div>
           </v-card>
         </v-bottom-sheet>
       </template>
@@ -76,6 +99,10 @@ const { mobile } = useDisplay();
 const sheetOpen = ref(false);
 
 const local = reactive<Filters>({ ...props.modelValue });
+
+// Mobile only: chip taps inside the sheet edit this draft, not `local` directly, so
+// results only update once "Filtrer" is tapped — "Annuler" just discards it.
+const draft = reactive<Filters>({ ...props.modelValue });
 
 watch(
   local,
@@ -103,6 +130,25 @@ function emitChange(): void {
 function onControlsChange(val: Filters): void {
   Object.assign(local, val);
   emitChange();
+}
+
+function onDraftChange(val: Filters): void {
+  Object.assign(draft, val);
+}
+
+function openSheet(): void {
+  Object.assign(draft, local);
+  sheetOpen.value = true;
+}
+
+function applyDraft(): void {
+  Object.assign(local, draft);
+  emitChange();
+  sheetOpen.value = false;
+}
+
+function cancelDraft(): void {
+  sheetOpen.value = false;
 }
 
 // Badge on the mobile "Filtres" button — search isn't counted, it has its own visible box.

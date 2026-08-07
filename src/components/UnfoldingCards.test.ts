@@ -75,7 +75,7 @@ describe("UnfoldingCards.vue", () => {
       props: { items: mockItems },
     });
 
-    expect(wrapper.text()).toContain("1. Choisissez votre Niveau");
+    expect(wrapper.text()).toContain("Choisissez votre Niveau");
     expect(wrapper.find('[data-test="unfold-level-2BAC"]').exists()).toBe(true);
     expect(wrapper.find('[data-test="unfold-level-1BAC"]').exists()).toBe(true);
   });
@@ -87,7 +87,7 @@ describe("UnfoldingCards.vue", () => {
 
     await wrapper.find('[data-test="unfold-level-2BAC"]').trigger("click");
 
-    expect(wrapper.text()).toContain("2. Chapitres de 2BAC");
+    expect(wrapper.text()).toContain("Chapitres de 2BAC");
     expect(wrapper.find('[data-test="unfold-chapter-Ondes Mécaniques"]').exists()).toBe(true);
     expect(wrapper.find('[data-test="unfold-chapter-Transformations Nucléaires"]').exists()).toBe(true);
   });
@@ -100,19 +100,25 @@ describe("UnfoldingCards.vue", () => {
     await wrapper.find('[data-test="unfold-level-2BAC"]').trigger("click");
     await wrapper.find('[data-test="unfold-chapter-Ondes Mécaniques"]').trigger("click");
 
-    expect(wrapper.text()).toContain("3. Documents — Ondes Mécaniques");
+    expect(wrapper.text()).toContain("Documents — Ondes Mécaniques");
     expect(wrapper.text()).toContain("Cours Ondes Mécaniques");
   });
 
-  it("resets unfolding state when root back button is clicked", async () => {
+  it("steps back from chapters to levels, and from documents to chapters", async () => {
     const wrapper = mountWithVuetify(UnfoldingCards, {
       props: { items: mockItems },
     });
 
     await wrapper.find('[data-test="unfold-level-2BAC"]').trigger("click");
-    expect(wrapper.text()).toContain("2. Chapitres de 2BAC");
+    expect(wrapper.text()).toContain("Chapitres de 2BAC");
 
-    await wrapper.find('[data-test="unfold-back-root"]').trigger("click");
-    expect(wrapper.text()).toContain("1. Choisissez votre Niveau");
+    await wrapper.find('[data-test="unfold-chapter-Ondes Mécaniques"]').trigger("click");
+    expect(wrapper.text()).toContain("Documents — Ondes Mécaniques");
+
+    await wrapper.find('[data-test="unfold-back-to-chapters"]').trigger("click");
+    expect(wrapper.text()).toContain("Chapitres de 2BAC");
+
+    await wrapper.find('[data-test="unfold-back-to-levels"]').trigger("click");
+    expect(wrapper.text()).toContain("Choisissez votre Niveau");
   });
 });

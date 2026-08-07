@@ -64,7 +64,7 @@
         <div class="d-flex align-center justify-space-between mb-6">
           <div>
             <h2 class="text-h5 font-weight-black font-heading mb-1 d-flex align-center ga-2">
-              <v-btn icon="mdi-arrow-left" size="x-small" variant="tonal" class="mr-1" @click="selectedLevel = null" />
+              <v-btn icon="mdi-arrow-left" size="x-small" variant="tonal" class="mr-1" data-test="unfold-back-to-levels" @click="selectedLevel = null" />
               Chapitres de {{ selectedLevel }}
             </h2>
             <p class="text-body-2 text-medium-emphasis">
@@ -139,7 +139,7 @@
         <div class="d-flex align-center justify-space-between mb-4">
           <div>
             <h2 class="text-h5 font-weight-black font-heading mb-1 d-flex align-center ga-2">
-              <v-btn icon="mdi-arrow-left" size="x-small" variant="tonal" class="mr-1" @click="selectedChapter = null" />
+              <v-btn icon="mdi-arrow-left" size="x-small" variant="tonal" class="mr-1" data-test="unfold-back-to-chapters" @click="selectedChapter = null" />
               Documents — {{ selectedChapter }}
             </h2>
             <p class="text-body-2 text-medium-emphasis">
@@ -194,18 +194,6 @@ function getSubjectIcon(subject: string): string {
   if (subject.toLowerCase().includes("chimie")) return "mdi-flask-outline";
   return "mdi-book-open-variant";
 }
-
-const currentStep = computed(() => {
-  if (!selectedLevel.value) return 1;
-  if (!selectedChapter.value) return 2;
-  return 3;
-});
-
-const stepTitle = computed(() => {
-  if (!selectedLevel.value) return "Sélection du Niveau";
-  if (!selectedChapter.value) return "Sélection du Chapitre";
-  return "Consultation des Documents";
-});
 
 // Extract levels with file count & unique chapter lists
 const levels = computed(() => {
@@ -288,10 +276,6 @@ function selectChapter(ch: string): void {
   selectedChapter.value = ch;
 }
 
-function resetAll(): void {
-  selectedLevel.value = null;
-  selectedChapter.value = null;
-}
 </script>
 
 <style scoped>

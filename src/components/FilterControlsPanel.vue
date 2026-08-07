@@ -6,7 +6,7 @@
         Niveau :
       </span>
       <v-chip
-        size="small"
+        :size="chipSize"
         variant="tonal"
         :color="!local.level ? 'primary' : 'default'"
         :class="{ 'font-weight-bold elevation-1': !local.level }"
@@ -19,7 +19,7 @@
       <v-chip
         v-for="lvl in levels"
         :key="lvl"
-        size="small"
+        :size="chipSize"
         variant="tonal"
         :color="local.level === lvl ? 'primary' : 'default'"
         :class="{ 'font-weight-bold elevation-1': local.level === lvl }"
@@ -32,6 +32,8 @@
       </v-chip>
     </div>
 
+    <v-divider v-if="showDivider" class="my-4" />
+
     <!-- Quick Type Filter Chips & Advanced Toggle -->
     <div class="d-flex align-center justify-space-between flex-wrap ga-3">
       <!-- Quick Type Pills -->
@@ -40,7 +42,7 @@
           Type :
         </span>
         <v-chip
-          size="small"
+          :size="chipSize"
           variant="tonal"
           :color="!local.type ? 'primary' : 'default'"
           :class="{ 'font-weight-bold elevation-1': !local.type }"
@@ -52,7 +54,7 @@
         <v-chip
           v-for="t in types"
           :key="t"
-          size="small"
+          :size="chipSize"
           variant="tonal"
           :color="local.type === t ? 'primary' : 'default'"
           :class="{ 'font-weight-bold elevation-1': local.type === t }"
@@ -136,7 +138,20 @@ import { ref, reactive, computed, watch } from "vue";
 import { distinctValues, distinctChapters, distinctLevels, type Filters } from "../lib/filter";
 import type { LibraryItem } from "../lib/types";
 
-const props = defineProps<{ items: LibraryItem[]; modelValue: Filters }>();
+const props = withDefaults(
+  defineProps<{
+    items: LibraryItem[];
+    modelValue: Filters;
+    /** Chip size — bumped up for the touch-friendly mobile bottom sheet. */
+    chipSize?: "small" | "large";
+    /** Divider between the Niveau and Type chip rows — mobile sheet only. */
+    showDivider?: boolean;
+  }>(),
+  {
+    chipSize: "small",
+    showDivider: false,
+  }
+);
 const emit = defineEmits<{ "update:modelValue": [Filters] }>();
 
 const showAdvanced = ref(false);
