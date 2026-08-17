@@ -1,5 +1,5 @@
 import type { LibraryItem } from "./types";
-import { LEVELS, TYPES } from "../config";
+import { LEVELS, TYPES, EXAMEN_NATIONAL_TYPE } from "../config";
 import { CHAPTERS_BY_LEVEL, type LevelChapters } from "../data/chapters";
 import { isClassified } from "./classification";
 
@@ -49,7 +49,10 @@ function typeRank(type: string): number {
  */
 export function buildLevelMenu(items: LibraryItem[], level: string): LevelMenu {
   const program = CHAPTERS_BY_LEVEL[level];
-  const ready = items.filter((it) => isMenuReady(it) && it.meta.level.includes(level));
+  // Examen National has its own dedicated page, so it never appears as a thematic column.
+  const ready = items.filter(
+    (it) => isMenuReady(it) && it.meta.level.includes(level) && it.meta.type !== EXAMEN_NATIONAL_TYPE
+  );
 
   // Columns: doc types present anywhere in this level, ordered by config.
   const types = [...new Set(ready.map((it) => it.meta.type))].sort(

@@ -50,6 +50,17 @@
         </v-btn>
 
         <v-btn
+          :to="{ name: 'examen-national' }"
+          :variant="route.name === 'examen-national' ? 'flat' : 'text'"
+          :color="route.name === 'examen-national' ? 'primary' : 'default'"
+          size="small"
+          class="rounded-pill font-weight-semibold px-4 nav-pill"
+          prepend-icon="mdi-certificate-outline"
+        >
+          Examen National
+        </v-btn>
+
+        <v-btn
           :to="{ name: 'admin' }"
           :variant="route.name === 'admin' ? 'flat' : 'text'"
           :color="route.name === 'admin' ? 'primary' : 'default'"
@@ -83,6 +94,10 @@
       <v-btn :to="{ name: 'menu' }" :color="route.name === 'menu' ? 'primary' : undefined">
         <v-icon icon="mdi-format-list-checks" />
         Menu
+      </v-btn>
+      <v-btn :to="{ name: 'examen-national' }" :color="route.name === 'examen-national' ? 'primary' : undefined">
+        <v-icon icon="mdi-certificate-outline" />
+        Examen
       </v-btn>
     </v-bottom-navigation>
 

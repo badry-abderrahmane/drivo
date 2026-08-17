@@ -26,10 +26,19 @@
       <div v-if="subtitle" class="text-caption text-medium-emphasis text-truncate">{{ subtitle }}</div>
 
       <div v-if="item.meta.chapter.length" class="d-flex flex-wrap ga-1 mt-1">
-        <span v-for="ch in item.meta.chapter" :key="ch" class="chapter-tag">
+        <span v-for="ch in visibleChapters" :key="ch" class="chapter-tag">
           <v-icon icon="mdi-atom" size="12" />
           {{ ch }}
         </span>
+        <button
+          v-if="hiddenChapterCount > 0"
+          type="button"
+          class="chapter-tag chapter-toggle"
+          data-test="chapter-toggle"
+          @click.stop.prevent="showAllChapters = true"
+        >
+          +{{ hiddenChapterCount }}
+        </button>
       </div>
     </div>
 
@@ -66,12 +75,21 @@
 
     <p v-if="subtitle" class="text-caption text-medium-emphasis mb-2 font-weight-medium">{{ subtitle }}</p>
 
-    <!-- All chapters, fully visible (wrapping tags) -->
+    <!-- Chapters, collapsed to 3 with a toggle to reveal the rest -->
     <div v-if="item.meta.chapter.length" class="d-flex flex-wrap ga-1 mb-3">
-      <span v-for="ch in item.meta.chapter" :key="ch" class="chapter-tag">
+      <span v-for="ch in visibleChapters" :key="ch" class="chapter-tag">
         <v-icon icon="mdi-bookmark-outline" size="13" />
         {{ ch }}
       </span>
+      <button
+        v-if="hiddenChapterCount > 0"
+        type="button"
+        class="chapter-tag chapter-toggle"
+        data-test="chapter-toggle"
+        @click.stop.prevent="showAllChapters = true"
+      >
+        +{{ hiddenChapterCount }}
+      </button>
     </div>
 
     <p v-if="item.meta.description" class="text-body-2 text-medium-emphasis line-clamp-2 mb-3">
@@ -100,7 +118,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import type { LibraryItem } from "../lib/types";
 import { fileKind } from "../lib/fileKind";
 
@@ -120,6 +138,17 @@ const subtitle = computed(() =>
 );
 
 const kind = computed(() => fileKind(props.item.name, props.item.mimeType));
+
+// Chapter tags are collapsed to 3 by default — a card tagged with many chapters (common
+// for national exams, which span the whole program) shouldn't grow taller than its peers.
+const CHAPTER_PREVIEW_COUNT = 3;
+const showAllChapters = ref(false);
+const visibleChapters = computed(() =>
+  showAllChapters.value ? props.item.meta.chapter : props.item.meta.chapter.slice(0, CHAPTER_PREVIEW_COUNT)
+);
+const hiddenChapterCount = computed(() =>
+  showAllChapters.value ? 0 : Math.max(0, props.item.meta.chapter.length - CHAPTER_PREVIEW_COUNT)
+);
 </script>
 
 <style scoped>
@@ -178,6 +207,19 @@ const kind = computed(() => fileKind(props.item.name, props.item.mimeType));
   font-weight: 500;
   line-height: 1.25;
   white-space: normal;
+}
+
+.chapter-toggle {
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 700;
+  background: rgba(var(--v-theme-primary), 0.14);
+  transition: background 0.15s ease;
+}
+
+.chapter-toggle:hover {
+  background: rgba(var(--v-theme-primary), 0.24);
 }
 
 .card-arrow-icon {

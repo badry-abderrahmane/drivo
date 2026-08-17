@@ -10,5 +10,9 @@ export const LEVELS = [
   "2ème Bac PC",
   "2ème Bac SVT",
 ];
-export const TYPES = ["Cours", "Exercices", "Devoir surveillé", "Examen National", "Vidéo"];
+export const EXAMEN_NATIONAL_TYPE = "Examen National";
+export const TYPES = ["Cours", "Exercices", "Devoir surveillé", EXAMEN_NATIONAL_TYPE, "Vidéo"];
 export const SUBJECTS = ["Physique", "Chimie", "Physique & Chimie"];
+
+/** The 3 final-year levels the national exam ("Examen National") applies to. */
+export const EXAMEN_NATIONAL_LEVELS = LEVELS.filter((l) => l.startsWith("2ème Bac"));

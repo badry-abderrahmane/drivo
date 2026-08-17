@@ -117,6 +117,17 @@ describe("buildLevelMenu", () => {
     }
   });
 
+  it("excludes Examen National files — they have their own dedicated page", () => {
+    const items = [
+      full("exam", { type: "Examen National", level: ["2ème Bac SM"] }),
+      full("cours", { type: "Cours" }),
+    ];
+    const menu = buildLevelMenu(items, "2ème Bac SM");
+    expect(menu.types).toEqual(["Cours"]);
+    const allFiles = menu.sections.flatMap((s) => s.rows.flatMap((r) => r.cells.flatMap((c) => c.files)));
+    expect(allFiles.map((f) => f.fileId)).not.toContain("exam");
+  });
+
   it("ignores off-program chapters and other levels", () => {
     const items = [
       full("keep", { type: "Cours", chapter: ["Ondes mécaniques progressives"] }),

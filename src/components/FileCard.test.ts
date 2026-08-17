@@ -34,6 +34,24 @@ describe("FileCard", () => {
     expect(w.text()).toContain("Électricité");
   });
 
+  it("collapses chapters beyond 3 behind a toggle, expanded on click", async () => {
+    const many = {
+      ...item,
+      meta: { ...item.meta, chapter: ["Mécanique", "Ondes", "Électricité", "Optique", "Chimie orga"] },
+    };
+    const w = mountWithVuetify(FileCard, { props: { item: many } });
+    expect(w.text()).toContain("Mécanique");
+    expect(w.text()).toContain("Électricité");
+    expect(w.text()).not.toContain("Optique");
+    expect(w.text()).not.toContain("Chimie orga");
+    expect(w.text()).toContain("+2");
+
+    await w.get('[data-test="chapter-toggle"]').trigger("click");
+    expect(w.text()).toContain("Optique");
+    expect(w.text()).toContain("Chimie orga");
+    expect(w.find('[data-test="chapter-toggle"]').exists()).toBe(false);
+  });
+
   it("shows a file-type icon based on the file", () => {
     const pdf = mountWithVuetify(FileCard, { props: { item } }); // raw.pdf
     expect(pdf.find(".mdi-file-pdf-box").exists()).toBe(true);
