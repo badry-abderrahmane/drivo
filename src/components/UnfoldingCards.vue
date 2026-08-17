@@ -27,7 +27,7 @@
               variant="flat"
               class="unfold-card level-unfold-card rounded-2xl border pa-6 h-100 d-flex flex-column justify-space-between cursor-pointer"
               :data-test="`unfold-level-${lvl.level}`"
-              :style="{ animationDelay: `${index * 80}ms` }"
+              :style="{ animationDelay: `${staggerDelay(index)}ms` }"
               @click="selectLevel(lvl.level)"
             >
               <div>
@@ -105,7 +105,7 @@
                   variant="flat"
                   class="unfold-card chapter-unfold-card rounded-2xl border pa-5 h-100 d-flex flex-column justify-space-between cursor-pointer"
                   :data-test="`unfold-chapter-${ch.name}`"
-                  :style="{ animationDelay: `${index * 60}ms` }"
+                  :style="{ animationDelay: `${staggerDelay(index)}ms` }"
                   @click="selectChapter(ch.name)"
                 >
                   <div>
@@ -152,36 +152,78 @@
           Aucun document disponible dans ce chapitre.
         </div>
 
-        <v-row v-else class="match-height">
-          <v-col
-            v-for="item in currentDocs"
-            :key="item.fileId"
-            cols="12"
-            sm="6"
-            md="4"
-            lg="3"
-            class="d-flex"
-          >
-            <FileCard :item="item" mode="grid" data-test="unfold-doc-card" />
-          </v-col>
-        </v-row>
+        <template v-else>
+          <div v-for="group in docsByType" :key="group.type" class="mb-8">
+            <div class="d-flex align-center ga-2 mb-4 px-1 text-no-wrap flex-nowrap">
+              <v-icon :icon="getTypeIcon(group.type)" color="primary" size="18" />
+              <h3 class="text-subtitle-2 font-weight-bold font-heading text-no-wrap flex-shrink-0">
+                {{ group.type }}
+              </h3>
+              <v-chip size="x-small" color="primary" variant="tonal" class="font-weight-bold ml-1 flex-shrink-0">
+                {{ group.docs.length }} document{{ group.docs.length > 1 ? "s" : "" }}
+              </v-chip>
+              <v-divider class="ms-3 flex-grow-1" />
+            </div>
+
+            <v-row class="match-height">
+              <v-col
+                v-for="item in group.docs"
+                :key="item.fileId"
+                cols="12"
+                sm="6"
+                md="4"
+                lg="3"
+                class="d-flex"
+              >
+                <FileCard :item="item" mode="grid" data-test="unfold-doc-card" />
+              </v-col>
+            </v-row>
+          </div>
+        </template>
       </div>
     </v-slide-y-transition>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { computed } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import type { LibraryItem } from "../lib/types";
 import { chaptersOf, levelsOf, subjectOf } from "../lib/group";
+import { TYPES, EXAMEN_NATIONAL_TYPE } from "../config";
 import FileCard from "./FileCard.vue";
 
 const props = defineProps<{
   items: LibraryItem[];
 }>();
 
-const selectedLevel = ref<string | null>(null);
-const selectedChapter = ref<string | null>(null);
+const route = useRoute();
+const router = useRouter();
+
+// Drill-down position lives in the route query (not local state) so the browser's
+// Back button steps back through Niveau -> Chapitre -> Documents instead of leaving
+// the app entirely, and a level/chapter is bookmarkable and shareable.
+const selectedLevel = computed<string | null>({
+  get: () => (typeof route.query.level === "string" ? route.query.level : null),
+  set: (level) => {
+    router.push({ query: { ...route.query, level: level ?? undefined, chapter: undefined } });
+  },
+});
+const selectedChapter = computed<string | null>({
+  get: () => (typeof route.query.chapter === "string" ? route.query.chapter : null),
+  set: (chapter) => {
+    router.push({ query: { ...route.query, chapter: chapter ?? undefined } });
+  },
+});
+
+// Entrance stagger, capped so a long chapter list (up to 17 cards in one Matière
+// group) doesn't leave the tail end fading in over a second-plus while the grid
+// above it has already settled.
+const MAX_STAGGERED_CARDS = 6;
+const STAGGER_STEP_MS = 40;
+function staggerDelay(index: number): number {
+  return Math.min(index, MAX_STAGGERED_CARDS) * STAGGER_STEP_MS;
+}
 
 function getLevelIcon(lvl: string): string {
   if (lvl.includes("2BAC")) return "mdi-atom";
@@ -267,9 +309,45 @@ const currentDocs = computed(() => {
   );
 });
 
+// Documents within a chapter, split into sections by Type — Cours, then Exercices, then
+// Devoir surveillé, then whatever's left, in TYPES' canonical order (the one place this
+// priority is defined, so it stays in sync with the filter chips elsewhere in the app).
+const docsByType = computed(() => {
+  const groups = new Map<string, LibraryItem[]>();
+  for (const it of currentDocs.value) {
+    const type = it.meta.type || "Autre";
+    if (!groups.has(type)) groups.set(type, []);
+    groups.get(type)!.push(it);
+  }
+  const orderOf = (type: string) => {
+    const idx = TYPES.indexOf(type);
+    return idx === -1 ? TYPES.length : idx;
+  };
+  return Array.from(groups.entries())
+    .sort(([a], [b]) => orderOf(a) - orderOf(b))
+    .map(([type, docs]) => ({ type, docs }));
+});
+
+function getTypeIcon(type: string): string {
+  switch (type) {
+    case "Cours":
+      return "mdi-book-open-variant";
+    case "Exercices":
+      return "mdi-pencil-outline";
+    case "Devoir surveillé":
+      return "mdi-clipboard-text-clock-outline";
+    case EXAMEN_NATIONAL_TYPE:
+      return "mdi-certificate-outline";
+    case "Vidéo":
+      return "mdi-play-circle-outline";
+    default:
+      return "mdi-file-outline";
+  }
+}
+
 function selectLevel(lvl: string): void {
+  // The setter already clears `chapter` from the query.
   selectedLevel.value = lvl;
-  selectedChapter.value = null;
 }
 
 function selectChapter(ch: string): void {

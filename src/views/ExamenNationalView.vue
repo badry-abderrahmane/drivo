@@ -88,7 +88,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { computed, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import FileCard from "../components/FileCard.vue";
 import { useLibrary } from "../composables/useLibrary";
 import { groupExamsByYear, EXAMEN_NATIONAL_LEVELS } from "../lib/examenNational";
@@ -97,7 +98,17 @@ import { isClassified } from "../lib/classification";
 
 const { items, loading, stale, error, ensureLoaded } = useLibrary();
 
-const selectedLevel = ref<string | null>(null);
+const route = useRoute();
+const router = useRouter();
+
+// Selected level lives in the route query, not local state, so Back steps out to the
+// filière picker instead of leaving the app, and a level is bookmarkable/shareable.
+const selectedLevel = computed<string | null>({
+  get: () => (typeof route.query.level === "string" ? route.query.level : null),
+  set: (level) => {
+    router.push({ query: { ...route.query, level: level ?? undefined } });
+  },
+});
 
 const levels = computed(() =>
   EXAMEN_NATIONAL_LEVELS.map((level) => ({

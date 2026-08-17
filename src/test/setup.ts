@@ -11,6 +11,11 @@ globalThis.ResizeObserver = class {
   disconnect() {}
 } as unknown as typeof ResizeObserver;
 
+// VListItem scrolls the active item into view on selection; jsdom has no layout engine.
+if (!Element.prototype.scrollIntoView) {
+  Element.prototype.scrollIntoView = () => {};
+}
+
 // visualViewport is read by some Vuetify overlay components.
 if (!("visualViewport" in globalThis)) {
   (globalThis as Record<string, unknown>).visualViewport = null;

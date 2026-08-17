@@ -216,7 +216,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
+import { useRoute } from "vue-router";
 import FilterBar from "../components/FilterBar.vue";
 import FileCard from "../components/FileCard.vue";
 import UnfoldingCards from "../components/UnfoldingCards.vue";
@@ -225,6 +226,7 @@ import { applyFilters, sortItems, type Filters } from "../lib/filter";
 import { isClassified } from "../lib/classification";
 
 const { items, loading, refreshing, stale, error, ensureLoaded } = useLibrary();
+const route = useRoute();
 
 /**
  * Only classified files are shown to students: a file needs its Niveau, Type, Matière and
@@ -233,7 +235,19 @@ const { items, loading, refreshing, stale, error, ensureLoaded } = useLibrary();
  * files — it reads useLibrary directly.
  */
 const published = computed(() => items.value.filter((it) => isClassified(it.meta)));
+
+// A search from the command palette's "Voir tous les résultats" link arrives as ?search=.
+// This is a one-way seed (URL -> filters, never back), but it has to be a watcher rather
+// than a read at setup: the browse route stays mounted across a query-only navigation
+// (e.g. clicking that link while already on this page), so setup() alone would miss it.
 const filters = ref<Filters>({});
+watch(
+  () => route.query.search,
+  (q) => {
+    filters.value = { ...filters.value, search: typeof q === "string" ? q : undefined };
+  },
+  { immediate: true }
+);
 const userViewMode = ref<"grid" | "list">("grid");
 
 const filtering = computed(() => {

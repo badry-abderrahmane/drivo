@@ -23,15 +23,6 @@ afterEach(() => {
 });
 
 describe("FilterBar", () => {
-  it("emits updated filters when search changes", async () => {
-    const w = mountWithVuetify(FilterBar, { props: { items, modelValue: {} as Filters } });
-    const input = w.get('[data-test="search"] input');
-    await input.setValue("newton");
-    const events = w.emitted("update:modelValue") as Filters[][];
-    expect(events.length).toBeGreaterThan(0);
-    expect(events[events.length - 1][0].search).toBe("newton");
-  });
-
   it("shows filters inline on desktop-width screens (no trigger button)", () => {
     setViewportWidth(1280);
     const w = mountWithVuetify(FilterBar, { props: { items, modelValue: {} as Filters } });

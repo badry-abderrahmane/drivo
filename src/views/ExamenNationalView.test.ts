@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { createRouter, createMemoryHistory } from "vue-router";
 import { mountWithVuetify } from "../test/setup";
 import { flushPromises } from "@vue/test-utils";
 import type { LibraryItem } from "../lib/types";
@@ -20,9 +21,24 @@ async function mountExamenNational(items: LibraryItem[]) {
     readFreshCache: () => null,
   }));
   const ExamenNationalView = (await import("./ExamenNationalView.vue")).default;
-  const w = mountWithVuetify(ExamenNationalView);
+  // The selected level lives in the route query, so this needs a real router in its history.
+  const router = createRouter({
+    history: createMemoryHistory(),
+    routes: [{ path: "/", component: { template: "<div/>" } }],
+  });
+  router.push("/");
+  await router.isReady();
+  const w = mountWithVuetify(ExamenNationalView, { global: { plugins: [router] } });
   await flushPromises();
   return w;
+}
+
+// A route-query navigation resolves through a microtask, and Vuetify's transition
+// needs a real timer tick (not just a flushed microtask queue) before the new content lands.
+async function settle(): Promise<void> {
+  await flushPromises();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  await flushPromises();
 }
 
 function cardFor(w: Awaited<ReturnType<typeof mountExamenNational>>, level: string) {
@@ -46,7 +62,7 @@ describe("ExamenNationalView", () => {
       full("b", { title: "Sujet PC 2021" }),
     ]);
     await cardFor(w, "2ème Bac SM").trigger("click");
-    await flushPromises();
+    await settle();
     expect(w.text()).toContain("Examen National — 2ème Bac SM");
     const groups = w.findAll('[data-test="year-group"]');
     expect(groups.map((g) => g.text().includes("2023"))).toContain(true);

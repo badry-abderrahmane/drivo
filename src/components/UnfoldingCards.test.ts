@@ -1,7 +1,34 @@
 import { describe, it, expect } from "vitest";
+import { createRouter, createMemoryHistory } from "vue-router";
+import { flushPromises } from "@vue/test-utils";
 import { mountWithVuetify } from "../test/setup";
 import UnfoldingCards from "./UnfoldingCards.vue";
 import type { LibraryItem } from "../lib/types";
+
+// The component reads/writes its drill-down position via the route query, so every
+// mount needs a real router in its history (Back/Forward is exactly what's under test).
+async function mountUnfolding(items: LibraryItem[]) {
+  const router = createRouter({
+    history: createMemoryHistory(),
+    routes: [{ path: "/", component: { template: "<div/>" } }],
+  });
+  router.push("/");
+  await router.isReady();
+  const wrapper = mountWithVuetify(UnfoldingCards, {
+    props: { items },
+    global: { plugins: [router] },
+  });
+  return { wrapper, router };
+}
+
+// A route-query navigation resolves through a microtask, and Vuetify's out-in transition
+// needs a real timer tick (not just a flushed microtask queue) before the new step's DOM
+// lands. flushPromises() alone can leave the old step still rendered.
+async function settle(): Promise<void> {
+  await flushPromises();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  await flushPromises();
+}
 
 const mockItems: LibraryItem[] = [
   {
@@ -70,10 +97,8 @@ const mockItems: LibraryItem[] = [
 ];
 
 describe("UnfoldingCards.vue", () => {
-  it("renders level cards initially (Step 1)", () => {
-    const wrapper = mountWithVuetify(UnfoldingCards, {
-      props: { items: mockItems },
-    });
+  it("renders level cards initially (Step 1)", async () => {
+    const { wrapper } = await mountUnfolding(mockItems);
 
     expect(wrapper.text()).toContain("Choisissez votre Niveau");
     expect(wrapper.find('[data-test="unfold-level-2BAC"]').exists()).toBe(true);
@@ -81,11 +106,10 @@ describe("UnfoldingCards.vue", () => {
   });
 
   it("unfolds into chapters when a level card is clicked (Step 2)", async () => {
-    const wrapper = mountWithVuetify(UnfoldingCards, {
-      props: { items: mockItems },
-    });
+    const { wrapper } = await mountUnfolding(mockItems);
 
     await wrapper.find('[data-test="unfold-level-2BAC"]').trigger("click");
+    await settle();
 
     expect(wrapper.text()).toContain("Chapitres de 2BAC");
     expect(wrapper.find('[data-test="unfold-chapter-Ondes Mécaniques"]').exists()).toBe(true);
@@ -93,32 +117,78 @@ describe("UnfoldingCards.vue", () => {
   });
 
   it("unfolds into document cards when a chapter card is clicked (Step 3)", async () => {
-    const wrapper = mountWithVuetify(UnfoldingCards, {
-      props: { items: mockItems },
-    });
+    const { wrapper } = await mountUnfolding(mockItems);
 
     await wrapper.find('[data-test="unfold-level-2BAC"]').trigger("click");
+    await settle();
     await wrapper.find('[data-test="unfold-chapter-Ondes Mécaniques"]').trigger("click");
+    await settle();
 
     expect(wrapper.text()).toContain("Documents — Ondes Mécaniques");
     expect(wrapper.text()).toContain("Cours Ondes Mécaniques");
   });
 
   it("steps back from chapters to levels, and from documents to chapters", async () => {
-    const wrapper = mountWithVuetify(UnfoldingCards, {
-      props: { items: mockItems },
-    });
+    const { wrapper } = await mountUnfolding(mockItems);
 
     await wrapper.find('[data-test="unfold-level-2BAC"]').trigger("click");
+    await settle();
     expect(wrapper.text()).toContain("Chapitres de 2BAC");
 
     await wrapper.find('[data-test="unfold-chapter-Ondes Mécaniques"]').trigger("click");
+    await settle();
     expect(wrapper.text()).toContain("Documents — Ondes Mécaniques");
 
     await wrapper.find('[data-test="unfold-back-to-chapters"]').trigger("click");
+    await settle();
     expect(wrapper.text()).toContain("Chapitres de 2BAC");
 
     await wrapper.find('[data-test="unfold-back-to-levels"]').trigger("click");
+    await settle();
+    expect(wrapper.text()).toContain("Choisissez votre Niveau");
+  });
+
+  it("splits chapter documents into sections ordered Cours, Exercices, Devoir surveillé, others", async () => {
+    const mk = (id: string, type: string): LibraryItem => ({
+      fileId: id, name: id, mimeType: "application/pdf", path: [],
+      webViewLink: "u", modifiedTime: "2026-01-01", isFolder: false, displayTitle: type + " " + id,
+      meta: { fileId: id, level: ["2BAC"], type, subject: "Physique", chapter: ["Ondes"], title: "", description: "", tags: [], order: 0 },
+    });
+    // Deliberately out of order, so a pass here can't be an accident of input order.
+    const items = [mk("1", "Vidéo"), mk("2", "Devoir surveillé"), mk("3", "Exercices"), mk("4", "Cours")];
+    const { wrapper } = await mountUnfolding(items);
+
+    await wrapper.find('[data-test="unfold-level-2BAC"]').trigger("click");
+    await settle();
+    await wrapper.find('[data-test="unfold-chapter-Ondes"]').trigger("click");
+    await settle();
+
+    const text = wrapper.text();
+    const positions = ["Cours", "Exercices", "Devoir surveillé", "Vidéo"].map((t) => text.indexOf(t));
+    expect(positions.every((p) => p !== -1)).toBe(true);
+    expect(positions).toEqual([...positions].sort((a, b) => a - b));
+  });
+
+  it("puts the drill-down position in the route query, so Back steps out one level at a time", async () => {
+    const { wrapper, router } = await mountUnfolding(mockItems);
+
+    await wrapper.find('[data-test="unfold-level-2BAC"]').trigger("click");
+    await settle();
+    expect(router.currentRoute.value.query.level).toBe("2BAC");
+
+    await wrapper.find('[data-test="unfold-chapter-Ondes Mécaniques"]').trigger("click");
+    await settle();
+    expect(router.currentRoute.value.query.chapter).toBe("Ondes Mécaniques");
+
+    await router.back();
+    await settle();
+    expect(router.currentRoute.value.query.chapter).toBeUndefined();
+    expect(router.currentRoute.value.query.level).toBe("2BAC");
+    expect(wrapper.text()).toContain("Chapitres de 2BAC");
+
+    await router.back();
+    await settle();
+    expect(router.currentRoute.value.query.level).toBeUndefined();
     expect(wrapper.text()).toContain("Choisissez votre Niveau");
   });
 });

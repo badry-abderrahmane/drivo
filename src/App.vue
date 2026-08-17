@@ -25,6 +25,31 @@
 
       <v-spacer />
 
+      <!-- Search trigger: opens the command palette (also reachable via Cmd/Ctrl+K) -->
+      <button
+        v-if="!mobile"
+        type="button"
+        class="search-trigger rounded-pill d-flex align-center ga-2 mr-2"
+        data-test="search-trigger"
+        @click="searchOpen = true"
+      >
+        <v-icon icon="mdi-magnify" size="18" color="medium-emphasis" />
+        <span class="text-medium-emphasis text-body-2">Rechercher…</span>
+        <v-hotkey keys="cmd+k" class="ml-2" />
+      </button>
+      <v-btn
+        v-else
+        icon
+        variant="tonal"
+        size="small"
+        class="rounded-circle mr-2"
+        data-test="search-trigger"
+        title="Rechercher"
+        @click="searchOpen = true"
+      >
+        <v-icon icon="mdi-magnify" color="primary" />
+      </v-btn>
+
       <!-- MD3 Navigation Segment Pills (desktop / wide screens) -->
       <nav v-if="!mobile" class="d-flex align-center ga-1 bg-surface-variant-subtle pa-1 rounded-pill mr-2">
         <v-btn
@@ -101,6 +126,8 @@
       </v-btn>
     </v-bottom-navigation>
 
+    <SearchPalette v-model="searchOpen" />
+
     <v-main class="app-main">
       <router-view />
     </v-main>
@@ -108,11 +135,11 @@
     <!-- Footer -->
     <v-footer class="app-footer text-center d-flex flex-column py-6 border-t mt-12 bg-surface">
       <div class="d-flex align-center justify-center ga-2 mb-2">
-        <span class="text-caption text-medium-emphasis">\( E = h\nu \)</span>
+        <span class="text-caption text-medium-emphasis">E = hν</span>
         <span class="text-caption text-medium-emphasis">·</span>
-        <span class="text-caption text-medium-emphasis">\( \lambda = \frac{h}{p} \)</span>
+        <span class="text-caption text-medium-emphasis">λ = h / p</span>
         <span class="text-caption text-medium-emphasis">·</span>
-        <span class="text-caption text-medium-emphasis">\( F = q(E + v \times B) \)</span>
+        <span class="text-caption text-medium-emphasis">F = q(E + v × B)</span>
       </div>
       <div class="text-caption text-medium-emphasis">
         PIPC — Portail Interactif de Physique-Chimie © {{ new Date().getFullYear() }}
@@ -122,11 +149,14 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from "vue";
 import { useRoute } from "vue-router";
 import { useTheme, useDisplay } from "vuetify";
+import SearchPalette from "./components/SearchPalette.vue";
 
 const route = useRoute();
 const theme = useTheme();
+const searchOpen = ref(false);
 const { mobile } = useDisplay();
 
 function toggleTheme(): void {
@@ -185,6 +215,19 @@ function toggleTheme(): void {
 
 .color-inherit {
   color: inherit;
+}
+
+.search-trigger {
+  border: 1px solid rgba(var(--v-border-color), 0.15);
+  background: rgba(var(--v-theme-surface-variant), 0.4);
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.search-trigger:hover {
+  border-color: rgba(var(--v-theme-primary), 0.4);
+  background: rgba(var(--v-theme-surface-variant), 0.6);
 }
 
 .bg-surface-variant-subtle {

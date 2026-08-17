@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { createRouter, createMemoryHistory } from "vue-router";
 import { mountWithVuetify } from "../test/setup";
 import { flushPromises } from "@vue/test-utils";
 import type { LibraryItem } from "../lib/types";
@@ -20,9 +21,24 @@ async function mountMenu(items: LibraryItem[]) {
     readFreshCache: () => null,
   }));
   const MenuView = (await import("./MenuView.vue")).default;
-  const w = mountWithVuetify(MenuView);
+  // The selected level lives in the route query, so this needs a real router in its history.
+  const router = createRouter({
+    history: createMemoryHistory(),
+    routes: [{ path: "/", component: { template: "<div/>" } }],
+  });
+  router.push("/");
+  await router.isReady();
+  const w = mountWithVuetify(MenuView, { global: { plugins: [router] } });
   await flushPromises();
   return w;
+}
+
+// A route-query navigation resolves through a microtask, and Vuetify's transition
+// needs a real timer tick (not just a flushed microtask queue) before the new content lands.
+async function settle(): Promise<void> {
+  await flushPromises();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  await flushPromises();
 }
 
 function cardFor(w: Awaited<ReturnType<typeof mountMenu>>, level: string) {
@@ -41,7 +57,7 @@ describe("MenuView", () => {
   it("opens the full program as rows, filling cells and leaving others empty", async () => {
     const w = await mountMenu([full("1", { chapter: ["Ondes mécaniques progressives"] })]);
     await cardFor(w, "2ème Bac SM").trigger("click");
-    await flushPromises();
+    await settle();
     expect(w.text()).toContain("Menu thématique — 2ème Bac SM");
     // full program rows present, incl. a chapter with no file
     expect(w.text()).toContain("Ondes mécaniques progressives");
@@ -53,7 +69,7 @@ describe("MenuView", () => {
     document.body.innerHTML = "";
     const w = await mountMenu([full("1", {})]);
     await cardFor(w, "2ème Bac SM").trigger("click");
-    await flushPromises();
+    await settle();
     await w.get('[data-test="menu-link"]').trigger("click");
     await flushPromises();
     const iframe = document.querySelector('[data-test="preview-frame"]') as HTMLIFrameElement | null;

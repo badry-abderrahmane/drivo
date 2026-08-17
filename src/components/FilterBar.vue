@@ -1,24 +1,8 @@
 <template>
-  <div class="filter-container  mb-6">
-    <!-- Main Search Card -->
-    <div class="rounded-2xl border  pa-5 filter-card rounded-xl elevation-1">
-      <!-- Search Input -->
-      <v-text-field
-        data-test="search"
-        v-model="local.search"
-        placeholder="Rechercher par titre de cours, formule, chapitre ou mot-clé..."
-        variant="solo-filled"
-        flat
-        density="comfortable"
-        clearable
-        hide-details
-        prepend-inner-icon="mdi-magnify"
-        class="search-input rounded-xl"
-        :class="{ 'mb-4': !mobile }"
-        @update:model-value="emitChange"
-      />
-
-      <!-- Desktop / wide screens: filters stay inline, right under search -->
+  <div class="filter-container mb-4">
+    <!-- Main Filters Card -->
+    <div class="rounded border pa-3 filter-card">
+      <!-- Desktop / wide screens: filters stay inline -->
       <FilterControlsPanel
         v-if="!mobile"
         :items="items"
@@ -26,12 +10,12 @@
         @update:model-value="onControlsChange"
       />
 
-      <!-- Mobile: filters live behind a button, so search isn't buried under chips -->
+      <!-- Mobile: filters live behind a button -->
       <template v-else>
         <v-btn
           variant="tonal"
           color="primary"
-          class="rounded-pill mt-4"
+          class="rounded-pill"
           prepend-icon="mdi-tune-variant"
           data-test="mobile-filters-trigger"
           @click="openSheet"
@@ -151,7 +135,7 @@ function cancelDraft(): void {
   sheetOpen.value = false;
 }
 
-// Badge on the mobile "Filtres" button — search isn't counted, it has its own visible box.
+// Badge on the mobile "Filtres" button.
 const mobileFilterCount = computed(() => {
   let count = 0;
   if (local.level) count++;
@@ -167,16 +151,6 @@ const mobileFilterCount = computed(() => {
   background: rgba(var(--v-theme-surface), 0.95);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(var(--v-border-color), 0.1) !important;
-}
-
-.search-input :deep(.v-field) {
-  border-radius: 16px !important;
-  transition: box-shadow 0.25s ease, border-color 0.25s ease;
-  background: rgba(var(--v-theme-surface-variant), 0.3) !important;
-}
-
-.search-input :deep(.v-field--focused) {
-  box-shadow: 0 0 0 2px rgba(var(--v-theme-primary), 0.4) !important;
 }
 
 .filter-chip {

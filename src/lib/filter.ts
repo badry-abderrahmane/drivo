@@ -1,4 +1,5 @@
 import type { LibraryItem } from "./types";
+import { buildSearchIndex, searchItems } from "./search";
 
 export interface Filters {
   level?: string;
@@ -8,19 +9,20 @@ export interface Filters {
   search?: string;
 }
 
+// Structural filters (level/type/subject/chapter) narrow the set first; a search term then
+// ranks *that* set via the same fuzzy engine the search palette previews with, so a result
+// shown there is guaranteed to still be here for the same query.
 export function applyFilters(items: LibraryItem[], f: Filters): LibraryItem[] {
-  const q = (f.search ?? "").trim().toLowerCase();
-  return items.filter((it) => {
+  const narrowed = items.filter((it) => {
     if (f.level && !it.meta.level.includes(f.level)) return false;
     if (f.type && it.meta.type !== f.type) return false;
     if (f.subject && it.meta.subject !== f.subject) return false;
     if (f.chapter && !it.meta.chapter.includes(f.chapter)) return false;
-    if (q) {
-      const hay = (it.displayTitle + " " + it.meta.tags.join(" ")).toLowerCase();
-      if (!hay.includes(q)) return false;
-    }
     return true;
   });
+  const q = f.search ?? "";
+  if (!q.trim()) return narrowed;
+  return searchItems(buildSearchIndex(narrowed), q);
 }
 
 export function sortItems(items: LibraryItem[]): LibraryItem[] {
