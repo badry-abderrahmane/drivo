@@ -23,7 +23,7 @@ coordinate in the frontend is the public web-app URL.
 
 ```bash
 npm install
-npm run dev      # browse http://localhost:5173/drivo/  ·  admin http://localhost:5173/drivo/#/admin
+npm run dev      # browse http://localhost:5173/  ·  admin http://localhost:5173/admin
 npm test
 npm run build
 ```
@@ -38,8 +38,8 @@ npm run build
 
 ## Pages URLs
 
-- Browse: `https://badry-abderrahmane.github.io/drivo/`
-- Admin:  `https://badry-abderrahmane.github.io/drivo/#/admin`
+- Browse: `https://pipc.ma/`
+- Admin:  `https://pipc.ma/admin`
 
-The frontend is a Vue 3 + Vuetify single-page app (hash-routed); admin is the
-`#/admin` route, not a separate page.
+The frontend is a Vue 3 + Vuetify single-page app served from prerendered
+static HTML; admin is the `/admin` route, not a separate page.

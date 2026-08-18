@@ -299,7 +299,15 @@ static HTML; admin is the `/admin` route, not a separate page.
 grep -rn "drivo" src/ vite.config.ts index.html README.md | grep -v "drivo:manifest" | grep -v "drivo:admin_pw"
 ```
 
-Expected: **no output.** The two excluded patterns are `localStorage`/`sessionStorage` keys (`src/lib/cache.ts:14`, `src/lib/adminAuth.ts:3`) which are internal names, not URLs, and must NOT be renamed — changing them would silently invalidate every returning visitor's cache and log the admin out.
+Expected: exactly two matches, both introduced by Task 1 and both intentional —
+`src/lib/seo.test.ts:41` (the assertion proving `basePathOf` still handles a
+project-site URL, which is the guard against reintroducing this bug) and the
+doc comment at `src/lib/seo.ts:58`. Any *other* match is a real leftover.
+
+The two patterns excluded by the `grep -v`s are `localStorage`/`sessionStorage`
+keys (`src/lib/cache.ts:14`, `src/lib/adminAuth.ts:3`). They are internal names,
+not URLs, and must NOT be renamed — changing them would silently invalidate
+every returning visitor's cached library and log the admin out.
 
 - [ ] **Step 10: Run the full suite and type-check**
 
@@ -430,4 +438,4 @@ That restores `base: "/drivo/"`, the router base, `SITE_URL` and the README, and
 - A deep link such as `https://pipc.ma/niveau/2eme-bac-sm/` returns its own prerendered title.
 - `sitemap.xml` and every canonical name `pipc.ma`; `robots.txt` disallows `/admin`.
 - `npm test` passes (303 tests) and `npx vue-tsc --noEmit` is clean.
-- `grep -rn "drivo" src/ vite.config.ts index.html README.md` returns only the two storage keys.
+- `grep -rn "drivo" src/ vite.config.ts index.html README.md` returns only the two storage keys plus the two intentional `basePathOf` references.

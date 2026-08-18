@@ -9,7 +9,7 @@ import AdminView from "./views/AdminView.vue";
 // URL that can be prerendered to a static file and indexed. `?search=` stays a query
 // param: a result set is not a page worth indexing.
 export default createRouter({
-  history: createWebHistory("/drivo/"),
+  history: createWebHistory("/"),
   routes: [
     { path: "/", name: "browse", component: BrowseView },
     { path: "/niveau/:level", name: "level", component: BrowseView },

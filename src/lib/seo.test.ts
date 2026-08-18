@@ -48,21 +48,21 @@ describe("basePathOf", () => {
 
 describe("canonicalUrl", () => {
   it("uses the trailing-slash form, which a static host serves without a redirect", () => {
-    expect(canonicalUrl("/doc/a/titre")).toBe("https://badry-abderrahmane.github.io/drivo/doc/a/titre/");
+    expect(canonicalUrl("/doc/a/titre")).toBe("https://pipc.ma/doc/a/titre/");
   });
 
   it("leaves the root alone", () => {
-    expect(canonicalUrl("/")).toBe("https://badry-abderrahmane.github.io/drivo/");
+    expect(canonicalUrl("/")).toBe("https://pipc.ma/");
   });
 });
 
 describe("absoluteUrl", () => {
   it("joins the site base with a path without doubling the slash", () => {
-    expect(absoluteUrl("/menu")).toBe("https://badry-abderrahmane.github.io/drivo/menu");
+    expect(absoluteUrl("/menu")).toBe("https://pipc.ma/menu");
   });
 
   it("maps the root path to the base itself", () => {
-    expect(absoluteUrl("/")).toBe("https://badry-abderrahmane.github.io/drivo/");
+    expect(absoluteUrl("/")).toBe("https://pipc.ma/");
   });
 });
 
@@ -106,7 +106,7 @@ describe("enumeratePages", () => {
   });
 
   it("keeps the admin page out of the sitemap", () => {
-    expect(sitemapXml(enumeratePages(items))).not.toContain("/drivo/admin<");
+    expect(sitemapXml(enumeratePages(items))).not.toContain("pipc.ma/admin");
   });
 
   it("emits a page for every route the router can match", () => {
@@ -138,7 +138,7 @@ describe("enumeratePages", () => {
 
   it("links a document page to its siblings so crawlers can walk the library", () => {
     const doc = enumeratePages(items).find((p) => p.path === "/doc/a/dipole-rc-cours");
-    expect(doc?.body).toContain('href="/drivo/doc/b/dipole-rc-exercices/"');
+    expect(doc?.body).toContain('href="/doc/b/dipole-rc-exercices/"');
   });
 
   it("escapes document titles in the body", () => {
@@ -179,7 +179,7 @@ describe("sitemapXml", () => {
   const xml = sitemapXml(pages);
 
   it("lists absolute URLs", () => {
-    expect(xml).toContain("<loc>https://badry-abderrahmane.github.io/drivo/</loc>");
+    expect(xml).toContain("<loc>https://pipc.ma/</loc>");
   });
 
   it("includes lastmod when known", () => {
@@ -188,7 +188,7 @@ describe("sitemapXml", () => {
 
   it("omits noindex pages", () => {
     const out = sitemapXml([...pages, { path: "/x", title: "x", description: "x", body: "", noindex: true }]);
-    expect(out).not.toContain("/drivo/x/<");
+    expect(out).not.toContain("pipc.ma/x/");
   });
 
   it("is well-formed", () => {
@@ -200,7 +200,7 @@ describe("sitemapXml", () => {
 describe("robotsTxt", () => {
   it("disallows admin and points at the sitemap", () => {
     const out = robotsTxt();
-    expect(out).toContain("Disallow: /drivo/admin");
+    expect(out).toContain("Disallow: /admin");
     expect(out).toContain(`Sitemap: ${absoluteUrl("/sitemap.xml")}`);
   });
 });
