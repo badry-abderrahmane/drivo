@@ -2,6 +2,9 @@
 export const BACKEND_URL =
   "https://script.google.com/macros/s/AKfycbzxrDtvVBdg0XuBD0hXCuaBpF3WUlWAmCt0WWbUMJNOilXV0ualQYT5AqNSrZ965Jzqww/exec";
 
+/** Canonical origin + base path of the deployed site. Trailing slash required. */
+export const SITE_URL = "https://badry-abderrahmane.github.io/drivo/";
+
 export const LEVELS = [
   "Tronc Commun",
   "1ère Bac Sc. Exp",
