@@ -37,9 +37,25 @@ export function absoluteUrl(path: string): string {
   return SITE_URL.replace(/\/$/, "") + path;
 }
 
+/**
+ * Every page is written as `<path>/index.html`, and a static host serves that only at the
+ * trailing-slash URL — it 301-redirects the bare path to it. Canonicals, og:url, sitemap
+ * entries and internal links therefore all use the trailing-slash form, so an indexed URL
+ * is served directly instead of costing a redirect on every crawl. Vue Router matches
+ * either form (its default `strict: false`), so in-app navigation is unaffected.
+ */
+function withSlash(path: string): string {
+  return path.endsWith("/") ? path : path + "/";
+}
+
+/** The absolute URL a page declares as its own. */
+export function canonicalUrl(path: string): string {
+  return absoluteUrl(withSlash(path));
+}
+
 /** The in-site href a crawler follows: the Vite base plus the route path. */
 function href(path: string): string {
-  return "/drivo" + path;
+  return "/drivo" + withSlash(path);
 }
 
 function isoDate(t: string): string | undefined {
@@ -221,7 +237,7 @@ export function enumeratePages(items: LibraryItem[]): PageMeta[] {
 
 /** The built shell with this page's head metadata and content block written into it. */
 export function injectPage(shell: string, page: PageMeta): string {
-  const url = absoluteUrl(page.path);
+  const url = canonicalUrl(page.path);
   const head = [
     `<title>${escapeHtml(page.title)}</title>`,
     `<meta name="description" content="${escapeHtml(page.description)}">`,
@@ -250,7 +266,7 @@ export function sitemapXml(pages: PageMeta[]): string {
     .filter((p) => !p.noindex)
     .map((p) => {
       const lastmod = p.lastmod ? `<lastmod>${p.lastmod}</lastmod>` : "";
-      return `  <url><loc>${escapeHtml(absoluteUrl(p.path))}</loc>${lastmod}</url>`;
+      return `  <url><loc>${escapeHtml(canonicalUrl(p.path))}</loc>${lastmod}</url>`;
     })
     .join("\n");
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;

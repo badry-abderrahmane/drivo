@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { enumeratePages, absoluteUrl, injectPage, sitemapXml, robotsTxt, escapeHtml } from "./seo";
+import { enumeratePages, absoluteUrl, canonicalUrl, injectPage, sitemapXml, robotsTxt, escapeHtml } from "./seo";
 import type { LibraryItem } from "./types";
 
 const make = (fileId: string, over: Partial<LibraryItem["meta"]> = {}, title = "Dipôle RC — Cours"): LibraryItem => ({
@@ -29,6 +29,16 @@ const SHELL = `<!doctype html><html lang="fr"><head><title>PIPC</title></head><b
 describe("escapeHtml", () => {
   it("escapes the characters that would break an attribute or a tag", () => {
     expect(escapeHtml(`<a href="x">&'`)).toBe("&lt;a href=&quot;x&quot;&gt;&amp;&#39;");
+  });
+});
+
+describe("canonicalUrl", () => {
+  it("uses the trailing-slash form, which a static host serves without a redirect", () => {
+    expect(canonicalUrl("/doc/a/titre")).toBe("https://badry-abderrahmane.github.io/drivo/doc/a/titre/");
+  });
+
+  it("leaves the root alone", () => {
+    expect(canonicalUrl("/")).toBe("https://badry-abderrahmane.github.io/drivo/");
   });
 });
 
@@ -114,7 +124,7 @@ describe("enumeratePages", () => {
 
   it("links a document page to its siblings so crawlers can walk the library", () => {
     const doc = enumeratePages(items).find((p) => p.path === "/doc/a/dipole-rc-cours");
-    expect(doc?.body).toContain('href="/drivo/doc/b/dipole-rc-exercices"');
+    expect(doc?.body).toContain('href="/drivo/doc/b/dipole-rc-exercices/"');
   });
 
   it("escapes document titles in the body", () => {
@@ -134,7 +144,7 @@ describe("injectPage", () => {
 
   it("adds a description, a canonical link and OG tags", () => {
     expect(html).toContain('<meta name="description"');
-    expect(html).toContain(`<link rel="canonical" href="${absoluteUrl(page.path)}">`);
+    expect(html).toContain(`<link rel="canonical" href="${canonicalUrl(page.path)}">`);
     expect(html).toContain('<meta property="og:title"');
   });
 
@@ -164,7 +174,7 @@ describe("sitemapXml", () => {
 
   it("omits noindex pages", () => {
     const out = sitemapXml([...pages, { path: "/x", title: "x", description: "x", body: "", noindex: true }]);
-    expect(out).not.toContain("/drivo/x<");
+    expect(out).not.toContain("/drivo/x/<");
   });
 
   it("is well-formed", () => {
