@@ -88,6 +88,7 @@ import MenuTable from "../components/MenuTable.vue";
 import FilePreview from "../components/FilePreview.vue";
 import { useLibrary } from "../composables/useLibrary";
 import { menuLevels, buildLevelMenu, isMenuReady } from "../lib/menu";
+import { slugify, resolveSlug } from "../lib/slug";
 import type { LibraryItem } from "../lib/types";
 
 const { items, loading, stale, error, ensureLoaded } = useLibrary();
@@ -95,12 +96,15 @@ const { items, loading, stale, error, ensureLoaded } = useLibrary();
 const route = useRoute();
 const router = useRouter();
 
-// Selected level lives in the route query, not local state, so Back steps out to the
-// level picker instead of leaving the app, and a level is bookmarkable/shareable.
+// Selected level lives in the route path, not local state, so Back steps out to the level
+// picker instead of leaving the app, and each level is a real, shareable, indexable URL.
 const selectedLevel = computed<string | null>({
-  get: () => (typeof route.query.level === "string" ? route.query.level : null),
+  get: () => {
+    const slug = route.params.level;
+    return typeof slug === "string" ? resolveSlug(slug, menuLevels()) : null;
+  },
   set: (level) => {
-    router.push({ query: { ...route.query, level: level ?? undefined } });
+    router.push(level ? { name: "menu-level", params: { level: slugify(level) } } : { name: "menu" });
   },
 });
 

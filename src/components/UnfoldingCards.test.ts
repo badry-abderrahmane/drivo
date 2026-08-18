@@ -5,12 +5,16 @@ import { mountWithVuetify } from "../test/setup";
 import UnfoldingCards from "./UnfoldingCards.vue";
 import type { LibraryItem } from "../lib/types";
 
-// The component reads/writes its drill-down position via the route query, so every
-// mount needs a real router in its history (Back/Forward is exactly what's under test).
+// The component reads/writes its drill-down position via route params, so every mount
+// needs a real router in its history (Back/Forward is exactly what's under test).
 async function mountUnfolding(items: LibraryItem[]) {
   const router = createRouter({
     history: createMemoryHistory(),
-    routes: [{ path: "/", component: { template: "<div/>" } }],
+    routes: [
+      { path: "/", name: "browse", component: { template: "<div/>" } },
+      { path: "/niveau/:level", name: "level", component: { template: "<div/>" } },
+      { path: "/niveau/:level/chapitre/:chapter", name: "chapter", component: { template: "<div/>" } },
+    ],
   });
   router.push("/");
   await router.isReady();
@@ -21,7 +25,7 @@ async function mountUnfolding(items: LibraryItem[]) {
   return { wrapper, router };
 }
 
-// A route-query navigation resolves through a microtask, and Vuetify's out-in transition
+// A route navigation resolves through a microtask, and Vuetify's out-in transition
 // needs a real timer tick (not just a flushed microtask queue) before the new step's DOM
 // lands. flushPromises() alone can leave the old step still rendered.
 async function settle(): Promise<void> {
@@ -169,26 +173,33 @@ describe("UnfoldingCards.vue", () => {
     expect(positions).toEqual([...positions].sort((a, b) => a - b));
   });
 
-  it("puts the drill-down position in the route query, so Back steps out one level at a time", async () => {
+  it("puts the drill-down position in the route path, so Back steps out one level at a time", async () => {
     const { wrapper, router } = await mountUnfolding(mockItems);
 
     await wrapper.find('[data-test="unfold-level-2BAC"]').trigger("click");
     await settle();
-    expect(router.currentRoute.value.query.level).toBe("2BAC");
+    expect(router.currentRoute.value.params.level).toBe("2bac");
 
     await wrapper.find('[data-test="unfold-chapter-Ondes Mécaniques"]').trigger("click");
     await settle();
-    expect(router.currentRoute.value.query.chapter).toBe("Ondes Mécaniques");
+    expect(router.currentRoute.value.params.chapter).toBe("ondes-mecaniques");
 
     await router.back();
     await settle();
-    expect(router.currentRoute.value.query.chapter).toBeUndefined();
-    expect(router.currentRoute.value.query.level).toBe("2BAC");
+    expect(router.currentRoute.value.params.chapter).toBeUndefined();
+    expect(router.currentRoute.value.params.level).toBe("2bac");
     expect(wrapper.text()).toContain("Chapitres de 2BAC");
 
     await router.back();
     await settle();
-    expect(router.currentRoute.value.query.level).toBeUndefined();
+    expect(router.currentRoute.value.params.level).toBeUndefined();
+    expect(wrapper.text()).toContain("Choisissez votre Niveau");
+  });
+
+  it("falls back to the level picker when the URL names an unknown level", async () => {
+    const { wrapper, router } = await mountUnfolding(mockItems);
+    router.push({ name: "level", params: { level: "niveau-inexistant" } });
+    await settle();
     expect(wrapper.text()).toContain("Choisissez votre Niveau");
   });
 });

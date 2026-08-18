@@ -190,6 +190,7 @@ import { computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import type { LibraryItem } from "../lib/types";
 import { chaptersOf, levelsOf, subjectOf } from "../lib/group";
+import { slugify, resolveSlug } from "../lib/slug";
 import { TYPES, EXAMEN_NATIONAL_TYPE } from "../config";
 import FileCard from "./FileCard.vue";
 
@@ -200,19 +201,44 @@ const props = defineProps<{
 const route = useRoute();
 const router = useRouter();
 
-// Drill-down position lives in the route query (not local state) so the browser's
-// Back button steps back through Niveau -> Chapitre -> Documents instead of leaving
-// the app entirely, and a level/chapter is bookmarkable and shareable.
+// Drill-down position lives in the route path (not local state or a query param) so the
+// browser's Back button steps back through Niveau -> Chapitre -> Documents, and every
+// level and chapter is a real URL that can be prerendered and indexed. Slugs resolve
+// against the levels and chapters actually present, so an unknown slug reads as null
+// and the view falls back to its picker instead of showing an empty drill-down.
+const availableLevels = computed(() => [...new Set(props.items.flatMap(levelsOf))]);
+
 const selectedLevel = computed<string | null>({
-  get: () => (typeof route.query.level === "string" ? route.query.level : null),
+  get: () => {
+    const slug = route.params.level;
+    return typeof slug === "string" ? resolveSlug(slug, availableLevels.value) : null;
+  },
   set: (level) => {
-    router.push({ query: { ...route.query, level: level ?? undefined, chapter: undefined } });
+    router.push(level ? { name: "level", params: { level: slugify(level) } } : { name: "browse" });
   },
 });
+
+const availableChapters = computed(() => {
+  const lvl = selectedLevel.value;
+  if (!lvl) return [];
+  return [
+    ...new Set(props.items.filter((it) => levelsOf(it).includes(lvl)).flatMap(chaptersOf)),
+  ];
+});
+
 const selectedChapter = computed<string | null>({
-  get: () => (typeof route.query.chapter === "string" ? route.query.chapter : null),
+  get: () => {
+    const slug = route.params.chapter;
+    return typeof slug === "string" ? resolveSlug(slug, availableChapters.value) : null;
+  },
   set: (chapter) => {
-    router.push({ query: { ...route.query, chapter: chapter ?? undefined } });
+    const lvl = selectedLevel.value;
+    if (!lvl) return;
+    router.push(
+      chapter
+        ? { name: "chapter", params: { level: slugify(lvl), chapter: slugify(chapter) } }
+        : { name: "level", params: { level: slugify(lvl) } }
+    );
   },
 });
 

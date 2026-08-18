@@ -21,10 +21,14 @@ async function mountMenu(items: LibraryItem[]) {
     readFreshCache: () => null,
   }));
   const MenuView = (await import("./MenuView.vue")).default;
-  // The selected level lives in the route query, so this needs a real router in its history.
+  // The selected level lives in a route param, so this needs a real router in its history.
   const router = createRouter({
     history: createMemoryHistory(),
-    routes: [{ path: "/", component: { template: "<div/>" } }],
+    routes: [
+      { path: "/", name: "menu", component: { template: "<div/>" } },
+      { path: "/menu/:level", name: "menu-level", component: { template: "<div/>" } },
+      { path: "/doc/:fileId/:slug?", name: "doc", component: { template: "<div/>" } },
+    ],
   });
   router.push("/");
   await router.isReady();

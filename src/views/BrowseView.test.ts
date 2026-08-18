@@ -44,7 +44,12 @@ async function mountView(items: LibraryItem[], initialSearch?: string) {
   // via the route query, so it needs a real router in its history.
   const router = createRouter({
     history: createMemoryHistory(),
-    routes: [{ path: "/", component: { template: "<div/>" } }],
+    routes: [
+      { path: "/", name: "browse", component: { template: "<div/>" } },
+      { path: "/niveau/:level", name: "level", component: { template: "<div/>" } },
+      { path: "/niveau/:level/chapitre/:chapter", name: "chapter", component: { template: "<div/>" } },
+      { path: "/doc/:fileId/:slug?", name: "doc", component: { template: "<div/>" } },
+    ],
   });
   router.push(initialSearch ? { path: "/", query: { search: initialSearch } } : "/");
   await router.isReady();
