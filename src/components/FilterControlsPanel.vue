@@ -216,15 +216,22 @@ const hasActiveFilters = computed(() => activeCount.value > 0);
 const levels = computed(() => distinctLevels(props.items));
 const types = computed(() => distinctValues(props.items, "type"));
 const subjects = computed(() => distinctValues(props.items, "subject"));
+// Chapitre only offers what the other structural filters can still reach: a chapter of the
+// selected Niveau *and* of the selected Matière. Each constraint applies only when it is set.
 const chapters = computed(() => {
-  const scoped = local.level
-    ? props.items.filter((it) => it.meta.level.includes(local.level!))
-    : props.items;
+  const { level, subject } = local;
+  const scoped = props.items.filter(
+    (it) =>
+      (!level || it.meta.level.includes(level)) &&
+      (!subject || it.meta.subject === subject)
+  );
   return distinctChapters(scoped);
 });
 
+// Narrowing Niveau or Matière can strand the chosen Chapitre outside the options that remain,
+// which would filter the library down to nothing. Drop it instead.
 watch(
-  () => local.level,
+  () => [local.level, local.subject],
   () => {
     if (local.chapter && !chapters.value.includes(local.chapter)) {
       local.chapter = undefined;
