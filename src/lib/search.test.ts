@@ -24,6 +24,8 @@ describe("searchItems", () => {
     item({ fileId: "2", tags: ["newton"] }, "TD1"),
     item({ fileId: "3", chapter: ["Le champ magnétique"] }, "Exercices"),
     item({ fileId: "4" }, "Optique géométrique"),
+    item({ fileId: "5" }, "Électricité générale"),
+    item({ fileId: "6", chapter: ["Dipôle RC"] }, "Serie 3"),
   ];
   const index = buildSearchIndex(items);
 
@@ -42,6 +44,31 @@ describe("searchItems", () => {
   it("returns nothing for an empty or whitespace-only query", () => {
     expect(searchItems(index, "")).toEqual([]);
     expect(searchItems(index, "   ")).toEqual([]);
+  });
+
+  it("matches despite missing accents in the query", () => {
+    expect(searchItems(index, "electricite").map((i) => i.fileId)).toContain("5");
+  });
+
+  it("matches despite accents in the query the title lacks", () => {
+    expect(searchItems(index, "sérié 3").map((i) => i.fileId)).toContain("6");
+  });
+
+  it("matches on the raw Drive filename", () => {
+    const withFilename = item({ fileId: "7" }, "Titre affiché");
+    withFilename.name = "2bac-sm-ondes-mecaniques.pdf";
+    const idx = buildSearchIndex([withFilename]);
+    expect(searchItems(idx, "ondes mecaniques").map((i) => i.fileId)).toContain("7");
+  });
+
+  it("matches on a chapter alias", () => {
+    expect(searchItems(index, "condensateur").map((i) => i.fileId)).toContain("6");
+  });
+
+  it("matches on an Arabic chapter alias", () => {
+    const arabic = item({ fileId: "8", chapter: ["Ondes mécaniques progressives"] }, "Cours");
+    const idx = buildSearchIndex([arabic]);
+    expect(searchItems(idx, "الموجات").map((i) => i.fileId)).toContain("8");
   });
 
   it("does not match unrelated items", () => {
