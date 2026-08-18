@@ -22,3 +22,14 @@ export function driveOpenUrl(fileId: string, mimeType?: string): string {
   if (host) return `https://docs.google.com/${host}/d/${fileId}/edit`;
   return `https://drive.google.com/file/d/${fileId}/view`;
 }
+
+/**
+ * A URL that saves the file rather than opening it. Google-native docs have no binary to
+ * download, so they are exported as PDF; everything else uses Drive's direct-download
+ * endpoint. Reuses the same mime-type split as the preview and open URLs.
+ */
+export function driveDownloadUrl(fileId: string, mimeType?: string): string {
+  const host = docHost(mimeType);
+  if (host) return `https://docs.google.com/${host}/d/${fileId}/export?format=pdf`;
+  return `https://drive.google.com/uc?export=download&id=${fileId}`;
+}
