@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import BrowseView from "./views/BrowseView.vue";
 import MenuView from "./views/MenuView.vue";
 import ExamenNationalView from "./views/ExamenNationalView.vue";
+import DocView from "./views/DocView.vue";
 import AdminView from "./views/AdminView.vue";
 
 // Path-based navigation state (not query params) so every level and chapter is a real
@@ -17,6 +18,7 @@ export default createRouter({
     { path: "/menu/:level", name: "menu-level", component: MenuView },
     { path: "/examen-national", name: "examen-national", component: ExamenNationalView },
     { path: "/examen-national/:level", name: "examen-national-level", component: ExamenNationalView },
+    { path: "/doc/:fileId/:slug?", name: "doc", component: DocView },
     { path: "/admin", name: "admin", component: AdminView },
   ],
 });
