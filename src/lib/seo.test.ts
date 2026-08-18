@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { enumeratePages, absoluteUrl, canonicalUrl, injectPage, sitemapXml, robotsTxt, escapeHtml } from "./seo";
+import { enumeratePages, absoluteUrl, basePathOf, canonicalUrl, injectPage, sitemapXml, robotsTxt, escapeHtml } from "./seo";
 import type { LibraryItem } from "./types";
 
 const make = (fileId: string, over: Partial<LibraryItem["meta"]> = {}, title = "Dipôle RC — Cours"): LibraryItem => ({
@@ -29,6 +29,20 @@ const SHELL = `<!doctype html><html lang="fr"><head><title>PIPC</title></head><b
 describe("escapeHtml", () => {
   it("escapes the characters that would break an attribute or a tag", () => {
     expect(escapeHtml(`<a href="x">&'`)).toBe("&lt;a href=&quot;x&quot;&gt;&amp;&#39;");
+  });
+});
+
+describe("basePathOf", () => {
+  it("is empty for a site served at the domain root", () => {
+    expect(basePathOf("https://pipc.ma/")).toBe("");
+  });
+
+  it("is the sub-path for a project site, without a trailing slash", () => {
+    expect(basePathOf("https://badry-abderrahmane.github.io/drivo/")).toBe("/drivo");
+  });
+
+  it("tolerates a missing trailing slash", () => {
+    expect(basePathOf("https://example.com/sub")).toBe("/sub");
   });
 });
 

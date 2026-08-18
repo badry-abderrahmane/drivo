@@ -53,9 +53,21 @@ export function canonicalUrl(path: string): string {
   return absoluteUrl(withSlash(path));
 }
 
-/** The in-site href a crawler follows: the Vite base plus the route path. */
+/**
+ * The site's path prefix, derived from SITE_URL rather than restated: "" when the site is
+ * served at a domain root, "/drivo" for a GitHub project site. Deriving it means moving the
+ * site to another host or path is a one-line change to SITE_URL, and cannot leave
+ * prerendered links pointing at a base the app no longer uses.
+ */
+export function basePathOf(siteUrl: string): string {
+  return new URL(siteUrl).pathname.replace(/\/$/, "");
+}
+
+const BASE_PATH = basePathOf(SITE_URL);
+
+/** The in-site href a crawler follows: the base path plus the route path. */
 function href(path: string): string {
-  return "/drivo" + withSlash(path);
+  return BASE_PATH + withSlash(path);
 }
 
 function isoDate(t: string): string | undefined {
@@ -273,5 +285,5 @@ export function sitemapXml(pages: PageMeta[]): string {
 }
 
 export function robotsTxt(): string {
-  return `User-agent: *\nAllow: /\nDisallow: /drivo/admin\n\nSitemap: ${absoluteUrl("/sitemap.xml")}\n`;
+  return `User-agent: *\nAllow: /\nDisallow: ${BASE_PATH}/admin\n\nSitemap: ${absoluteUrl("/sitemap.xml")}\n`;
 }
