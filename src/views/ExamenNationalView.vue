@@ -58,7 +58,7 @@
         </v-row>
       </template>
 
-      <!-- Selected level: exams grouped by year -->
+      <!-- Selected level: exams as a year × session × sujet/corrigé table -->
       <template v-else>
         <div class="d-flex align-center ga-3 mb-6">
           <v-btn variant="tonal" color="primary" prepend-icon="mdi-arrow-left" class="rounded-pill px-4" data-test="back" @click="selectedLevel = null">
@@ -67,17 +67,20 @@
           <h1 class="text-h5 font-weight-bold font-heading">Examen National — {{ selectedLevel }}</h1>
         </div>
 
-        <v-alert v-if="yearGroups.length === 0" type="info" variant="tonal" class="mb-6 rounded-xl">
+        <v-alert v-if="isEmpty" type="info" variant="tonal" class="mb-6 rounded-xl">
           Aucun sujet d'examen national classé pour cette filière pour le moment.
         </v-alert>
 
-        <div v-for="group in yearGroups" :key="group.year" class="mb-8" data-test="year-group">
+        <ExamTable v-if="table.rows.length" :rows="table.rows" class="mb-8" />
+
+        <!-- Exams whose title names no year have no row to sit in, so they keep the card grid. -->
+        <div v-if="table.other.length" class="mb-8" data-test="other-exams">
           <div class="d-flex align-center ga-2 mb-3">
-            <v-icon icon="mdi-calendar-outline" color="primary" size="20" />
-            <span class="text-h6 font-weight-bold text-primary">{{ group.year }}</span>
+            <v-icon icon="mdi-file-question-outline" color="primary" size="20" />
+            <span class="text-h6 font-weight-bold text-primary">Autres</span>
           </div>
           <v-row class="match-height">
-            <v-col v-for="it in group.items" :key="it.fileId" cols="12" sm="6" md="4" lg="3" class="d-flex">
+            <v-col v-for="it in table.other" :key="it.fileId" cols="12" sm="6" md="4" lg="3" class="d-flex">
               <FileCard :item="it" mode="grid" />
             </v-col>
           </v-row>
@@ -91,8 +94,9 @@
 import { computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import FileCard from "../components/FileCard.vue";
+import ExamTable from "../components/ExamTable.vue";
 import { useLibrary } from "../composables/useLibrary";
-import { groupExamsByYear, EXAMEN_NATIONAL_LEVELS } from "../lib/examenNational";
+import { buildExamTable, EXAMEN_NATIONAL_LEVELS } from "../lib/examenNational";
 import { slugify, resolveSlug } from "../lib/slug";
 import { EXAMEN_NATIONAL_TYPE } from "../config";
 import { isClassified } from "../lib/classification";
@@ -127,7 +131,8 @@ const levels = computed(() =>
   }))
 );
 
-const yearGroups = computed(() => groupExamsByYear(items.value, selectedLevel.value ?? ""));
+const table = computed(() => buildExamTable(items.value, selectedLevel.value ?? ""));
+const isEmpty = computed(() => table.value.rows.length === 0 && table.value.other.length === 0);
 
 onMounted(ensureLoaded);
 </script>

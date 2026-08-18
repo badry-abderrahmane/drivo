@@ -60,16 +60,29 @@ describe("ExamenNationalView", () => {
     expect(w.text()).not.toContain("Tronc Commun");
   });
 
-  it("groups exams by year within a selected level", async () => {
+  it("tabulates the exams of a selected level by year, most recent first", async () => {
     const w = await mountExamenNational([
-      full("a", { title: "Sujet PC 2023" }),
-      full("b", { title: "Sujet PC 2021" }),
+      full("a", { title: "PC 2023 N" }),
+      full("b", { title: "PC 2021 R CORRIGÉ" }),
     ]);
     await cardFor(w, "2ème Bac SM").trigger("click");
     await settle();
     expect(w.text()).toContain("Examen National — 2ème Bac SM");
-    const groups = w.findAll('[data-test="year-group"]');
-    expect(groups.map((g) => g.text().includes("2023"))).toContain(true);
-    expect(groups[0].text()).toContain("2023"); // most recent first
+    const rows = w.findAll('[data-test="exam-row"]');
+    expect(rows.map((r) => r.find("td").text())).toEqual(["2023", "2021"]);
+    // 2021's only file is a rattrapage corrigé: last cell filled, the three others dashed.
+    expect(rows[1].findAll("td").map((td) => td.text())).toEqual(["2021", "—", "—", "—", "Corrigé"]);
+  });
+
+  it("keeps exams with no year in a card list under the table", async () => {
+    const w = await mountExamenNational([
+      full("dated", { title: "PC 2023 N" }),
+      full("undated", { title: "Sujet sans année" }),
+    ]);
+    await cardFor(w, "2ème Bac SM").trigger("click");
+    await settle();
+    const other = w.find('[data-test="other-exams"]');
+    expect(other.exists()).toBe(true);
+    expect(other.text()).toContain("Sujet sans année");
   });
 });
