@@ -135,9 +135,11 @@ discover the library from any entry point.
   document page.
 - `SearchPalette.vue` results and `MenuTable.vue`'s `@preview` navigate to the
   document page.
-- `FilePreview.vue` and `FilePreview.test.ts` are deleted. DocView embeds the
-  iframe directly from `drivePreview.ts`; keeping the modal would mean two
-  renderings of the same content.
+- `FilePreview.vue` becomes **admin-only** (implementation deviation from the
+  original plan to delete it). `AdminView` uses it to preview files while
+  classifying them, and an unclassified file has no public document page by
+  design, so the document page cannot replace it there. Every student-facing
+  use is removed; DocView embeds the iframe directly from `drivePreview.ts`.
 
 ### Share previews
 
@@ -186,7 +188,17 @@ Also emitted:
   file, this catches only genuine typos and correctly returns 404 rather than
   masking broken links as soft-200s.
 
-`/admin` and search-query pages carry `noindex`.
+`/admin` carries `noindex` but IS still emitted as a file: GitHub Pages serves
+`404.html` for any unmatched path, so a route without a file would 404 instead
+of loading the SPA. The same applies to `/menu/:level` and
+`/examen-national/:level`. All are excluded from the sitemap.
+
+Canonicals, `og:url`, sitemap entries and prerendered internal links use the
+**trailing-slash** form (`/doc/<id>/<slug>/`). Each page is written as
+`<path>/index.html`, which a static host serves only at the trailing-slash URL,
+301-redirecting the bare path to it — so the bare form would cost a redirect on
+every crawl. Vue Router matches either form (default `strict: false`), so
+in-app navigation is unaffected.
 
 **Failure handling:** if the manifest fetch fails, the script logs a loud
 warning, emits the plain shell plus `404.html`, and exits 0. A backend hiccup
@@ -249,8 +261,7 @@ Test-driven throughout.
 
 ## Done means
 
-- All existing tests still green (226 today, minus the 2 deleted with the
-  `FilePreview` suite), plus the new ones.
+- All existing tests still green, plus the new ones.
 - `npm run build` emits the expected `dist` tree: per-level, per-chapter and
   per-document `index.html` files, `sitemap.xml`, `robots.txt`, `404.html`.
 - `sitemap.xml` lists every classified document.
