@@ -44,6 +44,9 @@
 </template>
 
 <script setup lang="ts">
+// Admin-only. Student-facing views navigate to the document page instead; the admin still
+// needs a modal because it previews files that are not yet classified, and those have no
+// public document page by design.
 import { computed } from "vue";
 import { fileKind } from "../lib/fileKind";
 import { drivePreviewUrl, driveOpenUrl } from "../lib/drivePreview";

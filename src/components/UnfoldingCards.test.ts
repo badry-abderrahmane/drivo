@@ -14,6 +14,7 @@ async function mountUnfolding(items: LibraryItem[]) {
       { path: "/", name: "browse", component: { template: "<div/>" } },
       { path: "/niveau/:level", name: "level", component: { template: "<div/>" } },
       { path: "/niveau/:level/chapitre/:chapter", name: "chapter", component: { template: "<div/>" } },
+      { path: "/doc/:fileId/:slug?", name: "doc", component: { template: "<div/>" } },
     ],
   });
   router.push("/");

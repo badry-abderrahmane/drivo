@@ -215,6 +215,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { useRouter } from "vue-router";
+import { docSlug } from "../lib/doc";
 import { useDisplay } from "vuetify";
 import { VCommandPalette } from "vuetify/labs/VCommandPalette";
 import { useLibrary } from "../composables/useLibrary";
@@ -292,7 +293,7 @@ function resultToItem(it: LibraryItem): PaletteActionItem {
     title: it.displayTitle,
     subtitle: [...it.meta.level, it.meta.subject].filter(Boolean).join(" · "),
     prependIcon: kind.icon,
-    onClick: () => window.open(it.webViewLink, "_blank", "noopener"),
+    onClick: () => router.push({ name: "doc", params: { fileId: it.fileId, slug: docSlug(it) } }),
   };
 }
 

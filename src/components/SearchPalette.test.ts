@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, afterEach } from "vitest";
 import { createRouter, createMemoryHistory, type Router } from "vue-router";
 import { flushPromises } from "@vue/test-utils";
 import { mountWithVuetify } from "../test/setup";
@@ -39,6 +39,7 @@ async function mountPalette(items: LibraryItem[]) {
     history: createMemoryHistory(),
     routes: [
       { path: "/", name: "browse", component: { template: "<div/>" } },
+      { path: "/doc/:fileId/:slug?", name: "doc", component: { template: "<div/>" } },
     ],
   });
   router.push("/");
@@ -110,16 +111,17 @@ describe("SearchPalette", () => {
     expect(document.body.textContent).not.toContain("Brouillon");
   });
 
-  it("opens the matched file's Drive link when a result is clicked", async () => {
-    const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
+  it("navigates to the in-app document page when a result is clicked", async () => {
     const w = await mountPalette([mk("1", "Le mouvement — Cours")]);
     await typeQuery(w, "mouvement");
 
     (document.querySelector(".v-list-item") as HTMLElement).click();
     await flushPromises();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await flushPromises();
 
-    expect(openSpy).toHaveBeenCalledWith("https://drive/1", "_blank", "noopener");
-    openSpy.mockRestore();
+    expect(router.currentRoute.value.name).toBe("doc");
+    expect(router.currentRoute.value.params.fileId).toBe("1");
   });
 
   it("navigates to the browse page with ?search= when 'voir tous les résultats' is clicked", async () => {

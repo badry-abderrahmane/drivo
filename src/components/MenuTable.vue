@@ -26,7 +26,7 @@
                     class="num-link"
                     :title="f.displayTitle"
                     data-test="menu-link"
-                    @click="emit('preview', f)"
+                    @click="goToDoc(f)"
                   >
                     {{ i + 1 }}
                   </button>
@@ -42,11 +42,19 @@
 </template>
 
 <script setup lang="ts">
+import { useRouter } from "vue-router";
 import type { LevelMenu } from "../lib/menu";
 import type { LibraryItem } from "../lib/types";
+import { docSlug } from "../lib/doc";
 
 defineProps<{ menu: LevelMenu }>();
-const emit = defineEmits<{ preview: [LibraryItem] }>();
+
+const router = useRouter();
+
+// Rows open the in-app document page; the menu no longer raises a preview modal.
+function goToDoc(f: LibraryItem): void {
+  router.push({ name: "doc", params: { fileId: f.fileId, slug: docSlug(f) } });
+}
 </script>
 
 <style scoped>

@@ -73,23 +73,20 @@
         <v-alert v-if="currentMenu.types.length === 0" type="info" variant="tonal" class="mb-6 rounded-xl">
           Aucune ressource classée pour ce niveau pour le moment — le programme complet est affiché ci-dessous.
         </v-alert>
-        <MenuTable :menu="currentMenu" @preview="openPreview" />
+        <MenuTable :menu="currentMenu" />
       </template>
     </template>
 
-    <FilePreview v-model="previewDialog" :item="previewItem" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import MenuTable from "../components/MenuTable.vue";
-import FilePreview from "../components/FilePreview.vue";
 import { useLibrary } from "../composables/useLibrary";
 import { menuLevels, buildLevelMenu, isMenuReady } from "../lib/menu";
 import { slugify, resolveSlug } from "../lib/slug";
-import type { LibraryItem } from "../lib/types";
 
 const { items, loading, stale, error, ensureLoaded } = useLibrary();
 
@@ -124,14 +121,6 @@ const levels = computed(() =>
 );
 
 const currentMenu = computed(() => buildLevelMenu(items.value, selectedLevel.value ?? ""));
-
-// Preview
-const previewDialog = ref(false);
-const previewItem = ref<LibraryItem | null>(null);
-function openPreview(it: LibraryItem): void {
-  previewItem.value = it;
-  previewDialog.value = true;
-}
 
 onMounted(ensureLoaded);
 </script>

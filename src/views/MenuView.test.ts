@@ -69,15 +69,14 @@ describe("MenuView", () => {
     expect(w.findAll('[data-test="menu-link"]').length).toBe(1); // only the one file
   });
 
-  it("previews a file when a numbered link is clicked", async () => {
-    document.body.innerHTML = "";
-    const w = await mountMenu([full("1", {})]);
+  it("navigates to the document page when a numbered link is clicked", async () => {
+    const w = await mountMenu([full("1", { title: "Ondes — Cours" })]);
     await cardFor(w, "2ème Bac SM").trigger("click");
     await settle();
     await w.get('[data-test="menu-link"]').trigger("click");
-    await flushPromises();
-    const iframe = document.querySelector('[data-test="preview-frame"]') as HTMLIFrameElement | null;
-    expect(iframe).not.toBeNull();
-    expect(iframe?.getAttribute("src")).toContain("/file/d/1/preview");
+    await settle();
+    const route = w.vm.$router.currentRoute.value;
+    expect(route.name).toBe("doc");
+    expect(route.params.fileId).toBe("1");
   });
 });

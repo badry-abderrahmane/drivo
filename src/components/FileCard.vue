@@ -3,9 +3,7 @@
   <v-card
     v-if="mode === 'list'"
     variant="flat"
-    :href="item.webViewLink"
-    target="_blank"
-    rel="noopener"
+    :to="docRoute"
     class="course-card list-mode rounded-xl pa-3 d-flex align-center ga-3 w-100 border"
   >
     <div
@@ -49,9 +47,7 @@
   <v-card
     v-else
     variant="flat"
-    :href="item.webViewLink"
-    target="_blank"
-    rel="noopener"
+    :to="docRoute"
     class="course-card grid-mode h-100 d-flex flex-column rounded-2xl border pa-5 position-relative overflow-hidden"
   >
     <div class="card-glow-accent"></div>
@@ -121,6 +117,7 @@
 import { computed, ref } from "vue";
 import type { LibraryItem } from "../lib/types";
 import { fileKind } from "../lib/fileKind";
+import { docSlug } from "../lib/doc";
 
 const props = withDefaults(
   defineProps<{
@@ -138,6 +135,13 @@ const subtitle = computed(() =>
 );
 
 const kind = computed(() => fileKind(props.item.name, props.item.mimeType));
+
+// Cards open the in-app document page rather than ejecting the student to Drive; the
+// document page carries the Drive preview plus download and share actions.
+const docRoute = computed(() => ({
+  name: "doc",
+  params: { fileId: props.item.fileId, slug: docSlug(props.item) },
+}));
 
 // Chapter tags are collapsed to 3 by default — a card tagged with many chapters (common
 // for national exams, which span the whole program) shouldn't grow taller than its peers.
