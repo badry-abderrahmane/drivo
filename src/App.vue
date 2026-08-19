@@ -146,9 +146,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { useTheme, useDisplay } from "vuetify";
+import { INTRO_DURATION_MS, INTRO_EXIT_MS } from "./lib/intro";
 import SearchPalette from "./components/SearchPalette.vue";
 import BrandMark from "./components/BrandMark.vue";
 
@@ -157,9 +158,62 @@ const theme = useTheme();
 const searchOpen = ref(false);
 const { mobile } = useDisplay();
 
+const THEME_KEY = "pipc:theme";
+
 function toggleTheme(): void {
-  theme.global.name.value = theme.global.current.value.dark ? "light" : "dark";
+  const next = theme.global.current.value.dark ? "light" : "dark";
+  theme.global.name.value = next;
+  try {
+    localStorage.setItem(THEME_KEY, next);
+  } catch {
+    /* unavailable — the choice simply does not survive the session */
+  }
 }
+
+/**
+ * Restore the saved theme, then dismiss the splash the shell injected. The mark flies to
+ * the header's copy of itself (FLIP: measure both, transform the splash node onto the
+ * target) so the intro resolves into the app rather than being curtained away.
+ *
+ * The timer is unconditional — the splash never waits on data. The backend can take ~50s
+ * on a cache miss, and an animation that waits for it stops being an animation.
+ */
+onMounted(() => {
+  try {
+    const savedTheme = localStorage.getItem(THEME_KEY);
+    if (savedTheme === "dark" || savedTheme === "light") theme.global.name.value = savedTheme;
+  } catch {
+    /* unavailable — fall back to the default theme */
+  }
+
+  const splash = document.getElementById("pipc-splash");
+  if (!splash) return;
+
+  // Count from injection, not from mount: the animation has already been running while
+  // the bundle downloaded and parsed, and the visitor should not pay for that twice.
+  const startedAt = (window as { __pipcSplashAt?: number }).__pipcSplashAt ?? Date.now();
+  const remaining = Math.max(0, INTRO_DURATION_MS - (Date.now() - startedAt));
+
+  window.setTimeout(() => {
+    const mark = document.getElementById("pipc-splash-mark");
+    const target = document.querySelector<HTMLElement>(".header-mark");
+    if (mark && target) {
+      const from = mark.getBoundingClientRect();
+      const to = target.getBoundingClientRect();
+      if (from.width > 0 && to.width > 0) {
+        // transform-origin is center, so the delta has to be measured center-to-center;
+        // using the corners would leave the mark off by half the size difference.
+        const dx = to.left + to.width / 2 - (from.left + from.width / 2);
+        const dy = to.top + to.height / 2 - (from.top + from.height / 2);
+        const scale = to.width / from.width;
+        mark.style.transition = `transform ${INTRO_EXIT_MS}ms cubic-bezier(.2, .8, .2, 1)`;
+        mark.style.transform = `translate(${dx}px, ${dy}px) scale(${scale})`;
+      }
+    }
+    splash.classList.add("pipc-out");
+    window.setTimeout(() => splash.remove(), INTRO_EXIT_MS);
+  }, remaining);
+});
 </script>
 
 <style scoped>
@@ -174,6 +228,13 @@ function toggleTheme(): void {
   position: sticky;
   top: 0;
   z-index: 100;
+}
+
+/* Vuetify ellipsises the toolbar title's placeholder, which clipped "Physique-Chimie"
+   once Plus Jakarta Sans widened the lockup. The brand is a fixed-width element, not
+   truncatable text. */
+:deep(.v-toolbar-title__placeholder) {
+  overflow: visible;
 }
 
 .header-mark {

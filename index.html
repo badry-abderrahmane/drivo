@@ -21,9 +21,113 @@
       h1, h2, h3, h4, .font-heading {
         font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
       }
+
+      /* ---- Opening animation. Injected by the inline script below (so it never reaches
+         crawlers or no-JS visitors), removed by App.vue on mount. ---- */
+      #pipc-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        background: linear-gradient(165deg, #FFF9F4, #FBE3CD);
+        transition: opacity 380ms cubic-bezier(.2, .8, .2, 1);
+        /* Failsafe: App.vue removes this node at ~1.4s, but if the bundle never loads
+           nothing would — and a fixed overlay would then hide the prerendered content
+           that a no-JS visitor can otherwise still read. CSS alone gets them out. */
+        animation: pipc-failsafe 1ms 6000ms forwards;
+      }
+      @keyframes pipc-failsafe {
+        to { opacity: 0; visibility: hidden; }
+      }
+      #pipc-splash.pipc-dark {
+        background: linear-gradient(165deg, #1F1509, #120C06);
+      }
+      #pipc-splash.pipc-out { opacity: 0; }
+      #pipc-splash-mark { transform-origin: center; }
+      #pipc-splash-mark .pipc-draw {
+        stroke-dasharray: 80;
+        stroke-dashoffset: 80;
+        animation: pipc-draw 1000ms cubic-bezier(.6, 0, .3, 1) forwards;
+      }
+      #pipc-splash-mark .pipc-fill { opacity: 0; animation: pipc-fade 450ms 850ms forwards; }
+      #pipc-splash .pipc-word {
+        font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+        font-weight: 800;
+        font-size: 22px;
+        letter-spacing: -.5px;
+        color: #1A1207;
+        opacity: 0;
+        animation: pipc-rise 400ms 1000ms cubic-bezier(.2, .8, .2, 1) forwards;
+      }
+      #pipc-splash.pipc-dark .pipc-word { color: #F5EDE4; }
+      #pipc-splash .pipc-sub {
+        font-size: 9px;
+        letter-spacing: .22em;
+        text-transform: uppercase;
+        color: #14528C;
+        opacity: 0;
+        animation: pipc-rise 400ms 1120ms cubic-bezier(.2, .8, .2, 1) forwards;
+      }
+      #pipc-splash.pipc-dark .pipc-sub { color: #7FB6E8; }
+      @keyframes pipc-draw { to { stroke-dashoffset: 0; } }
+      @keyframes pipc-fade { to { opacity: 1; } }
+      @keyframes pipc-rise {
+        from { opacity: 0; transform: translateY(9px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
     </style>
+
   </head>
   <body>
+    <script>
+      // Runs before the bundle loads, so the splash paints in ~50ms instead of after Vue
+      // mounts. Injected rather than written statically into the shell: the ~653
+      // prerendered pages must reach crawlers and no-JS visitors uncovered. Mirrors
+      // src/lib/intro.ts — keep the two in step.
+      //
+      // It lives at the top of <body>, NOT in <head>: from <head> there is no body to
+      // append to yet, and deferring to DOMContentLoaded puts the injection AFTER the
+      // deferred module script — so Vue would mount, find no splash to dismiss, and the
+      // splash would then appear with nothing left to remove it.
+      (function () {
+        try {
+          if (sessionStorage.getItem("pipc:intro-played") !== null) return;
+          if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+          sessionStorage.setItem("pipc:intro-played", "1");
+        } catch (e) {
+          return;
+        }
+        var dark = false;
+        try {
+          dark = localStorage.getItem("pipc:theme") === "dark";
+        } catch (e) {}
+        var el = document.createElement("div");
+        el.id = "pipc-splash";
+        if (dark) el.className = "pipc-dark";
+        el.setAttribute("aria-hidden", "true");
+        el.innerHTML =
+          '<svg id="pipc-splash-mark" width="72" height="72" viewBox="0 0 64 64">' +
+          '<rect class="pipc-fill" width="64" height="64" rx="14" fill="#E2610A"/>' +
+          '<path class="pipc-draw" d="M16 22 H48 M26 26 V44 M42 26 V44" stroke="#E2610A" ' +
+          'stroke-width="8" stroke-linecap="round" fill="none"/>' +
+          '<g class="pipc-fill" fill="#FFFFFF">' +
+          '<rect x="12" y="18" width="40" height="8" rx="4"/>' +
+          '<rect x="22" y="22" width="8" height="26" rx="4"/>' +
+          '<rect x="38" y="22" width="8" height="26" rx="4"/></g></svg>' +
+          '<div class="pipc-word">PIPC</div>' +
+          '<div class="pipc-sub">Physique-Chimie</div>';
+        document.body.appendChild(el);
+        // When the animation actually started. App.vue holds the splash for the
+        // remainder of its duration measured from here, so a slow bundle cannot stretch
+        // a 1.4s intro into a 3s one.
+        window.__pipcSplashAt = Date.now();
+      })();
+    </script>
+
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
