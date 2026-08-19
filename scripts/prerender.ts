@@ -36,6 +36,11 @@ async function main(): Promise<void> {
     const raw = await fetchManifest();
     const items = buildLibrary(raw.files, raw.meta);
     pages = enumeratePages(items);
+
+    // The same manifest, emitted as a static file so a first-time visitor with empty
+    // localStorage paints from the CDN instead of waiting on the backend. No second
+    // fetch: this is the payload we already have in hand.
+    await write("library-seed.json", JSON.stringify({ files: raw.files, meta: raw.meta }));
   } catch (err) {
     // A backend hiccup must degrade SEO for one deploy, never break the deploy.
     console.warn("[prerender] manifest fetch failed — emitting the plain shell only:", err);

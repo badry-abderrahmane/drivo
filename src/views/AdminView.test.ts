@@ -18,7 +18,7 @@ async function mountAdmin() {
   const saveMeta = vi.fn().mockResolvedValue({ ok: true });
   const reindex = vi.fn().mockResolvedValue({ ok: true, count: 1 });
   const loadLibrary = vi.fn().mockResolvedValue({ items: [item], stale: false });
-  vi.doMock("../lib/loadLibrary", () => ({ loadLibrary, readFreshCache: () => null }));
+  vi.doMock("../lib/loadLibrary", () => ({ loadLibrary, readFreshCache: () => null, fetchSeed: async () => null }));
   vi.doMock("../api", () => ({ saveMeta, reindex }));
   const AdminView = (await import("./AdminView.vue")).default;
   const w = mountWithVuetify(AdminView);
@@ -122,7 +122,7 @@ describe("AdminView", () => {
     let resolveLoad: (v: { items: LibraryItem[]; stale: boolean }) => void = () => {};
     const loadLibrary = vi.fn(() => new Promise((r) => { resolveLoad = r; }));
     const saveMeta = vi.fn().mockResolvedValue({ ok: true });
-    vi.doMock("../lib/loadLibrary", () => ({ loadLibrary, readFreshCache: () => null }));
+    vi.doMock("../lib/loadLibrary", () => ({ loadLibrary, readFreshCache: () => null, fetchSeed: async () => null }));
     vi.doMock("../api", () => ({ saveMeta, reindex: vi.fn() }));
     const AdminView = (await import("./AdminView.vue")).default;
     const w = mountWithVuetify(AdminView);
@@ -166,7 +166,7 @@ describe("AdminView", () => {
     sessionStorage.setItem("drivo:admin_pw", "secret"); // skip the gate
     vi.doMock("../lib/loadLibrary", () => ({
       loadLibrary: vi.fn().mockResolvedValue({ items, stale: false }),
-      readFreshCache: () => null,
+      readFreshCache: () => null, fetchSeed: async () => null,
     }));
     vi.doMock("../api", () => ({ saveMeta: vi.fn().mockResolvedValue({ ok: true }), reindex: vi.fn() }));
     const AdminView = (await import("./AdminView.vue")).default;
@@ -206,7 +206,7 @@ async function mountAdminWith(items: LibraryItem[]) {
   const saveMeta = vi.fn().mockResolvedValue({ ok: true });
   vi.doMock("../lib/loadLibrary", () => ({
     loadLibrary: vi.fn().mockResolvedValue({ items, stale: false }),
-    readFreshCache: () => null,
+    readFreshCache: () => null, fetchSeed: async () => null,
   }));
   vi.doMock("../api", () => ({ saveMeta, reindex: vi.fn() }));
   sessionStorage.setItem("drivo:admin_pw", "secret"); // skip the gate

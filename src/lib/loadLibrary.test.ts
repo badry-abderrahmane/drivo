@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
-import { loadLibrary, readFreshCache, CACHE_MAX_AGE_MS } from "./loadLibrary";
+import { loadLibrary, readFreshCache, fetchSeed, CACHE_MAX_AGE_MS } from "./loadLibrary";
 import { saveManifestCache } from "./cache";
 import * as api from "../api";
 
@@ -12,6 +12,7 @@ const manifest = {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
   vi.useRealTimers();
 });
 beforeEach(() => {
@@ -50,6 +51,36 @@ describe("loadLibrary", () => {
     const { items, stale } = await loadLibrary();
     expect(stale).toBe(true);
     expect(items[0].displayTitle).toBe("Cours 1");
+  });
+});
+
+describe("fetchSeed", () => {
+  it("returns items from the static seed", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => manifest }));
+    const items = await fetchSeed();
+    expect(items).not.toBeNull();
+    expect(items![0].displayTitle).toBe("Cours 1");
+  });
+
+  it("does not write localStorage", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => manifest }));
+    await fetchSeed();
+    expect(localStorage.getItem("drivo:manifest")).toBeNull();
+  });
+
+  it("returns null on a 404", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 404 }));
+    expect(await fetchSeed()).toBeNull();
+  });
+
+  it("returns null on malformed JSON", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ nope: true }) }));
+    expect(await fetchSeed()).toBeNull();
+  });
+
+  it("returns null when the network throws", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
+    expect(await fetchSeed()).toBeNull();
   });
 });
 

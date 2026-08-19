@@ -1,5 +1,5 @@
 import { ref } from "vue";
-import { loadLibrary, readFreshCache } from "../lib/loadLibrary";
+import { loadLibrary, readFreshCache, fetchSeed } from "../lib/loadLibrary";
 import type { LibraryItem } from "../lib/types";
 
 const items = ref<LibraryItem[]>([]);
@@ -50,6 +50,20 @@ async function run(): Promise<void> {
     });
     return;
   }
+  // No cache: paint from the build-time seed (a static CDN file, ~100ms) rather than
+  // blocking on the backend, which is ~0.5s warm but can take ~50s on a cache miss.
+  const seeded = await fetchSeed();
+  if (seeded) {
+    items.value = seeded;
+    stale.value = false;
+    loadedOnce = true;
+    refreshing.value = true;
+    void networkLoad().finally(() => {
+      refreshing.value = false;
+    });
+    return;
+  }
+
   loading.value = true;
   try {
     await networkLoad();

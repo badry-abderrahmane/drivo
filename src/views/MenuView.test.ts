@@ -19,6 +19,7 @@ async function mountMenu(items: LibraryItem[]) {
   vi.doMock("../lib/loadLibrary", () => ({
     loadLibrary: vi.fn().mockResolvedValue({ items, stale: false }),
     readFreshCache: () => null,
+    fetchSeed: async () => null,
   }));
   const MenuView = (await import("./MenuView.vue")).default;
   // The selected level lives in a route param, so this needs a real router in its history.

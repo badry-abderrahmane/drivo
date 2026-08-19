@@ -21,6 +21,7 @@ async function mountDoc(items: LibraryItem[], fileId: string, opts: { pending?: 
       ? vi.fn().mockReturnValue(new Promise(() => {}))
       : vi.fn().mockResolvedValue({ items, stale: false }),
     readFreshCache: () => null,
+    fetchSeed: async () => null,
   }));
   const DocView = (await import("./DocView.vue")).default;
   const router = createRouter({

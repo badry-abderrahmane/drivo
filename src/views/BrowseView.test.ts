@@ -38,6 +38,7 @@ async function mountView(items: LibraryItem[], initialSearch?: string) {
   vi.doMock("../lib/loadLibrary", () => ({
     loadLibrary: vi.fn().mockResolvedValue({ items, stale: false }),
     readFreshCache: () => null, // tests exercise the network path, not the cached one
+    fetchSeed: async () => null, // nor the build-time seed
   }));
   const BrowseView = (await import("./BrowseView.vue")).default;
   // UnfoldingCards (rendered inside BrowseView) reads/writes its drill-down position

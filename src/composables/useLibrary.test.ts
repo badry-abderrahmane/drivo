@@ -13,9 +13,10 @@ beforeEach(() => vi.resetModules());
 // the loadLibrary mock into that graph via doMock (spyOn wouldn't reach the fresh copy).
 async function load(
   loadLibrary: ReturnType<typeof vi.fn>,
-  readFreshCache: () => LibraryItem[] | null = () => null
+  readFreshCache: () => LibraryItem[] | null = () => null,
+  fetchSeed: () => Promise<LibraryItem[] | null> = async () => null
 ) {
-  vi.doMock("../lib/loadLibrary", () => ({ loadLibrary, readFreshCache, CACHE_MAX_AGE_MS: 1 }));
+  vi.doMock("../lib/loadLibrary", () => ({ loadLibrary, readFreshCache, fetchSeed, CACHE_MAX_AGE_MS: 1 }));
   return (await import("./useLibrary")).useLibrary();
 }
 
@@ -36,6 +37,33 @@ describe("useLibrary", () => {
     expect(lib.stale.value).toBe(false);
     await lib.ensureLoaded(); // second call does not refetch
     expect(loadLibrary).toHaveBeenCalledTimes(1);
+  });
+
+  it("paints from the seed without blocking, then refreshes behind it", async () => {
+    const gate = deferred<{ items: LibraryItem[]; stale: boolean }>();
+    const loadLibrary = vi.fn(() => gate.promise);
+    const lib = await load(loadLibrary, () => null, async () => [item("seed")]);
+
+    await lib.ensureLoaded();
+    // The backend has NOT answered yet, and the visitor already has content.
+    expect(lib.items.value).toHaveLength(1);
+    expect(lib.items.value[0].fileId).toBe("seed");
+    expect(lib.loading.value).toBe(false);
+    expect(lib.refreshing.value).toBe(true);
+
+    gate.resolve({ items: [item("fresh")], stale: false });
+    await gate.promise;
+    await Promise.resolve();
+    expect(lib.items.value[0].fileId).toBe("fresh");
+    expect(lib.refreshing.value).toBe(false);
+  });
+
+  it("falls back to the blocking load when there is no seed", async () => {
+    const loadLibrary = vi.fn().mockResolvedValue({ items: [item("1")], stale: false });
+    const lib = await load(loadLibrary, () => null, async () => null);
+    await lib.ensureLoaded();
+    expect(loadLibrary).toHaveBeenCalledTimes(1);
+    expect(lib.items.value).toHaveLength(1);
   });
 
   it("captures stale flag", async () => {
