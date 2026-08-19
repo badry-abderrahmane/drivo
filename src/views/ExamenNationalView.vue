@@ -61,11 +61,13 @@
 
       <!-- Selected level: exams as a year × session × sujet/corrigé table -->
       <template v-else>
-        <div class="d-flex align-center ga-3 mb-6">
-          <v-btn variant="tonal" color="primary" prepend-icon="mdi-arrow-left" class="rounded-pill px-4" data-test="back" @click="selectedLevel = null">
+        <!-- Stacks on phones — see MenuView: side by side, the button squeezes the title
+             into a column too narrow to fit and it overflows the screen. -->
+        <div class="d-flex flex-column flex-sm-row align-start align-sm-center ga-3 mb-6">
+          <v-btn variant="tonal" color="primary" prepend-icon="mdi-arrow-left" class="rounded-pill px-4 flex-shrink-0" data-test="back" @click="selectedLevel = null">
             Retour aux filières
           </v-btn>
-          <h1 class="text-h5 font-weight-bold font-heading">Examen National — {{ selectedLevel }}</h1>
+          <h1 class="text-h5 font-weight-bold font-heading page-title">Examen National — {{ selectedLevel }}</h1>
         </div>
 
         <v-alert v-if="isEmpty" type="info" variant="tonal" class="mb-6 rounded-xl">
@@ -142,6 +144,13 @@ onMounted(ensureLoaded);
 <style scoped>
 .max-width-xl {
   max-width: 1200px;
+}
+
+/* A flex item defaults to min-width:auto and refuses to shrink below its longest word,
+   which is what pushed this heading off-screen instead of wrapping. */
+.page-title {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .level-card {
   position: relative;

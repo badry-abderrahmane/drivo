@@ -65,11 +65,13 @@
 
       <!-- Selected level table -->
       <template v-else>
-        <div class="d-flex align-center ga-3 mb-6">
-          <v-btn variant="tonal" color="primary" prepend-icon="mdi-arrow-left" class="rounded-pill px-4" data-test="back" @click="selectedLevel = null">
+        <!-- Stacks on phones: side by side, the button takes its width and squeezes the
+             title into a column too narrow to fit, so it overflows the screen. -->
+        <div class="d-flex flex-column flex-sm-row align-start align-sm-center ga-3 mb-6">
+          <v-btn variant="tonal" color="primary" prepend-icon="mdi-arrow-left" class="rounded-pill px-4 flex-shrink-0" data-test="back" @click="selectedLevel = null">
             Retour aux niveaux
           </v-btn>
-          <h1 class="text-h5 font-weight-bold font-heading">Menu thématique — {{ selectedLevel }}</h1>
+          <h1 class="text-h5 font-weight-bold font-heading page-title">Menu thématique — {{ selectedLevel }}</h1>
         </div>
         <v-alert v-if="currentMenu.types.length === 0" type="info" variant="tonal" class="mb-6 rounded-xl">
           Aucune ressource classée pour ce niveau pour le moment — le programme complet est affiché ci-dessous.
@@ -154,5 +156,12 @@ onMounted(ensureLoaded);
 }
 .color-primary {
   color: rgb(var(--v-theme-primary));
+}
+
+/* A flex item defaults to min-width:auto and refuses to shrink below its longest word,
+   which is what pushed this heading off-screen instead of wrapping. */
+.page-title {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 </style>
