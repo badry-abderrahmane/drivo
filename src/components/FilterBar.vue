@@ -147,10 +147,14 @@ const mobileFilterCount = computed(() => {
 </script>
 
 <style scoped>
+/* Tinted with primary-container rather than surface, so the filter bar reads as its own
+   panel instead of another card. Kept as a token, not a hex, so it follows the theme into
+   dark mode and survives the next palette change. Selected chips are flat rather than
+   tonal because of this tint — see FilterControlsPanel.vue. */
 .filter-card {
-  background: rgba(var(--v-theme-surface), 0.95);
+  background: rgba(var(--v-theme-primary-container), 0.9);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(var(--v-border-color), 0.1) !important;
+  border: 1px solid rgba(var(--v-theme-primary), 0.18) !important;
 }
 
 .filter-chip {

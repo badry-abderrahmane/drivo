@@ -7,7 +7,7 @@
       </span>
       <v-chip
         :size="chipSize"
-        variant="tonal"
+        :variant="!local.level ? 'flat' : 'tonal'"
         :color="!local.level ? 'primary' : 'default'"
         :class="{ 'font-weight-bold': !local.level }"
         class="filter-chip rounded-pill px-2"
@@ -20,7 +20,7 @@
         v-for="lvl in levels"
         :key="lvl"
         :size="chipSize"
-        variant="tonal"
+        :variant="local.level === lvl ? 'flat' : 'tonal'"
         :color="local.level === lvl ? 'primary' : 'default'"
         :class="{ 'font-weight-bold': local.level === lvl }"
         class="filter-chip rounded-pill px-2"
@@ -43,7 +43,7 @@
         </span>
         <v-chip
           :size="chipSize"
-          variant="tonal"
+          :variant="!local.type ? 'flat' : 'tonal'"
           :color="!local.type ? 'primary' : 'default'"
           :class="{ 'font-weight-bold': !local.type }"
           class="filter-chip rounded-pill px-2"
@@ -55,7 +55,7 @@
           v-for="t in types"
           :key="t"
           :size="chipSize"
-          variant="tonal"
+          :variant="local.type === t ? 'flat' : 'tonal'"
           :color="local.type === t ? 'primary' : 'default'"
           :class="{ 'font-weight-bold': local.type === t }"
           class="filter-chip rounded-pill px-2"
@@ -63,7 +63,12 @@
         >
           <!-- A dot, not a coloured chip: these are controls, and colouring them by type
                would drown the selected/unselected signal. The dot teaches the type-colour
-               mapping while orange keeps meaning "this filter is on". -->
+               mapping while green keeps meaning "this filter is on".
+
+               The selected chip is flat, not tonal: the bar sits on a primary-container
+               tint, and a tonal primary chip separates from that tint by 1.20:1 — exactly
+               the same as an unselected default chip, so the two become indistinguishable.
+               Flat gives 4.48:1. -->
           <span
             class="type-dot"
             :style="{ backgroundColor: `rgb(var(--v-theme-${typeColor(t)}))` }"
@@ -145,6 +150,7 @@
 import { ref, reactive, computed, watch } from "vue";
 import { distinctValues, distinctChapters, distinctLevels, type Filters } from "../lib/filter";
 import { typeColor } from "../lib/docType";
+import { sortChaptersByProgram } from "../lib/chapterNumber";
 import type { LibraryItem } from "../lib/types";
 
 const props = withDefaults(
@@ -227,6 +233,11 @@ const types = computed(() => distinctValues(props.items, "type"));
 const subjects = computed(() => distinctValues(props.items, "subject"));
 // Chapitre only offers what the other structural filters can still reach: a chapter of the
 // selected Niveau *and* of the selected Matière. Each constraint applies only when it is set.
+//
+// Listed in program order rather than alphabetically: this dropdown is the closest thing the
+// app has to a table of contents, and the teaching sequence is the order a student is looking
+// for. Passing the selected Niveau matters — the same chapter name sits at different positions
+// in different levels. See sortChaptersByProgram.
 const chapters = computed(() => {
   const { level, subject } = local;
   const scoped = props.items.filter(
@@ -234,7 +245,7 @@ const chapters = computed(() => {
       (!level || it.meta.level.includes(level)) &&
       (!subject || it.meta.subject === subject)
   );
-  return distinctChapters(scoped);
+  return sortChaptersByProgram(distinctChapters(scoped), level);
 });
 
 // Narrowing Niveau or Matière can strand the chosen Chapitre outside the options that remain,

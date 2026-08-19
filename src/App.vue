@@ -132,7 +132,7 @@
     <!-- Footer -->
     <v-footer class="app-footer text-center d-flex flex-column py-6 border-t mt-12 bg-surface">
       <figure class="footer-quote mb-3 px-4" data-test="footer-quote">
-        <blockquote class="text-caption text-medium-emphasis font-italic">
+        <blockquote class="text-body-2 text-primary font-weight-bold font-italic">
           {{ quote.text }}
         </blockquote>
         <figcaption v-if="quote.author" class="text-caption text-medium-emphasis mt-1">
@@ -322,6 +322,8 @@ onMounted(() => {
 
 .footer-quote blockquote {
   line-height: 1.6;
+  /* Bold italic at this size sets too tight against the surrounding captions. */
+  letter-spacing: 0.01em;
 }
 
 .page-enter-active,

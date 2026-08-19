@@ -43,3 +43,50 @@ export function chapterMatiere(level: string, chapter: string): keyof LevelChapt
   if (program.Chimie.some((c) => foldText(c) === target)) return "Chimie";
   return null;
 }
+
+/**
+ * A chapter list in the order the program teaches it — Physique first, then Chimie, each
+ * following the official sequence — rather than alphabetically. The picker is a contents
+ * page, and a contents page that starts at "Association des conducteurs ohmiques" hides
+ * the shape of the year.
+ *
+ * `level` matters and is not an optimisation: 52 of the 153 chapter names appear under
+ * more than one level, and 18 of those sit at a *different* position depending on which
+ * (e.g. "Le champ magnétique" is 7th in 1ère Bac Sc. Exp and 11th in 1ère Bac SM). Ranking
+ * from one global table would therefore misorder whichever level lost the tie. When no
+ * level is selected the list spans the whole curriculum, so it falls back to level order
+ * as declared in CHAPTERS_BY_LEVEL — Tronc Commun upward.
+ *
+ * Chapters outside the program keep the same treatment they get in chapterNumber(): no
+ * invented position. They collect at the end, alphabetically, instead of being scattered
+ * through the program at guessed indices.
+ */
+export function sortChaptersByProgram(chapters: string[], level?: string): string[] {
+  const programs =
+    level && CHAPTERS_BY_LEVEL[level]
+      ? [CHAPTERS_BY_LEVEL[level]]
+      : Object.values(CHAPTERS_BY_LEVEL);
+
+  const rank = new Map<string, number>();
+  let next = 0;
+  for (const program of programs) {
+    for (const matiere of ["Physique", "Chimie"] as const) {
+      for (const chapter of program[matiere]) {
+        const key = foldText(chapter);
+        // First occurrence wins, so a chapter shared by several levels keeps the position
+        // of the earliest level rather than the latest.
+        if (!rank.has(key)) rank.set(key, next);
+        next += 1;
+      }
+    }
+  }
+
+  return [...chapters].sort((a, b) => {
+    const ra = rank.get(foldText(a));
+    const rb = rank.get(foldText(b));
+    if (ra !== undefined && rb !== undefined) return ra - rb;
+    if (ra !== undefined) return -1;
+    if (rb !== undefined) return 1;
+    return a.localeCompare(b, "fr");
+  });
+}
