@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="PIPC">
   <!-- The header's π tile (src/components/BrandMark.vue), same geometry. Rects, not a
        stroked path: a favicon cannot rely on a webfont, and rasterisers drop strokes —
-       ImageMagick renders a stroked version of this mark as a blank orange square. -->
-  <rect width="64" height="64" rx="14" fill="#E2610A"/>
+       ImageMagick renders a stroked version of this mark as a blank green square. -->
+  <rect width="64" height="64" rx="14" fill="#16A34A"/>
   <g fill="#FFFFFF">
     <rect x="12" y="18" width="40" height="8" rx="4"/>
     <rect x="22" y="22" width="8" height="26" rx="4"/>

@@ -22,12 +22,12 @@
  * rasteriser renders — ImageMagick silently drops stroked paths and produces a blank
  * tile — so the favicon, the header and the splash are literally the same geometry.
  *
- * The tile keeps #E2610A rather than the theme's primary: at tile size it is a graphical
- * object needing 3:1, and the brighter orange is the brand colour. Buttons use the
- * darker #C2540A via the theme.
+ * The tile keeps #16A34A rather than the theme's primary: at tile size it is a graphical
+ * object needing 3:1, and the brighter green is the brand colour. Buttons use the
+ * darker #1E7A4D via the theme.
  */
 withDefaults(
   defineProps<{ size?: number; tileColor?: string; glyphColor?: string }>(),
-  { size: 42, tileColor: "#E2610A", glyphColor: "#FFFFFF" }
+  { size: 42, tileColor: "#16A34A", glyphColor: "#FFFFFF" }
 );
 </script>

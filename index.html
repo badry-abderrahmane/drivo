@@ -48,7 +48,7 @@
         align-items: center;
         justify-content: center;
         gap: 14px;
-        background: linear-gradient(165deg, #FFF9F4, #FBE3CD);
+        background: linear-gradient(165deg, #F6FBF7, #D8EFE0);
         transition: opacity 380ms cubic-bezier(.2, .8, .2, 1);
         /* Failsafe: App.vue removes this node at ~1.4s, but if the bundle never loads
            nothing would — and a fixed overlay would then hide the prerendered content
@@ -59,7 +59,7 @@
         to { opacity: 0; visibility: hidden; }
       }
       #pipc-splash.pipc-dark {
-        background: linear-gradient(165deg, #1F1509, #120C06);
+        background: linear-gradient(165deg, #16241C, #0B120E);
       }
       #pipc-splash.pipc-out { opacity: 0; }
       #pipc-splash-mark { transform-origin: center; }
@@ -74,11 +74,11 @@
         font-weight: 800;
         font-size: 22px;
         letter-spacing: -.5px;
-        color: #1A1207;
+        color: #101A14;
         opacity: 0;
         animation: pipc-rise 400ms 1000ms cubic-bezier(.2, .8, .2, 1) forwards;
       }
-      #pipc-splash.pipc-dark .pipc-word { color: #F5EDE4; }
+      #pipc-splash.pipc-dark .pipc-word { color: #E8F0EA; }
       #pipc-splash .pipc-sub {
         font-size: 9px;
         letter-spacing: .22em;
@@ -126,8 +126,8 @@
         el.setAttribute("aria-hidden", "true");
         el.innerHTML =
           '<svg id="pipc-splash-mark" width="72" height="72" viewBox="0 0 64 64">' +
-          '<rect class="pipc-fill" width="64" height="64" rx="14" fill="#E2610A"/>' +
-          '<path class="pipc-draw" d="M16 22 H48 M26 26 V44 M42 26 V44" stroke="#E2610A" ' +
+          '<rect class="pipc-fill" width="64" height="64" rx="14" fill="#16A34A"/>' +
+          '<path class="pipc-draw" d="M16 22 H48 M26 26 V44 M42 26 V44" stroke="#16A34A" ' +
           'stroke-width="8" stroke-linecap="round" fill="none"/>' +
           '<g class="pipc-fill" fill="#FFFFFF">' +
           '<rect x="12" y="18" width="40" height="8" rx="4"/>' +
