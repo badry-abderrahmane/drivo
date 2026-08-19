@@ -285,7 +285,7 @@ onMounted(ensureLoaded);
 }
 
 .hero-title {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   line-height: 1.15;
 }
 

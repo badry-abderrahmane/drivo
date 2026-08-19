@@ -8,10 +8,7 @@
     >
       <v-app-bar-title class="d-flex align-center">
         <router-link :to="{ name: 'browse' }" class="d-flex align-center ga-3 text-decoration-none color-inherit">
-          <div class="quantum-avatar rounded-xl d-flex align-center justify-center elevation-1">
-            <span class="brand-pi">π</span>
-            <div class="quantum-ring"></div>
-          </div>
+          <BrandMark :size="42" class="header-mark" data-test="brand-mark" />
           <div class="d-flex flex-column">
             <span class="font-weight-black text-h6 brand-title">
               PIPC
@@ -153,6 +150,7 @@ import { ref } from "vue";
 import { useRoute } from "vue-router";
 import { useTheme, useDisplay } from "vuetify";
 import SearchPalette from "./components/SearchPalette.vue";
+import BrandMark from "./components/BrandMark.vue";
 
 const route = useRoute();
 const theme = useTheme();
@@ -178,30 +176,18 @@ function toggleTheme(): void {
   z-index: 100;
 }
 
-.quantum-avatar {
-  background: linear-gradient(135deg, rgba(var(--v-theme-primary), 0.2), rgba(var(--v-theme-secondary), 0.15));
-  width: 42px;
-  height: 42px;
-  position: relative;
-  border: 1.5px solid rgba(var(--v-theme-primary), 0.3);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.header-mark {
+  display: block;
+  flex: none;
+  transition: transform var(--pipc-fast, 120ms) var(--pipc-ease, cubic-bezier(.2, .8, .2, 1));
 }
 
-.quantum-avatar:hover {
-  transform: rotate(180deg) scale(1.05);
-  border-color: rgb(var(--v-theme-primary));
-}
-
-.brand-pi {
-  font-size: 26px;
-  font-weight: 800;
-  line-height: 1;
-  color: rgb(var(--v-theme-primary));
-  font-family: 'Space Grotesk', sans-serif;
+.header-mark:hover {
+  transform: scale(1.04);
 }
 
 .brand-title {
-  font-family: 'Space Grotesk', 'Orbitron', sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   letter-spacing: -0.5px;
   color: rgb(var(--v-theme-on-surface));
   line-height: 1.1;

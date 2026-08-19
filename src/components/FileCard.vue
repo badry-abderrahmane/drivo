@@ -185,7 +185,7 @@ const hiddenChapterCount = computed(() =>
 }
 
 .title-text {
-  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
   line-height: 1.35;
   color: rgb(var(--v-theme-on-surface));
 }
