@@ -229,7 +229,6 @@
           v-model="selectedIds"
           :headers="headers"
           :items="visibleRows"
-          :search="search"
           :loading="loading"
           item-value="fileId"
           show-select
@@ -608,6 +607,7 @@ import {
   toEditRow, toSaveInput, saveKey, changedRows, applyBulkPatch, titleSuggestions,
   type EditRow, type BulkPatch,
 } from "./adminRows";
+import { searchRows } from "./adminSearch";
 import BulkClassifyDialog from "../components/BulkClassifyDialog.vue";
 
 function kindOf(r: EditRow) {
@@ -657,12 +657,22 @@ const statusCounts = computed(() => {
   return { todo: scopedRows.value.length - done, done, all: scopedRows.value.length };
 });
 
-/** Rows actually shown: folder scope narrowed by status. `search` is applied by the table. */
-const visibleRows = computed(() => {
+/** Rows in the folder scope, narrowed by status. Search is applied on top, below. */
+const statusRows = computed(() => {
   if (statusFilter.value === "all") return scopedRows.value;
   const wantClassified = statusFilter.value === "done";
   return scopedRows.value.filter((r) => isClassified(r) === wantClassified);
 });
+
+/**
+ * Rows actually shown. Search is applied here rather than by v-data-table's `search`
+ * prop: that prop filters on a literal substring, so it would discard the fuzzy and
+ * accent-folded hits this search exists to find.
+ *
+ * The index is built from the current rows, so a title just typed is findable before it
+ * is saved. The computed is lazy, so an empty search box costs nothing while editing.
+ */
+const visibleRows = computed(() => searchRows(statusRows.value, search.value ?? ""));
 
 // In-app file preview state
 const previewDialog = ref(false);

@@ -306,6 +306,25 @@ describe("AdminView status filter", () => {
     expect(w.get('[data-test="status-todo"]').text()).toBe(before);
   });
 
+  it("filters the table with the fuzzy search, not a literal substring", async () => {
+    const { w } = await mountAdminWith(mixed);
+    // Vuetify's built-in `search` prop would drop this: no row literally contains "tod1".
+    await w.get('[data-test="search"] input').setValue("tod1");
+    await flushPromises();
+    expect(w.text()).toContain("todo1.pdf");
+  });
+
+  it("shows every row again when the search box is cleared", async () => {
+    const { w } = await mountAdminWith(mixed);
+    await w.get('[data-test="search"] input').setValue("zzz-no-match");
+    await flushPromises();
+    expect(w.text()).not.toContain("todo1.pdf");
+
+    await w.get('[data-test="search"] input').setValue("");
+    await flushPromises();
+    expect(w.text()).toContain("todo1.pdf");
+  });
+
   it("names the fields an unclassified row is missing", async () => {
     const { w } = await mountAdminWith([fileAt("todo1", ["A"], false)]);
     expect(w.text()).toContain("Niveau");
