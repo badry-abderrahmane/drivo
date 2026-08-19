@@ -1,0 +1,26 @@
+/**
+ * One corner radius for the whole app.
+ *
+ * Vuetify's scale is 4 / 8 / 24px, and the codebase also used `rounded-2xl`, `rounded-md`
+ * and `rounded-24` — Tailwind-style names Vuetify never defined, so 23 elements silently
+ * fell back to their component default. That mix is why the corners looked arbitrary.
+ *
+ * Everything non-pill now resolves to 12px. `!important` is not decoration here: Vuetify
+ * ships its radius utilities as `border-radius:24px!important`, so specificity alone
+ * cannot win — verified in the built CSS. `rounded-pill` and `rounded-circle` are
+ * deliberately untouched: the pill marks things you can click.
+ */
+.v-application .rounded,
+.v-application .rounded-sm,
+.v-application .rounded-md,
+.v-application .rounded-lg,
+.v-application .rounded-xl,
+.v-application .rounded-2xl,
+.v-application .rounded-24 {
+  border-radius: 12px !important;
+}
+
+/* Corner-specific variants keep their side, at the same 12px. */
+.v-application .rounded-t-xl {
+  border-radius: 12px 12px 0 0 !important;
+}

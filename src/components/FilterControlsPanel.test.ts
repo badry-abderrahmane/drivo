@@ -33,6 +33,15 @@ const subjectItems = [
 ];
 
 describe("FilterControlsPanel", () => {
+  it("marks each Type chip with its type's colour dot, one per type", () => {
+    const w = mountWithVuetify(FilterControlsPanel, { props: { items, modelValue: {} as Filters } });
+    const dots = w.findAll('[data-test="type-dot"]');
+    // "Tous" is not a type and gets no dot.
+    const types = new Set(items.map((i) => i.meta.type).filter(Boolean));
+    expect(dots).toHaveLength(types.size);
+    expect(dots[0].attributes("style")).toContain("--v-theme-type-");
+  });
+
   it("emits the selected level when a Niveau quick-pill is clicked", async () => {
     const w = mountWithVuetify(FilterControlsPanel, { props: { items, modelValue: {} as Filters } });
     await w.get('[data-test="level-2ème Bac SM"]').trigger("click");

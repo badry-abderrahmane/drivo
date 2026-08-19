@@ -39,6 +39,16 @@ export default createVuetify({
           "on-error-container": "#410002",
           warning: "#B45309",
           success: "#166534",
+          // One hue per document type (src/lib/docType.ts), used with variant="tonal".
+          // None of them is the brand orange — orange means "you can act on this", and a
+          // type badge is a label. Burgundy for the exam deliberately avoids the error
+          // red above, so a failed load never reads as an exam badge.
+          "type-cours": "#14528C",
+          "type-exercices": "#166534",
+          "type-devoir": "#5B21B6",
+          "type-examen": "#9A2540",
+          "type-video": "#0E6E7A",
+          "type-autre": "#6B5B4A",
         },
       },
       dark: {
@@ -73,6 +83,13 @@ export default createVuetify({
           "on-error-container": "#FFDAD6",
           warning: "#FBBF24",
           success: "#4ADE80",
+          // Lightened so the tonal chip stays legible on the warm brown-black surface.
+          "type-cours": "#AFD2F0",
+          "type-exercices": "#8FDCB0",
+          "type-devoir": "#CBBEFD",
+          "type-examen": "#F5A3B5",
+          "type-video": "#8FDDE5",
+          "type-autre": "#C7B6A2",
         },
       },
     },

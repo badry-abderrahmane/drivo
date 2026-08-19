@@ -44,9 +44,7 @@
       <h1 class="text-h4 font-weight-black font-heading mb-3">{{ doc.displayTitle }}</h1>
 
       <div class="d-flex align-center flex-wrap ga-2 mb-3">
-        <v-chip v-if="doc.meta.type" size="small" color="primary" variant="tonal" class="font-weight-bold rounded-pill">
-          {{ doc.meta.type }}
-        </v-chip>
+        <DocTypeChip :type="doc.meta.type" size="small" />
         <v-chip v-if="doc.meta.subject" size="small" variant="tonal" class="rounded-pill">
           {{ doc.meta.subject }}
         </v-chip>
@@ -126,6 +124,7 @@
 import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import FileCard from "../components/FileCard.vue";
+import DocTypeChip from "../components/DocTypeChip.vue";
 import { useLibrary } from "../composables/useLibrary";
 import { findDoc, relatedDocs } from "../lib/doc";
 import { slugify } from "../lib/slug";

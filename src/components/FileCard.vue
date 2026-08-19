@@ -16,9 +16,7 @@
     <div class="flex-grow-1 overflow-hidden">
       <div class="d-flex align-center ga-2 flex-wrap mb-1">
         <span class="text-subtitle-2 font-weight-bold text-truncate">{{ item.displayTitle }}</span>
-        <v-chip v-if="item.meta.type" size="x-small" color="primary" variant="tonal" class="font-weight-medium rounded-pill">
-          {{ item.meta.type }}
-        </v-chip>
+        <DocTypeChip :type="item.meta.type" size="x-small" />
       </div>
 
       <div v-if="subtitle" class="text-caption text-medium-emphasis text-truncate">{{ subtitle }}</div>
@@ -60,9 +58,7 @@
         <v-icon :icon="kind.icon" size="26" />
       </div>
 
-      <v-chip v-if="item.meta.type" size="small" color="primary" variant="tonal" class="font-weight-semibold rounded-pill px-3">
-        {{ item.meta.type }}
-      </v-chip>
+      <DocTypeChip :type="item.meta.type" size="small" />
     </div>
 
     <h3 class="text-body-1 font-weight-bold text-wrap line-clamp-2 mb-1 title-text">
@@ -118,6 +114,7 @@ import { computed, ref } from "vue";
 import type { LibraryItem } from "../lib/types";
 import { fileKind } from "../lib/fileKind";
 import { docSlug } from "../lib/doc";
+import DocTypeChip from "./DocTypeChip.vue";
 
 const props = withDefaults(
   defineProps<{

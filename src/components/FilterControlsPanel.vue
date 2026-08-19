@@ -61,6 +61,14 @@
           class="filter-chip rounded-pill px-2"
           @click="selectType(t)"
         >
+          <!-- A dot, not a coloured chip: these are controls, and colouring them by type
+               would drown the selected/unselected signal. The dot teaches the type-colour
+               mapping while orange keeps meaning "this filter is on". -->
+          <span
+            class="type-dot"
+            :style="{ backgroundColor: `rgb(var(--v-theme-${typeColor(t)}))` }"
+            data-test="type-dot"
+          />
           {{ t }}
         </v-chip>
       </div>
@@ -136,6 +144,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from "vue";
 import { distinctValues, distinctChapters, distinctLevels, type Filters } from "../lib/filter";
+import { typeColor } from "../lib/docType";
 import type { LibraryItem } from "../lib/types";
 
 const props = withDefaults(
@@ -240,3 +249,13 @@ watch(
   }
 );
 </script>
+
+<style scoped>
+.type-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: none;
+  margin-right: 6px;
+}
+</style>
