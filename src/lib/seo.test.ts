@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { enumeratePages, absoluteUrl, basePathOf, canonicalUrl, injectPage, sitemapXml, robotsTxt, escapeHtml } from "./seo";
+import { enumeratePages, absoluteUrl, basePathOf, canonicalUrl, injectPage, jsonLd, sitemapXml, robotsTxt, escapeHtml } from "./seo";
 import type { LibraryItem } from "./types";
 
 const make = (fileId: string, over: Partial<LibraryItem["meta"]> = {}, title = "Dipôle RC — Cours"): LibraryItem => ({
@@ -202,5 +202,38 @@ describe("robotsTxt", () => {
     const out = robotsTxt();
     expect(out).toContain("Disallow: /admin");
     expect(out).toContain(`Sitemap: ${absoluteUrl("/sitemap.xml")}`);
+  });
+});
+
+describe("jsonLd", () => {
+  const base = { path: "/doc/1/x", title: "T", description: "D", body: "" };
+
+  it("names Hassan Badry as author of ordinary documents", () => {
+    const out = jsonLd({ ...base, docType: "Cours" });
+    expect(out).toContain('"author"');
+    expect(out).toContain("Hassan Badry");
+    expect(out).not.toContain('"editor"');
+  });
+
+  it("names him as editor of Examen National papers, not author", () => {
+    const out = jsonLd({ ...base, docType: "Examen National" });
+    expect(out).toContain('"editor"');
+    expect(out).not.toContain('"author"');
+  });
+
+  it("returns nothing for non-document pages", () => {
+    expect(jsonLd(base)).toBe("");
+  });
+});
+
+describe("injectPage author meta", () => {
+  it("declares the author on every page", () => {
+    const out = injectPage('<html><head></head><body><div id="app"></div></body></html>', {
+      path: "/",
+      title: "T",
+      description: "D",
+      body: "",
+    });
+    expect(out).toContain('<meta name="author" content="Hassan Badry">');
   });
 });

@@ -3,7 +3,7 @@ import { isClassified } from "./classification";
 import { slugify } from "./slug";
 import { docSlug } from "./doc";
 import { menuLevels } from "./menu";
-import { SITE_URL, EXAMEN_NATIONAL_LEVELS, EXAMEN_NATIONAL_TYPE } from "../config";
+import { SITE_URL, EXAMEN_NATIONAL_LEVELS, EXAMEN_NATIONAL_TYPE, AUTHOR_NAME } from "../config";
 
 /**
  * One prerenderable page. `body` is a semantic HTML block written into `<div id="app">`:
@@ -19,6 +19,8 @@ export interface PageMeta {
   lastmod?: string;
   noindex?: boolean;
   ogImage?: string;
+  /** The document's `meta.type`, set only for document pages. Drives author vs editor. */
+  docType?: string;
 }
 
 const SUFFIX = " | PIPC";
@@ -143,6 +145,7 @@ function docPage(item: LibraryItem, all: LibraryItem[]): PageMeta {
     body: parts.filter(Boolean).join(""),
     lastmod: isoDate(item.modifiedTime),
     ogImage: item.thumbnailLink,
+    docType: item.meta.type,
   };
 }
 
@@ -247,6 +250,28 @@ export function enumeratePages(items: LibraryItem[]): PageMeta[] {
   return pages;
 }
 
+/**
+ * schema.org for a document page. Hassan Badry wrote and edited the cours and exercices,
+ * so he is their `author`; the Examen National papers are written by the ministry and he
+ * gathered them, so there he is the `editor`. The distinction is free here and claiming
+ * authorship of national exam papers would be false.
+ */
+export function jsonLd(page: PageMeta): string {
+  if (!page.docType) return "";
+  const role = page.docType === EXAMEN_NATIONAL_TYPE ? "editor" : "author";
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "LearningResource",
+    name: page.title.replace(SUFFIX, ""),
+    description: page.description,
+    url: canonicalUrl(page.path),
+    inLanguage: "fr",
+    [role]: { "@type": "Person", name: AUTHOR_NAME },
+    publisher: { "@type": "Organization", name: "PIPC" },
+  };
+  return `<script type="application/ld+json">${JSON.stringify(data)}</script>`;
+}
+
 /** The built shell with this page's head metadata and content block written into it. */
 export function injectPage(shell: string, page: PageMeta): string {
   const url = canonicalUrl(page.path);
@@ -263,6 +288,8 @@ export function injectPage(shell: string, page: PageMeta): string {
     `<meta property="og:url" content="${url}">`,
     page.ogImage ? `<meta property="og:image" content="${escapeHtml(page.ogImage)}">` : "",
     `<meta name="twitter:card" content="summary_large_image">`,
+    `<meta name="author" content="${escapeHtml(AUTHOR_NAME)}">`,
+    jsonLd(page),
   ]
     .filter(Boolean)
     .join("");
