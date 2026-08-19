@@ -82,16 +82,9 @@
           Examen National
         </v-btn>
 
-        <v-btn
-          :to="{ name: 'admin' }"
-          :variant="route.name === 'admin' ? 'flat' : 'text'"
-          :color="route.name === 'admin' ? 'primary' : 'default'"
-          size="small"
-          class="rounded-pill font-weight-semibold px-4 nav-pill"
-          prepend-icon="mdi-shield-outline"
-        >
-          Admin
-        </v-btn>
+        <!-- Admin is reachable at /admin, but not advertised in the nav: it is not a
+             student destination. The password gate is what protects it — this only keeps
+             it out of the way. -->
       </nav>
 
       <!-- Theme Switcher -->
@@ -138,13 +131,17 @@
 
     <!-- Footer -->
     <v-footer class="app-footer text-center d-flex flex-column py-6 border-t mt-12 bg-surface">
-      <div class="d-flex align-center justify-center ga-2 mb-2">
-        <span class="text-caption text-medium-emphasis">E = hν</span>
-        <span class="text-caption text-medium-emphasis">·</span>
-        <span class="text-caption text-medium-emphasis">λ = h / p</span>
-        <span class="text-caption text-medium-emphasis">·</span>
-        <span class="text-caption text-medium-emphasis">F = q(E + v × B)</span>
-      </div>
+      <figure class="footer-quote mb-3 px-4" data-test="footer-quote">
+        <blockquote class="text-caption text-medium-emphasis font-italic">
+          {{ quote.text }}
+        </blockquote>
+        <figcaption v-if="quote.author" class="text-caption text-medium-emphasis mt-1">
+          — {{ quote.author }}
+        </figcaption>
+        <figcaption v-else class="text-caption text-disabled mt-1">
+          Proverbe
+        </figcaption>
+      </figure>
       <div class="text-caption font-weight-medium mb-1" data-test="footer-credit">
         Documents rassemblés et édités par M. Hassan Badry
       </div>
@@ -162,11 +159,16 @@ import { useTheme, useDisplay } from "vuetify";
 import { INTRO_DURATION_MS, INTRO_EXIT_MS } from "./lib/intro";
 import SearchPalette from "./components/SearchPalette.vue";
 import BrandMark from "./components/BrandMark.vue";
+import { randomQuote } from "./lib/quotes";
 
 const route = useRoute();
 const theme = useTheme();
 const searchOpen = ref(false);
 const { mobile } = useDisplay();
+
+// Chosen once per page load, not per navigation: a quotation that changed under the
+// reader every time they opened a document would be a distraction, not a note.
+const quote = randomQuote();
 
 const THEME_KEY = "pipc:theme";
 
@@ -309,6 +311,17 @@ onMounted(() => {
 
 .app-footer {
   border-top: 1px solid rgba(var(--v-border-color), 0.08) !important;
+}
+
+/* The Poincaré line is long; cap the measure so it wraps as a readable block rather than
+   one wide ribbon across a desktop footer. */
+.footer-quote {
+  max-width: 62ch;
+  margin-inline: auto;
+}
+
+.footer-quote blockquote {
+  line-height: 1.6;
 }
 
 .page-enter-active,
