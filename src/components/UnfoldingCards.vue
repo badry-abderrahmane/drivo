@@ -406,8 +406,10 @@ function selectChapter(ch: string): void {
 .unfold-card {
   background: rgb(var(--v-theme-surface));
   border: 1px solid rgba(var(--v-border-color), 0.1) !important;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  animation: cardFocusIn 0.5s ease backwards;
+  transition: transform var(--pipc-base) var(--pipc-ease),
+              border-color var(--pipc-base) var(--pipc-ease),
+              box-shadow var(--pipc-base) var(--pipc-ease);
+  animation: cardFocusIn var(--pipc-slow) var(--pipc-ease) backwards;
 }
 
 @keyframes cardFocusIn {
@@ -424,9 +426,9 @@ function selectChapter(ch: string): void {
 }
 
 .unfold-card:hover {
-  transform: translateY(-5px) scale(1.01);
-  border-color: rgba(var(--v-theme-primary), 0.45) !important;
-  box-shadow: 0 14px 36px -8px rgba(0, 0, 0, 0.1) !important;
+  transform: translateY(-2px);
+  border-color: rgba(var(--v-theme-primary), 0.5) !important;
+  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.1) !important;
 }
 
 .unfold-card:hover .unfold-arrow {
@@ -440,7 +442,7 @@ function selectChapter(ch: string): void {
   border: 0;
   cursor: pointer;
   padding: 0;
-  animation: cardFocusIn 0.5s ease backwards;
+  animation: cardFocusIn var(--pipc-slow) var(--pipc-ease) backwards;
 }
 
 .spine-number {

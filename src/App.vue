@@ -126,7 +126,14 @@
     <SearchPalette v-model="searchOpen" />
 
     <v-main class="app-main">
-      <router-view />
+      <!-- Keyed by route NAME, not path: UnfoldingCards drives its drill-down from route
+           params, so keying by path would remount it on every level -> chapter step and
+           discard the state its own transitions depend on. -->
+      <router-view v-slot="{ Component, route: r }">
+        <transition name="page" mode="out-in">
+          <component :is="Component" :key="String(r.name)" />
+        </transition>
+      </router-view>
     </v-main>
 
     <!-- Footer -->
@@ -302,5 +309,19 @@ onMounted(() => {
 
 .app-footer {
   border-top: 1px solid rgba(var(--v-border-color), 0.08) !important;
+}
+
+.page-enter-active,
+.page-leave-active {
+  transition: opacity var(--pipc-base) var(--pipc-ease), transform var(--pipc-base) var(--pipc-ease);
+}
+
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.page-leave-to {
+  opacity: 0;
 }
 </style>

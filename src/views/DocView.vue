@@ -179,6 +179,12 @@ onMounted(ensureLoaded);
 .doc-view {
   max-width: 1100px;
 }
+/* The breadcrumb marks itself .color-inherit, but that class is only defined in App.vue's
+   scoped style, so it never reached here and the links rendered in default browser blue.
+   Obvious now that the page is warm paper. */
+.color-inherit {
+  color: inherit;
+}
 .doc-frame-wrapper {
   width: 100%;
   height: 72vh;

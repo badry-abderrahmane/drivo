@@ -159,15 +159,16 @@ const hiddenChapterCount = computed(() =>
 .course-card {
   background: rgb(var(--v-theme-surface));
   border: 1px solid rgba(var(--v-border-color), 0.1) !important;
-  transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform var(--pipc-fast) var(--pipc-ease),
+              border-color var(--pipc-fast) var(--pipc-ease),
+              background var(--pipc-fast) var(--pipc-ease);
   text-decoration: none;
   color: inherit;
 }
 
 .course-card.grid-mode:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.08) !important;
-  border-color: rgba(var(--v-theme-primary), 0.4) !important;
+  transform: translateY(-1px);
+  border-color: rgba(var(--v-theme-primary), 0.5) !important;
 }
 
 .course-card.grid-mode:hover .card-arrow-icon {

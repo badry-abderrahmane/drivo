@@ -15,6 +15,21 @@
       rel="stylesheet"
     />
     <style>
+      :root {
+        --pipc-fast: 120ms;
+        --pipc-base: 220ms;
+        --pipc-slow: 380ms;
+        --pipc-ease: cubic-bezier(.2, .8, .2, 1);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+
       body {
         font-family: 'Inter', system-ui, -apple-system, sans-serif;
       }

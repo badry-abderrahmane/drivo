@@ -31,7 +31,12 @@
     <div v-if="loading" class="py-4">
       <v-row>
         <v-col v-for="i in 8" :key="i" cols="12" sm="6" md="4" lg="3">
-          <v-skeleton-loader type="card, article" class="rounded-xl border" />
+          <div class="card-skeleton rounded-xl border" data-test="card-skeleton">
+            <div class="sk-chip"></div>
+            <div class="sk-line sk-line-lg"></div>
+            <div class="sk-line sk-line-md"></div>
+            <div class="sk-foot"></div>
+          </div>
         </v-col>
       </v-row>
     </div>
@@ -267,6 +272,37 @@ onMounted(ensureLoaded);
 </script>
 
 <style scoped>
+/* A skeleton should be the shape of the thing it becomes: chip, two title lines and an
+   action row, matching FileCard's real geometry rather than Vuetify's generic card. */
+.card-skeleton {
+  background: rgb(var(--v-theme-surface));
+  padding: 16px;
+  height: 100%;
+}
+
+.card-skeleton > * {
+  background: linear-gradient(
+    100deg,
+    rgba(var(--v-theme-on-surface), 0.06) 30%,
+    rgba(var(--v-theme-on-surface), 0.12) 50%,
+    rgba(var(--v-theme-on-surface), 0.06) 70%
+  );
+  background-size: 220% 100%;
+  animation: sk-shimmer 1.5s linear infinite;
+  border-radius: 6px;
+}
+
+.sk-chip { width: 68px; height: 18px; border-radius: 999px; }
+.sk-line { height: 12px; margin-top: 12px; }
+.sk-line-lg { width: 92%; }
+.sk-line-md { width: 64%; }
+.sk-foot { height: 14px; width: 45%; margin-top: 22px; }
+
+@keyframes sk-shimmer {
+  from { background-position: 120% 0; }
+  to { background-position: -120% 0; }
+}
+
 .browse-view {
   max-width: 1400px;
 }
