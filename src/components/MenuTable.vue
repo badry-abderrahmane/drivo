@@ -16,7 +16,10 @@
           </thead>
           <tbody>
             <tr v-for="row in section.rows" :key="row.chapter">
-              <td class="font-weight-medium theme-cell">{{ row.chapter }}</td>
+              <td class="font-weight-medium theme-cell">
+                <span class="chapter-num">{{ formatChapterNumber(section.subject, row.chapter) }}</span>
+                {{ row.chapter }}
+              </td>
               <td v-for="cell in row.cells" :key="cell.type">
                 <div v-if="cell.files.length" class="d-flex flex-wrap ga-1">
                   <button
@@ -46,8 +49,15 @@ import { useRouter } from "vue-router";
 import type { LevelMenu } from "../lib/menu";
 import type { LibraryItem } from "../lib/types";
 import { docSlug } from "../lib/doc";
+import { chapterNumber } from "../lib/chapterNumber";
 
-defineProps<{ menu: LevelMenu }>();
+const props = defineProps<{ menu: LevelMenu }>();
+
+/** Two-digit program number, or an em dash for a chapter outside the official program. */
+function formatChapterNumber(subject: string, chapter: string): string {
+  const n = chapterNumber(props.menu.level, subject, chapter);
+  return n === null ? "—" : String(n).padStart(2, "0");
+}
 
 const router = useRouter();
 
@@ -66,6 +76,14 @@ function goToDoc(f: LibraryItem): void {
 }
 .theme-cell {
   min-width: 220px;
+}
+.chapter-num {
+  display: inline-block;
+  min-width: 26px;
+  margin-right: 8px;
+  font-weight: 800;
+  color: rgb(var(--v-theme-primary));
+  opacity: 0.55;
 }
 .num-link {
   display: inline-flex;

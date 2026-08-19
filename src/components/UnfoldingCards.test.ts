@@ -121,6 +121,25 @@ describe("UnfoldingCards.vue", () => {
     expect(wrapper.find('[data-test="unfold-chapter-Transformations Nucléaires"]').exists()).toBe(true);
   });
 
+  it("hangs the program number beside each chapter", async () => {
+    const { wrapper } = await mountUnfolding(mockItems);
+
+    await wrapper.find('[data-test="unfold-level-2BAC"]').trigger("click");
+    await settle();
+
+    expect(wrapper.find('[data-test="chapter-spine-number"]').exists()).toBe(true);
+  });
+
+  it("shows an em dash, not a number, for a chapter outside the official program", async () => {
+    const { wrapper } = await mountUnfolding(mockItems);
+
+    await wrapper.find('[data-test="unfold-level-2BAC"]').trigger("click");
+    await settle();
+
+    // The fixture's chapters are invented, so none of them is in CHAPTERS_BY_LEVEL.
+    expect(wrapper.find('[data-test="chapter-spine-number"]').text()).toBe("—");
+  });
+
   it("unfolds into document cards when a chapter card is clicked (Step 3)", async () => {
     const { wrapper } = await mountUnfolding(mockItems);
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { chapterNumber } from "./chapterNumber";
+import { chapterNumber, chapterMatiere } from "./chapterNumber";
 import { CHAPTERS_BY_LEVEL } from "../data/chapters";
 
 describe("chapterNumber", () => {
@@ -21,11 +21,29 @@ describe("chapterNumber", () => {
     expect(chapterNumber("Niveau inconnu", "Physique", "Le mouvement")).toBeNull();
   });
 
-  it("returns null for an unknown matière", () => {
-    expect(chapterNumber("Tronc Commun", "Biologie", "Le mouvement")).toBeNull();
+  it("numbers a combined 'Physique & Chimie' subject from whichever list holds it", () => {
+    const chimie = CHAPTERS_BY_LEVEL["Tronc Commun"].Chimie[1];
+    expect(chapterNumber("Tronc Commun", "Physique & Chimie", "Le mouvement")).toBe(3);
+    expect(chapterNumber("Tronc Commun", "Physique & Chimie", chimie)).toBe(2);
+  });
+
+  it("returns null for an unknown matière when the chapter is in neither list", () => {
+    expect(chapterNumber("Tronc Commun", "Biologie", "La photosynthèse")).toBeNull();
   });
 
   it("ignores case and accents when matching", () => {
     expect(chapterNumber("Tronc Commun", "Physique", "LE MOUVEMENT")).toBe(3);
+  });
+});
+
+describe("chapterMatiere", () => {
+  it("reports which half of the program a chapter belongs to", () => {
+    expect(chapterMatiere("Tronc Commun", "Le mouvement")).toBe("Physique");
+    expect(chapterMatiere("Tronc Commun", CHAPTERS_BY_LEVEL["Tronc Commun"].Chimie[0])).toBe("Chimie");
+  });
+
+  it("returns null for an off-program chapter or unknown level", () => {
+    expect(chapterMatiere("Tronc Commun", "Chapitre inventé")).toBeNull();
+    expect(chapterMatiere("Niveau inconnu", "Le mouvement")).toBeNull();
   });
 });

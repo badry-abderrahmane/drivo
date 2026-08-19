@@ -93,43 +93,28 @@
               <v-divider class="ms-3 flex-grow-1" />
             </div>
 
-            <v-row>
-              <v-col
+            <div class="chapter-spine">
+              <button
                 v-for="(ch, index) in subGroup.chapters"
                 :key="ch.name"
-                cols="12"
-                sm="6"
-                md="4"
+                type="button"
+                class="spine-row d-flex align-start ga-4 w-100 text-left"
+                :data-test="`unfold-chapter-${ch.name}`"
+                :style="{ animationDelay: `${staggerDelay(index)}ms` }"
+                @click="selectChapter(ch.name)"
               >
-                <v-card
-                  variant="flat"
-                  class="unfold-card chapter-unfold-card rounded-2xl border pa-5 h-100 d-flex flex-column justify-space-between cursor-pointer"
-                  :data-test="`unfold-chapter-${ch.name}`"
-                  :style="{ animationDelay: `${staggerDelay(index)}ms` }"
-                  @click="selectChapter(ch.name)"
-                >
-                  <div>
-                    <div class="d-flex align-center justify-space-between mb-3">
-                      <v-chip size="x-small" color="secondary" variant="tonal" class="font-weight-semibold rounded-pill">
-                        {{ subGroup.subject }}
-                      </v-chip>
-                      <v-chip size="x-small" color="primary" variant="flat" class="font-weight-bold rounded-pill">
-                        {{ ch.count }} doc{{ ch.count > 1 ? "s" : "" }}
-                      </v-chip>
-                    </div>
-
-                    <h4 class="text-body-1 font-weight-bold font-heading mb-2 line-clamp-2">
-                      {{ ch.name }}
-                    </h4>
-                  </div>
-
-                  <div class="unfold-action-bar d-flex align-center justify-space-between pt-3 border-t mt-3">
-                    <span class="text-caption font-weight-bold text-primary">Afficher les documents</span>
-                    <v-icon icon="mdi-folder-open-outline" color="primary" size="18" />
-                  </div>
-                </v-card>
-              </v-col>
-            </v-row>
+                <span class="spine-number font-heading" data-test="chapter-spine-number">
+                  {{ formatChapterNumber(subGroup.subject, ch.name) }}
+                </span>
+                <span class="spine-body flex-grow-1 pb-4">
+                  <span class="d-block font-heading font-weight-bold spine-name">{{ ch.name }}</span>
+                  <span class="d-block text-caption text-medium-emphasis mt-1">
+                    {{ ch.count }} document{{ ch.count > 1 ? "s" : "" }}
+                  </span>
+                </span>
+                <v-icon icon="mdi-chevron-right" size="20" color="primary" class="mt-1 spine-arrow" />
+              </button>
+            </div>
           </div>
         </template>
       </div>
@@ -190,6 +175,7 @@ import { computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import type { LibraryItem } from "../lib/types";
 import { chaptersOf, levelsOf, subjectOf } from "../lib/group";
+import { chapterNumber, chapterMatiere } from "../lib/chapterNumber";
 import { slugify, resolveSlug } from "../lib/slug";
 import { TYPES, EXAMEN_NATIONAL_TYPE } from "../config";
 import FileCard from "./FileCard.vue";
@@ -249,6 +235,15 @@ const MAX_STAGGERED_CARDS = 6;
 const STAGGER_STEP_MS = 40;
 function staggerDelay(index: number): number {
   return Math.min(index, MAX_STAGGERED_CARDS) * STAGGER_STEP_MS;
+}
+
+/**
+ * Two-digit program number, or an em dash for a chapter the admin typed freely. A wrong
+ * number in a contents page is worse than no number.
+ */
+function formatChapterNumber(subject: string, chapter: string): string {
+  const n = selectedLevel.value ? chapterNumber(selectedLevel.value, subject, chapter) : null;
+  return n === null ? "—" : String(n).padStart(2, "0");
 }
 
 function getLevelIcon(lvl: string): string {
@@ -319,6 +314,23 @@ const currentSubjectGroups = computed(() => {
       count: new Set(list.map((i) => i.fileId)).size,
       items: list,
     }));
+    // Presented as a table of contents, so it has to read like one: program order, with
+    // off-program chapters (no number) collected at the end rather than interleaved.
+    const matiereRank = (name: string): number => {
+      const m = chapterMatiere(selectedLevel.value!, name);
+      return m === "Physique" ? 0 : m === "Chimie" ? 1 : 2;
+    };
+    chapters.sort((a, b) => {
+      const ra = matiereRank(a.name);
+      const rb = matiereRank(b.name);
+      if (ra !== rb) return ra - rb;
+      const na = chapterNumber(selectedLevel.value!, a.subject, a.name);
+      const nb = chapterNumber(selectedLevel.value!, b.subject, b.name);
+      if (na !== null && nb !== null) return na - nb || a.name.localeCompare(b.name, "fr");
+      if (na !== null) return -1;
+      if (nb !== null) return 1;
+      return a.name.localeCompare(b.name, "fr");
+    });
     result.push({ subject, chapters });
   }
 
@@ -419,6 +431,64 @@ function selectChapter(ch: string): void {
 
 .unfold-card:hover .unfold-arrow {
   transform: translateY(2px);
+}
+
+/* The chapter list is set like a printed table of contents: the program number hangs in
+   a margin against a rule, rather than each chapter sitting in its own card. */
+.spine-row {
+  background: none;
+  border: 0;
+  cursor: pointer;
+  padding: 0;
+  animation: cardFocusIn 0.5s ease backwards;
+}
+
+.spine-number {
+  width: 52px;
+  flex: none;
+  text-align: right;
+  font-size: 1.9rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -1.5px;
+  color: rgb(var(--v-theme-primary));
+  opacity: 0.3;
+  transition: opacity var(--pipc-fast, 120ms) var(--pipc-ease, cubic-bezier(.2, .8, .2, 1));
+}
+
+.spine-row:hover .spine-number {
+  opacity: 0.75;
+}
+
+.spine-body {
+  border-left: 2px solid rgb(var(--v-theme-outline-variant));
+  padding-left: 14px;
+  transition: border-color var(--pipc-fast, 120ms) var(--pipc-ease, cubic-bezier(.2, .8, .2, 1));
+}
+
+.spine-row:hover .spine-body {
+  border-left-color: rgb(var(--v-theme-primary));
+}
+
+.spine-name {
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+
+.spine-arrow {
+  opacity: 0;
+  transition: opacity var(--pipc-fast, 120ms) var(--pipc-ease, cubic-bezier(.2, .8, .2, 1));
+}
+
+.spine-row:hover .spine-arrow {
+  opacity: 1;
+}
+
+@media (max-width: 600px) {
+  .spine-number {
+    width: 36px;
+    font-size: 1.4rem;
+  }
 }
 
 .icon-avatar {
