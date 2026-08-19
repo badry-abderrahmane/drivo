@@ -174,7 +174,7 @@
 import { computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import type { LibraryItem } from "../lib/types";
-import { chaptersOf, levelsOf, subjectOf } from "../lib/group";
+import { chaptersOf, levelsOf } from "../lib/group";
 import { chapterNumber, chapterMatiere } from "../lib/chapterNumber";
 import { slugify, resolveSlug } from "../lib/slug";
 import { TYPES, EXAMEN_NATIONAL_TYPE } from "../config";
@@ -231,6 +231,9 @@ const selectedChapter = computed<string | null>({
 // Entrance stagger, capped so a long chapter list (up to 17 cards in one Matière
 // group) doesn't leave the tail end fading in over a second-plus while the grid
 // above it has already settled.
+/** Where chapters that are not in the official program go — see currentSubjectGroups. */
+const OTHER_MATIERE = "Autres";
+
 const MAX_STAGGERED_CARDS = 6;
 const STAGGER_STEP_MS = 40;
 function staggerDelay(index: number): number {
@@ -287,14 +290,20 @@ const currentSubjectGroups = computed(() => {
   if (!selectedLevel.value) return [];
   const levelItems = props.items.filter((it) => levelsOf(it).includes(selectedLevel.value!));
 
+  // Grouped by the CHAPTER's matière, not the document's subject label. A Devoir
+  // surveillé or an Examen National genuinely covers both matières and is labelled
+  // "Physique & Chimie" — grouping by that label produced a third heading whose chapters
+  // were, every one of them, already listed under Physique or Chimie. Routing per chapter
+  // puts each document under the chapters it actually covers, in both matières when that
+  // is the truth, and the duplicate heading disappears.
   const bySubject = new Map<string, Map<string, LibraryItem[]>>();
   for (const it of levelItems) {
-    const subj = subjectOf(it);
-    if (!bySubject.has(subj)) {
-      bySubject.set(subj, new Map());
-    }
-    const chapterMap = bySubject.get(subj)!;
     for (const ch of chaptersOf(it)) {
+      const matiere = chapterMatiere(selectedLevel.value!, ch) ?? OTHER_MATIERE;
+      if (!bySubject.has(matiere)) {
+        bySubject.set(matiere, new Map());
+      }
+      const chapterMap = bySubject.get(matiere)!;
       if (!chapterMap.has(ch)) {
         chapterMap.set(ch, []);
       }
@@ -316,14 +325,8 @@ const currentSubjectGroups = computed(() => {
     }));
     // Presented as a table of contents, so it has to read like one: program order, with
     // off-program chapters (no number) collected at the end rather than interleaved.
-    const matiereRank = (name: string): number => {
-      const m = chapterMatiere(selectedLevel.value!, name);
-      return m === "Physique" ? 0 : m === "Chimie" ? 1 : 2;
-    };
+    // Every chapter in a group now shares one matière, so the number alone orders them.
     chapters.sort((a, b) => {
-      const ra = matiereRank(a.name);
-      const rb = matiereRank(b.name);
-      if (ra !== rb) return ra - rb;
       const na = chapterNumber(selectedLevel.value!, a.subject, a.name);
       const nb = chapterNumber(selectedLevel.value!, b.subject, b.name);
       if (na !== null && nb !== null) return na - nb || a.name.localeCompare(b.name, "fr");
@@ -333,6 +336,11 @@ const currentSubjectGroups = computed(() => {
     });
     result.push({ subject, chapters });
   }
+
+  // Physique, then Chimie, then anything unroutable — "Autres" last, and only when a
+  // chapter actually landed there.
+  const rank = (s: string): number => (s === "Physique" ? 0 : s === "Chimie" ? 1 : 2);
+  result.sort((a, b) => rank(a.subject) - rank(b.subject) || a.subject.localeCompare(b.subject, "fr"));
 
   return result;
 });

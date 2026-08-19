@@ -121,6 +121,51 @@ describe("UnfoldingCards.vue", () => {
     expect(wrapper.find('[data-test="unfold-chapter-Transformations Nucléaires"]').exists()).toBe(true);
   });
 
+  it("files a cross-matière document under each chapter's own matière, with no combined group", async () => {
+    // A Devoir surveillé genuinely covering both matières — the case that used to create a
+    // third "Physique & Chimie" heading duplicating chapters already listed elsewhere.
+    const ds: LibraryItem = {
+      fileId: "ds1",
+      name: "DS1.pdf",
+      mimeType: "application/pdf",
+      path: ["Drive"],
+      webViewLink: "https://drive.google.com/ds1",
+      modifiedTime: "2026-01-01",
+      isFolder: false,
+      displayTitle: "Devoir surveillé 1",
+      meta: {
+        fileId: "ds1",
+        level: ["Tronc Commun"],
+        type: "Devoir surveillé",
+        subject: "Physique & Chimie",
+        chapter: ["Le mouvement", "Les espèces chimiques"],
+        title: "Devoir surveillé 1",
+        description: "",
+        tags: [],
+        order: 1,
+      },
+    };
+
+    const { wrapper } = await mountUnfolding([ds]);
+    await wrapper.find('[data-test="unfold-level-Tronc Commun"]').trigger("click");
+    await settle();
+
+    expect(wrapper.text()).not.toContain("Physique & Chimie");
+    expect(wrapper.text()).toContain("Matière : Physique");
+    expect(wrapper.text()).toContain("Matière : Chimie");
+    expect(wrapper.find('[data-test="unfold-chapter-Le mouvement"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="unfold-chapter-Les espèces chimiques"]').exists()).toBe(true);
+  });
+
+  it("collects chapters outside the official program under Autres", async () => {
+    const { wrapper } = await mountUnfolding(mockItems);
+    await wrapper.find('[data-test="unfold-level-2BAC"]').trigger("click");
+    await settle();
+
+    // The fixture's level and chapters are invented, so none can be routed to a matière.
+    expect(wrapper.text()).toContain("Matière : Autres");
+  });
+
   it("hangs the program number beside each chapter", async () => {
     const { wrapper } = await mountUnfolding(mockItems);
 
