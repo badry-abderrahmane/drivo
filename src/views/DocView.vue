@@ -61,6 +61,13 @@
         </v-chip>
       </div>
 
+      <div class="d-flex align-center ga-2 mb-4" data-test="doc-author">
+        <v-icon icon="mdi-account-edit-outline" size="16" color="secondary" />
+        <span class="text-caption text-medium-emphasis">
+          Rassemblé et édité par M. {{ AUTHOR_NAME }}
+        </span>
+      </div>
+
       <p v-if="doc.meta.description" class="text-body-1 text-medium-emphasis mb-6">
         {{ doc.meta.description }}
       </p>
@@ -123,6 +130,7 @@ import { useLibrary } from "../composables/useLibrary";
 import { findDoc, relatedDocs } from "../lib/doc";
 import { slugify } from "../lib/slug";
 import { drivePreviewUrl, driveOpenUrl, driveDownloadUrl } from "../lib/drivePreview";
+import { AUTHOR_NAME } from "../config";
 
 const { items, loading, ensureLoaded } = useLibrary();
 const route = useRoute();

@@ -138,6 +138,9 @@
         <span class="text-caption text-medium-emphasis">·</span>
         <span class="text-caption text-medium-emphasis">F = q(E + v × B)</span>
       </div>
+      <div class="text-caption font-weight-medium mb-1" data-test="footer-credit">
+        Documents rassemblés et édités par M. Hassan Badry
+      </div>
       <div class="text-caption text-medium-emphasis">
         PIPC — Portail Interactif de Physique-Chimie © {{ new Date().getFullYear() }}
       </div>

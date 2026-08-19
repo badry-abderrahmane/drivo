@@ -19,3 +19,6 @@ export const SUBJECTS = ["Physique", "Chimie", "Physique & Chimie"];
 
 /** The 3 final-year levels the national exam ("Examen National") applies to. */
 export const EXAMEN_NATIONAL_LEVELS = LEVELS.filter((l) => l.startsWith("2ème Bac"));
+
+/** The teacher who gathered and edited every document in the library. */
+export const AUTHOR_NAME = "Hassan Badry";

@@ -38,6 +38,7 @@
 
     <!-- Main Content -->
     <template v-else-if="!error">
+      <AuthorCredit class="mb-6" />
       <!-- PIPC Physics Hero Banner -->
       <!-- <div class="hero-banner entrance-block rounded-xl pa-6 pa-md-8 mb-8 border relative overflow-hidden">
         <div class="quantum-bg-glow"></div>
@@ -221,6 +222,7 @@ import { useRoute } from "vue-router";
 import FilterBar from "../components/FilterBar.vue";
 import FileCard from "../components/FileCard.vue";
 import UnfoldingCards from "../components/UnfoldingCards.vue";
+import AuthorCredit from "../components/AuthorCredit.vue";
 import { useLibrary } from "../composables/useLibrary";
 import { applyFilters, sortItems, type Filters } from "../lib/filter";
 import { isClassified } from "../lib/classification";
