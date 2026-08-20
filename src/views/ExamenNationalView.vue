@@ -21,7 +21,6 @@
             </v-chip>
           </div>
           <h1 class="text-h4 font-weight-black font-heading mb-2">Examen National</h1>
-          <AuthorCredit class="mb-3" />
           <p class="text-body-1 text-medium-emphasis">
             Sélectionnez votre filière de 2ème Bac pour consulter les sujets d'examen national, classés par année.
           </p>
@@ -98,7 +97,6 @@ import { computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import FileCard from "../components/FileCard.vue";
 import ExamTable from "../components/ExamTable.vue";
-import AuthorCredit from "../components/AuthorCredit.vue";
 import { useLibrary } from "../composables/useLibrary";
 import { buildExamTable, EXAMEN_NATIONAL_LEVELS } from "../lib/examenNational";
 import { slugify, resolveSlug } from "../lib/slug";

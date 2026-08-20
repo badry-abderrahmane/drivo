@@ -142,9 +142,11 @@
           Proverbe
         </figcaption>
       </figure>
-      <div class="text-caption font-weight-medium mb-1" data-test="footer-credit">
-        Documents rassemblés et édités par M. Hassan Badry
-      </div>
+      <!-- The credit lives here and nowhere else. It used to be a plain-text line here *and*
+           a pill under every page title — the same sentence twice on screen. As a signature at
+           the end of the page it keeps its presence without interrupting the material. -->
+      <AuthorCredit class="my-3 mx-auto" />
+
       <div class="text-caption text-medium-emphasis">
         PIPC — Portail Interactif de Physique-Chimie © {{ new Date().getFullYear() }}
       </div>
@@ -159,6 +161,7 @@ import { useTheme, useDisplay } from "vuetify";
 import { INTRO_DURATION_MS, INTRO_EXIT_MS } from "./lib/intro";
 import SearchPalette from "./components/SearchPalette.vue";
 import BrandMark from "./components/BrandMark.vue";
+import AuthorCredit from "./components/AuthorCredit.vue";
 import { randomQuote } from "./lib/quotes";
 
 const route = useRoute();

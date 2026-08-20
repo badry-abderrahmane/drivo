@@ -11,9 +11,11 @@
         data-test="filter-level"
         clearable
         hide-details
-        density="comfortable"
+        density="compact"
         variant="outlined"
-        class="rounded-lg filter-select"
+        color="primary"
+        base-color="primary"
+        class="filter-select elevation-0"
         prepend-inner-icon="mdi-school-outline"
         @update:model-value="emitChange"
       />
@@ -25,9 +27,11 @@
         data-test="filter-type"
         clearable
         hide-details
-        density="comfortable"
+        density="compact"
         variant="outlined"
-        class="rounded-lg filter-select"
+        color="primary"
+        base-color="primary"
+        class="filter-select"
         prepend-inner-icon="mdi-shape-outline"
         @update:model-value="emitChange"
       >
@@ -54,9 +58,11 @@
         data-test="filter-subject"
         clearable
         hide-details
-        density="comfortable"
+        density="compact"
         variant="outlined"
-        class="rounded-lg filter-select"
+        color="primary"
+        base-color="primary"
+        class="filter-select"
         prepend-inner-icon="mdi-book-open-variant"
         @update:model-value="emitChange"
       />
@@ -68,33 +74,21 @@
         data-test="filter-chapter"
         clearable
         hide-details
-        density="comfortable"
+        density="compact"
         variant="outlined"
-        class="rounded-lg filter-select"
+        color="primary"
+        base-color="primary"
+        class="filter-select flex-grow-1"
         prepend-inner-icon="mdi-bookmark-outline"
         @update:model-value="emitChange"
       />
-    </div>
-
-    <div v-if="hasActiveFilters" class="d-flex justify-end mt-2">
-      <v-btn
-        size="x-small"
-        variant="text"
-        color="error"
-        prepend-icon="mdi-filter-remove-outline"
-        class="rounded-pill"
-        data-test="filter-reset"
-        @click="clearFilters"
-      >
-        Réinitialiser ({{ activeCount }})
-      </v-btn>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { reactive, computed, watch } from "vue";
-import { distinctValues, distinctChapters, distinctLevels, type Filters } from "../lib/filter";
+import { distinctValues, distinctChapters, distinctLevels, syncFilters, type Filters } from "../lib/filter";
 import { typeColor } from "../lib/docType";
 import { sortChaptersByProgram } from "../lib/chapterNumber";
 import type { LibraryItem } from "../lib/types";
@@ -118,7 +112,7 @@ watch(
 watch(
   () => props.modelValue,
   (val) => {
-    Object.assign(local, val);
+    syncFilters(local, val);
   },
   { deep: true }
 );
@@ -126,27 +120,6 @@ watch(
 function emitChange(): void {
   emit("update:modelValue", { ...local });
 }
-
-function clearFilters(): void {
-  local.level = undefined;
-  local.type = undefined;
-  local.subject = undefined;
-  local.chapter = undefined;
-  local.search = undefined;
-  emitChange();
-}
-
-const activeCount = computed(() => {
-  let count = 0;
-  if (local.level) count++;
-  if (local.type) count++;
-  if (local.subject) count++;
-  if (local.chapter) count++;
-  if (local.search && local.search.trim()) count++;
-  return count;
-});
-
-const hasActiveFilters = computed(() => activeCount.value > 0);
 
 const levels = computed(() => distinctLevels(props.items));
 const types = computed(() => distinctValues(props.items, "type"));
@@ -182,6 +155,40 @@ watch(
 </script>
 
 <style scoped>
+/* `base-color` primary tints the outline and the label; the chosen value is a plain
+   on-surface string until it is set here too, which is the part that actually says
+   "this filter is on" once the menu is closed. */
+.filter-select :deep(.v-field__input) {
+  color: rgb(var(--v-theme-primary));
+  font-weight: 600;
+}
+
+/* Vuetify keeps the outline's width and opacity in custom properties declared on
+   .v-field__outline itself, so they have to be overridden on that element — set on
+   .v-field they would be shadowed by the element's own declarations. */
+.filter-select :deep(.v-field__outline) {
+  --v-field-border-width: 2px;
+  --v-field-border-opacity: 1;
+}
+
+/* Focus still has to read as a step up from an already-bold resting outline. Matching
+   Vuetify's own specificity (.v-field--variant-outlined.v-field--focused) is what makes
+   this win over their 2px focus rule. */
+.filter-select :deep(.v-field--variant-outlined.v-field--focused .v-field__outline) {
+  --v-field-border-width: 3px;
+}
+
+.filter-select :deep(.v-field) {
+  border-radius: 9px;
+}
+
+/* The outline is drawn in three pieces and the left one is a fixed 12px — narrower than
+   the corner it now has to curve around, which would flatten the top-left. Vuetify widens
+   it only for a `rounded-*` class sitting on the field itself, which ours is not. */
+.filter-select :deep(.v-field__outline__start) {
+  flex-basis: 20px;
+}
+
 /* Equal quarters of the line, and `min-width: 0` so a long chapter name shrinks the field
    instead of pushing the fourth select onto a second row. */
 .filter-select {

@@ -9,6 +9,23 @@ export interface Filters {
   search?: string;
 }
 
+/**
+ * Copies `source` onto the reactive `target`, key by key — including the keys `source`
+ * does not have, which are set back to undefined.
+ *
+ * Object.assign is the trap this exists to avoid: a parent clearing its filters passes a
+ * bare `{}`, which has no keys at all, so Object.assign would leave every stale value in
+ * place. The controls would keep displaying filters that no longer filter anything, and
+ * the next edit would re-apply them.
+ */
+export function syncFilters(target: Filters, source: Filters): void {
+  target.level = source.level;
+  target.type = source.type;
+  target.subject = source.subject;
+  target.chapter = source.chapter;
+  target.search = source.search;
+}
+
 // Structural filters (level/type/subject/chapter) narrow the set first; a search term then
 // ranks *that* set via the same fuzzy engine the search palette previews with, so a result
 // shown there is guaranteed to still be here for the same query.

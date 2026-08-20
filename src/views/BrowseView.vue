@@ -43,7 +43,6 @@
 
     <!-- Main Content -->
     <template v-else-if="!error">
-      <AuthorCredit class="mb-6" />
       <!-- PIPC Physics Hero Banner -->
       <!-- <div class="hero-banner entrance-block rounded-xl pa-6 pa-md-8 mb-8 border relative overflow-hidden">
         <div class="quantum-bg-glow"></div>
@@ -102,19 +101,30 @@
            click-through browser (level -> chapter -> docs) with no concept of search
            results, so filtered results still need this flat, filterable rendering. -->
       <template v-else-if="filtering">
-        <div class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4 px-1">
-          <div class="d-flex align-center ga-2">
-            <span class="text-subtitle-2 font-weight-bold">
+        <!-- Sized up a step across the whole line: this row is the header of the results,
+             not a footnote to them, so the count, the state chips and both controls read
+             at the same weight as the cards below rather than shrinking away from them. -->
+        <div class="d-flex align-center justify-space-between flex-wrap ga-4 mb-4 px-1">
+          <div class="d-flex align-center ga-3">
+            <span class="text-h6 font-weight-bold">
               {{ shown.length }} résultat{{ shown.length > 1 ? "s" : "" }}
             </span>
-            <v-chip size="x-small" color="primary" variant="tonal">
-              Filtré
-            </v-chip>
+            <v-btn
+              size="default"
+              variant="tonal"
+              color="error"
+              prepend-icon="mdi-filter-remove-outline"
+              class="rounded"
+              data-test="clear-filters"
+              @click="resetFilters"
+            >
+              Vider les filtres
+            </v-btn>
             <!-- Shown while a cached page refreshes behind the scenes, so nothing on screen is
                  silently out of date. -->
             <v-chip
               v-if="refreshing"
-              size="x-small"
+              size="default"
               variant="tonal"
               data-test="refreshing"
               prepend-icon="mdi-sync"
@@ -126,20 +136,20 @@
           <!-- View Mode Switcher -->
           <div class="d-flex align-center ga-1 bg-surface rounded-pill border pa-1">
             <v-btn
-              size="x-small"
+              size="default"
               :variant="userViewMode === 'grid' ? 'flat' : 'text'"
               :color="userViewMode === 'grid' ? 'primary' : 'default'"
-              class="rounded-pill px-3"
+              class="rounded-pill px-4"
               prepend-icon="mdi-grid"
               @click="userViewMode = 'grid'"
             >
               Grille
             </v-btn>
             <v-btn
-              size="x-small"
+              size="default"
               :variant="userViewMode === 'list' ? 'flat' : 'text'"
               :color="userViewMode === 'list' ? 'primary' : 'default'"
-              class="rounded-pill px-3"
+              class="rounded-pill px-4"
               prepend-icon="mdi-format-list-bulleted"
               @click="userViewMode = 'list'"
             >
@@ -227,7 +237,6 @@ import { useRoute } from "vue-router";
 import FilterBar from "../components/FilterBar.vue";
 import FileCard from "../components/FileCard.vue";
 import UnfoldingCards from "../components/UnfoldingCards.vue";
-import AuthorCredit from "../components/AuthorCredit.vue";
 import { useLibrary } from "../composables/useLibrary";
 import { applyFilters, sortItems, type Filters } from "../lib/filter";
 import { isClassified } from "../lib/classification";
@@ -255,7 +264,9 @@ watch(
   },
   { immediate: true }
 );
-const userViewMode = ref<"grid" | "list">("grid");
+// List, not grid: a filtered set is being scanned — title, type and chapter down a single
+// column compare far faster than the same rows spread across a four-across grid.
+const userViewMode = ref<"grid" | "list">("list");
 
 const filtering = computed(() => {
   const f = filters.value;

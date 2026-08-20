@@ -110,6 +110,25 @@ describe("BrowseView", () => {
     expect(w.find(".hero-section").exists()).toBe(false);
   });
 
+  it("opens filtered results in list mode, not grid", async () => {
+    const { w } = await mountView(
+      [mk("1", ["2ème Bac SM"], "Mécanique"), mk("2", ["1ère Bac"], "Optique")],
+      "Mécanique"
+    );
+    expect(w.find(".list-mode").exists()).toBe(true);
+  });
+
+  it("clears every filter from the button beside the result count", async () => {
+    const { w } = await mountView(
+      [mk("1", ["2ème Bac SM"], "Mécanique"), mk("2", ["1ère Bac"], "Optique")],
+      "Mécanique"
+    );
+    await w.get('[data-test="clear-filters"]').trigger("click");
+    await flushPromises();
+    // Back to the unfiltered browse view.
+    expect(w.text()).toContain("Choisissez votre Niveau");
+  });
+
   it("shows a flat card grid, pre-filtered, when arriving with ?search=", async () => {
     const { w } = await mountView(
       [mk("1", ["2ème Bac SM"], "Mécanique"), mk("2", ["1ère Bac"], "Optique")],

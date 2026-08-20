@@ -87,20 +87,39 @@ describe("FilterControlsPanel", () => {
     expect(events[events.length - 1][0].level).toBeFalsy();
   });
 
-  it("resets every filter, search included, from the reset button", async () => {
+  it("carries no reset of its own — the results header owns clearing", () => {
     const w = mountWithVuetify(FilterControlsPanel, {
       props: { items, modelValue: { level: "2ème Bac SM", search: "onde" } as Filters },
     });
-    await w.get('[data-test="filter-reset"]').trigger("click");
-    const events = w.emitted("update:modelValue") as Filters[][];
-    const last = events[events.length - 1][0];
-    expect(last.level).toBeUndefined();
-    expect(last.search).toBeUndefined();
+    expect(w.find('[data-test="filter-reset"]').exists()).toBe(false);
+    expect(w.findAll("button")).toHaveLength(0);
   });
 
-  it("hides the reset button while nothing is filtered", () => {
+  // Deliberately not pinned to one palette: the look of these fields is still being tuned,
+  // and what must hold through that is that the four are tuned *together* — a row of filters
+  // where one field is styled differently from its neighbours reads as a bug.
+  it("styles the four selects identically", () => {
     const w = mountWithVuetify(FilterControlsPanel, { props: { items, modelValue: {} as Filters } });
-    expect(w.find('[data-test="filter-reset"]').exists()).toBe(false);
+    const looks = w.findAllComponents({ name: "VSelect" }).map((s) =>
+      JSON.stringify({
+        variant: s.props("variant"),
+        color: s.props("color"),
+        baseColor: s.props("baseColor"),
+        bgColor: s.props("bgColor"),
+        density: s.props("density"),
+      })
+    );
+    expect(looks).toHaveLength(4);
+    expect(new Set(looks).size).toBe(1);
+  });
+
+  it("empties every select when the parent clears its filters", async () => {
+    const w = mountWithVuetify(FilterControlsPanel, {
+      props: { items, modelValue: { level: "2ème Bac SM", type: "Cours" } as Filters },
+    });
+    await w.setProps({ modelValue: {} as Filters });
+    const values = w.findAllComponents({ name: "VSelect" }).map((c) => c.props("modelValue"));
+    expect(values.every((v) => !v)).toBe(true);
   });
 
   it("narrows Chapitre options to the selected Niveau's chapters", async () => {

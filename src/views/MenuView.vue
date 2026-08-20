@@ -21,7 +21,6 @@
             </v-chip>
           </div>
           <h1 class="text-h4 font-weight-black font-heading mb-2">Menu Thématique</h1>
-          <AuthorCredit class="mb-3" />
           <p class="text-body-1 text-medium-emphasis">
             Sélectionnez votre niveau scolaire pour accéder au programme structuré et consulter l'ensemble des fiches et chapitres.
           </p>
@@ -87,7 +86,6 @@
 import { computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import MenuTable from "../components/MenuTable.vue";
-import AuthorCredit from "../components/AuthorCredit.vue";
 import { useLibrary } from "../composables/useLibrary";
 import { menuLevels, buildLevelMenu, isMenuReady } from "../lib/menu";
 import { slugify, resolveSlug } from "../lib/slug";

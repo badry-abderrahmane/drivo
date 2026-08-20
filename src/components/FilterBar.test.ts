@@ -28,11 +28,32 @@ describe("FilterBar", () => {
     expect(w.find('[data-test="filter-level"]').exists()).toBe(true);
   });
 
+  it("wraps the selects in nothing — no tinted card, no border", () => {
+    setViewportWidth(1280);
+    const w = mountWithVuetify(FilterBar, { props: { items, modelValue: {} as Filters } });
+    expect(w.find(".filter-card").exists()).toBe(false);
+    expect(w.get(".filter-container").classes()).not.toContain("border");
+  });
+
   it("renders nothing at all on mobile-width screens", () => {
     setViewportWidth(375);
     const w = mountWithVuetify(FilterBar, { props: { items, modelValue: {} as Filters } });
     expect(w.find('[data-test="filter-level"]').exists()).toBe(false);
-    expect(w.find(".filter-card").exists()).toBe(false);
+    expect(w.find(".filter-container").exists()).toBe(false);
+  });
+
+  it("empties the selects when the parent clears its filters", async () => {
+    // Regression: BrowseView's "Vider les filtres" assigns a bare {}. Object.assign onto
+    // the local copy would have been a no-op — it has no keys to copy — leaving every
+    // select still showing a filter that no longer filters anything.
+    setViewportWidth(1280);
+    const w = mountWithVuetify(FilterBar, {
+      props: { items, modelValue: { level: "2ème Bac SM", type: "Cours" } as Filters },
+    });
+    await w.setProps({ modelValue: {} as Filters });
+
+    const values = w.findAllComponents({ name: "VSelect" }).map((c) => c.props("modelValue"));
+    expect(values.every((v) => !v)).toBe(true);
   });
 
   it("passes a filter chosen in the panel up to its parent", async () => {

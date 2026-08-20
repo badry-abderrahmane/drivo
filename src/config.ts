@@ -22,3 +22,9 @@ export const EXAMEN_NATIONAL_LEVELS = LEVELS.filter((l) => l.startsWith("2ème B
 
 /** The teacher who gathered and edited every document in the library. */
 export const AUTHOR_NAME = "Hassan Badry";
+
+/** His title, shown under his name wherever the library is credited. */
+export const AUTHOR_ROLE = "Professeur de Physique-Chimie";
+
+/** His portrait. Served from public/, so it is a site-absolute path, not a bundled import. */
+export const AUTHOR_PHOTO = "/hassan-badry.jpg";

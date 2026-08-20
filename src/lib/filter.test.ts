@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { applyFilters, sortItems, distinctValues, distinctChapters, distinctLevels } from "./filter";
+import { applyFilters, sortItems, distinctValues, distinctChapters, distinctLevels, syncFilters } from "./filter";
+import type { Filters } from "./filter";
 import type { LibraryItem } from "./types";
 
 const item = (over: Partial<LibraryItem["meta"]> & { fileId: string }, title = "t"): LibraryItem => ({
@@ -97,5 +98,21 @@ describe("level filtering (level is a list per file)", () => {
   });
   it("distinctLevels flattens and de-duplicates levels across files, sorted", () => {
     expect(distinctLevels(items)).toEqual(["2 Bac PC", "2 Bac SM"]);
+  });
+});
+
+describe("syncFilters", () => {
+  it("copies every field across", () => {
+    const target: Filters = {};
+    syncFilters(target, { level: "1ère Bac", type: "Cours", subject: "Physique", chapter: "Optique", search: "onde" });
+    expect(target).toEqual({ level: "1ère Bac", type: "Cours", subject: "Physique", chapter: "Optique", search: "onde" });
+  });
+
+  it("clears fields the source does not carry, unlike Object.assign", () => {
+    const target: Filters = { level: "1ère Bac", type: "Cours", search: "onde" };
+    syncFilters(target, {});
+    expect(target.level).toBeUndefined();
+    expect(target.type).toBeUndefined();
+    expect(target.search).toBeUndefined();
   });
 });
