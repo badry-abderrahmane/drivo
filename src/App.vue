@@ -130,26 +130,102 @@
     </v-main>
 
     <!-- Footer -->
-    <v-footer class="app-footer text-center d-flex flex-column py-6 border-t mt-12 bg-surface">
-      <figure class="footer-quote mb-3 px-4" data-test="footer-quote">
-        <blockquote class="text-body-2 text-primary font-weight-bold font-italic">
-          {{ quote.text }}
-        </blockquote>
-        <figcaption v-if="quote.author" class="text-caption text-medium-emphasis mt-1">
-          — {{ quote.author }}
-        </figcaption>
-        <figcaption v-else class="text-caption text-disabled mt-1">
-          Proverbe
-        </figcaption>
-      </figure>
-      <!-- The credit lives here and nowhere else. It used to be a plain-text line here *and*
-           a pill under every page title — the same sentence twice on screen. As a signature at
-           the end of the page it keeps its presence without interrupting the material. -->
-      <AuthorCredit class="my-3 mx-auto" />
+    <v-footer class="app-footer border-t mt-12 bg-surface pa-0">
+      <v-container class="py-10 px-4 px-md-8">
+        <!-- Quote Hero Section -->
+        <div class="footer-quote-wrapper mb-10 text-center">
+          <v-card variant="outlined" class="footer-quote-card mx-auto pa-6 rounded-xl">
+            <v-icon icon="mdi-format-quote-open" size="32" color="primary" class="quote-icon mb-2 opacity-60" />
+            <figure class="footer-quote" data-test="footer-quote">
+              <blockquote class="text-body-1 text-primary font-weight-medium font-italic">
+                « {{ quote.text }} »
+              </blockquote>
+              <figcaption v-if="quote.author" class="text-caption text-medium-emphasis mt-2 font-weight-semibold">
+                — {{ quote.author }}
+              </figcaption>
+              <figcaption v-else class="text-caption text-disabled mt-2">
+                Proverbe
+              </figcaption>
+            </figure>
+          </v-card>
+        </div>
 
-      <div class="text-caption text-medium-emphasis">
-        PIPC — Portail Interactif de Physique-Chimie © {{ new Date().getFullYear() }}
-      </div>
+        <!-- Main Footer Columns -->
+        <v-row class="ga-y-8 mb-8">
+          <!-- Column 1: Brand Info -->
+          <v-col cols="12" md="4" class="d-flex flex-column align-start">
+            <router-link :to="{ name: 'browse' }" class="d-flex align-center ga-3 text-decoration-none color-inherit mb-3">
+              <BrandMark :size="40" />
+              <div class="d-flex flex-column">
+                <span class="font-weight-black text-h6 brand-title">PIPC</span>
+                <span class="text-caption text-medium-emphasis brand-subtitle">Physique-Chimie</span>
+              </div>
+            </router-link>
+            <p class="text-body-2 text-medium-emphasis mb-4 footer-description">
+              Portail interactif de révision et ressources de Physique-Chimie pour lycéens et étudiants.
+            </p>
+          </v-col>
+
+          <!-- Column 2: Quick Links -->
+          <v-col cols="12" sm="6" md="4" class="d-flex flex-column">
+            <h3 class="text-subtitle-2 font-weight-bold text-uppercase tracking-wider text-high-emphasis mb-3">
+              Navigation
+            </h3>
+            <div class="d-flex flex-column ga-2">
+              <router-link
+                :to="{ name: 'browse' }"
+                class="footer-nav-link text-body-2 text-medium-emphasis d-inline-flex align-center ga-2 text-decoration-none"
+              >
+                <v-icon icon="mdi-atom" size="16" color="primary" />
+                Parcourir les cours
+              </router-link>
+              <router-link
+                :to="{ name: 'menu' }"
+                class="footer-nav-link text-body-2 text-medium-emphasis d-inline-flex align-center ga-2 text-decoration-none"
+              >
+                <v-icon icon="mdi-format-list-checks" size="16" color="primary" />
+                Menu thématique
+              </router-link>
+              <router-link
+                :to="{ name: 'examen-national' }"
+                class="footer-nav-link text-body-2 text-medium-emphasis d-inline-flex align-center ga-2 text-decoration-none"
+              >
+                <v-icon icon="mdi-certificate-outline" size="16" color="primary" />
+                Examen National
+              </router-link>
+            </div>
+          </v-col>
+
+          <!-- Column 3: Author Credit -->
+          <v-col cols="12" sm="6" md="4" class="d-flex flex-column">
+            <h3 class="text-subtitle-2 font-weight-bold text-uppercase tracking-wider text-high-emphasis mb-3">
+              Enseignant & Auteur
+            </h3>
+            <v-card variant="flat" class="author-card pa-4 rounded-lg bg-surface-variant-subtle border">
+              <AuthorCredit />
+            </v-card>
+          </v-col>
+        </v-row>
+
+        <v-divider class="my-6 border-opacity-25" />
+
+        <!-- Bottom Copyright & Utility Bar -->
+        <div class="d-flex flex-column flex-sm-row align-center justify-space-between ga-4 text-caption text-medium-emphasis">
+          <div>
+            PIPC — Portail Interactif de Physique-Chimie © {{ new Date().getFullYear() }}
+          </div>
+          <v-btn
+            variant="text"
+            size="small"
+            color="primary"
+            class="back-to-top-btn rounded-pill font-weight-semibold text-none"
+            append-icon="mdi-arrow-up"
+            @click="scrollToTop"
+          >
+            Haut de page
+          </v-btn>
+        </div>
+      </v-container>
     </v-footer>
   </v-app>
 </template>
@@ -183,6 +259,10 @@ function toggleTheme(): void {
   } catch {
     /* unavailable — the choice simply does not survive the session */
   }
+}
+
+function scrollToTop(): void {
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 /**
@@ -316,8 +396,13 @@ onMounted(() => {
   border-top: 1px solid rgba(var(--v-border-color), 0.08) !important;
 }
 
-/* The Poincaré line is long; cap the measure so it wraps as a readable block rather than
-   one wide ribbon across a desktop footer. */
+.footer-quote-card {
+  max-width: 680px;
+  background: rgba(var(--v-theme-surface-variant), 0.25);
+  border-color: rgba(var(--v-border-color), 0.12) !important;
+  backdrop-filter: blur(8px);
+}
+
 .footer-quote {
   max-width: 62ch;
   margin-inline: auto;
@@ -325,8 +410,37 @@ onMounted(() => {
 
 .footer-quote blockquote {
   line-height: 1.6;
-  /* Bold italic at this size sets too tight against the surrounding captions. */
   letter-spacing: 0.01em;
+}
+
+.footer-description {
+  max-width: 320px;
+  line-height: 1.5;
+}
+
+.tracking-wider {
+  letter-spacing: 0.05em;
+}
+
+.footer-nav-link {
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.footer-nav-link:hover {
+  color: rgb(var(--v-theme-primary)) !important;
+  transform: translateX(3px);
+}
+
+.author-card {
+  border-color: rgba(var(--v-border-color), 0.1) !important;
+}
+
+.back-to-top-btn {
+  transition: transform 0.2s ease;
+}
+
+.back-to-top-btn:hover {
+  transform: translateY(-2px);
 }
 
 .page-enter-active,
