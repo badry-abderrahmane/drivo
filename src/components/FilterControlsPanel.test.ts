@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { flushPromises } from "@vue/test-utils";
 import { mountWithVuetify } from "../test/setup";
 import FilterControlsPanel from "./FilterControlsPanel.vue";
 import type { LibraryItem } from "../lib/types";
@@ -32,100 +33,120 @@ const subjectItems = [
   withSubject("c", ["1ère Bac"], "Physique", "Optique"),
 ];
 
+type Panel = ReturnType<typeof mountWithVuetify>;
+const select = (w: Panel, label: string) =>
+  w.findAllComponents({ name: "VSelect" }).find((c) => c.props("label") === label)!;
+
 describe("FilterControlsPanel", () => {
-  it("marks each Type chip with its type's colour dot, one per type", () => {
+  it("offers the four filters as selects, with no chips and no advanced toggle", () => {
     const w = mountWithVuetify(FilterControlsPanel, { props: { items, modelValue: {} as Filters } });
-    const dots = w.findAll('[data-test="type-dot"]');
-    // "Tous" is not a type and gets no dot.
-    const types = new Set(items.map((i) => i.meta.type).filter(Boolean));
-    expect(dots).toHaveLength(types.size);
-    expect(dots[0].attributes("style")).toContain("--v-theme-type-");
+    const labels = w.findAllComponents({ name: "VSelect" }).map((c) => c.props("label"));
+    expect(labels).toEqual(["Niveau", "Type", "Matière", "Chapitre"]);
+    expect(w.findAll(".v-chip")).toHaveLength(0);
+    expect(w.text()).not.toContain("Filtres avancés");
   });
 
-  it("emits the selected level when a Niveau quick-pill is clicked", async () => {
+  it("keeps the four selects on one non-wrapping line", () => {
     const w = mountWithVuetify(FilterControlsPanel, { props: { items, modelValue: {} as Filters } });
-    await w.get('[data-test="level-2ème Bac SM"]').trigger("click");
+    const row = w.get(".d-flex.flex-nowrap");
+    expect(row.findAllComponents({ name: "VSelect" })).toHaveLength(4);
+  });
+
+  it("lists every level and type it can see", () => {
+    const w = mountWithVuetify(FilterControlsPanel, { props: { items, modelValue: {} as Filters } });
+    expect(select(w, "Niveau").props("items")).toEqual(["1ère Bac", "2ème Bac SM"]);
+    expect(select(w, "Type").props("items")).toEqual(["Cours", "Exercices"]);
+  });
+
+  it("marks each Type option with its type's colour dot", async () => {
+    const w = mountWithVuetify(FilterControlsPanel, { props: { items, modelValue: {} as Filters } });
+    document.body.innerHTML = ""; // the menu teleports to <body>
+    (select(w, "Type").vm as unknown as { menu: boolean }).menu = true;
+    await flushPromises();
+
+    const dots = document.querySelectorAll('[data-test="type-dot"]');
+    expect(dots).toHaveLength(new Set(items.map((i) => i.meta.type)).size);
+    expect(dots[0].getAttribute("style")).toContain("--v-theme-type-");
+  });
+
+  it("emits the selected level when the Niveau select changes", async () => {
+    const w = mountWithVuetify(FilterControlsPanel, { props: { items, modelValue: {} as Filters } });
+    select(w, "Niveau").vm.$emit("update:modelValue", "2ème Bac SM");
+    await w.vm.$nextTick();
     const events = w.emitted("update:modelValue") as Filters[][];
     expect(events[events.length - 1][0].level).toBe("2ème Bac SM");
   });
 
-  it("clears the level when the Niveau 'Tous' pill is clicked", async () => {
+  it("clears the level when the Niveau select is cleared", async () => {
     const w = mountWithVuetify(FilterControlsPanel, {
       props: { items, modelValue: { level: "2ème Bac SM" } as Filters },
     });
-    await w.get('[data-test="level-all"]').trigger("click");
+    select(w, "Niveau").vm.$emit("update:modelValue", null);
+    await w.vm.$nextTick();
     const events = w.emitted("update:modelValue") as Filters[][];
-    expect(events[events.length - 1][0].level).toBeUndefined();
+    expect(events[events.length - 1][0].level).toBeFalsy();
   });
 
-  it("no longer shows Niveau or Type selects in Filtres avancés (covered by quick pills)", async () => {
+  it("resets every filter, search included, from the reset button", async () => {
+    const w = mountWithVuetify(FilterControlsPanel, {
+      props: { items, modelValue: { level: "2ème Bac SM", search: "onde" } as Filters },
+    });
+    await w.get('[data-test="filter-reset"]').trigger("click");
+    const events = w.emitted("update:modelValue") as Filters[][];
+    const last = events[events.length - 1][0];
+    expect(last.level).toBeUndefined();
+    expect(last.search).toBeUndefined();
+  });
+
+  it("hides the reset button while nothing is filtered", () => {
     const w = mountWithVuetify(FilterControlsPanel, { props: { items, modelValue: {} as Filters } });
-    const toggle = w.findAll("button").find((b) => b.text().includes("Filtres avancés"))!;
-    await toggle.trigger("click");
-    const labels = w.findAll("label").map((l) => l.text());
-    expect(labels).not.toContain("Niveau");
-    expect(labels).not.toContain("Type");
-    expect(labels).toContain("Matière");
-    expect(labels).toContain("Chapitre");
+    expect(w.find('[data-test="filter-reset"]').exists()).toBe(false);
   });
 
   it("narrows Chapitre options to the selected Niveau's chapters", async () => {
     const w = mountWithVuetify(FilterControlsPanel, { props: { items: chapterItems, modelValue: {} as Filters } });
-    const chapterSelect = () => w.findAllComponents({ name: "VSelect" }).find((c) => c.props("label") === "Chapitre")!;
+    expect(select(w, "Chapitre").props("items")).toEqual(["Mécanique", "Optique"]);
 
-    await w.findAll("button").find((b) => b.text().includes("Filtres avancés"))!.trigger("click");
-    expect(chapterSelect().props("items")).toEqual(["Mécanique", "Optique"]);
-
-    await w.get('[data-test="level-2ème Bac SM"]').trigger("click");
-    expect(chapterSelect().props("items")).toEqual(["Mécanique"]);
+    select(w, "Niveau").vm.$emit("update:modelValue", "2ème Bac SM");
+    await w.vm.$nextTick();
+    expect(select(w, "Chapitre").props("items")).toEqual(["Mécanique"]);
   });
 
   it("clears an already-selected chapter that no longer matches the new Niveau", async () => {
     const w = mountWithVuetify(FilterControlsPanel, {
       props: { items: chapterItems, modelValue: { level: "1ère Bac", chapter: "Optique" } as Filters },
     });
-    await w.get('[data-test="level-2ème Bac SM"]').trigger("click");
+    select(w, "Niveau").vm.$emit("update:modelValue", "2ème Bac SM");
+    await w.vm.$nextTick();
     const events = w.emitted("update:modelValue") as Filters[][];
     const last = events[events.length - 1][0];
     expect(last.level).toBe("2ème Bac SM");
     expect(last.chapter).toBeUndefined();
   });
+
   it("narrows Chapitre options to the selected Matière's chapters", async () => {
     const w = mountWithVuetify(FilterControlsPanel, { props: { items: subjectItems, modelValue: {} as Filters } });
-    const select = (label: string) =>
-      w.findAllComponents({ name: "VSelect" }).find((c) => c.props("label") === label)!;
+    expect(select(w, "Chapitre").props("items")).toEqual(["Acides et bases", "Mécanique", "Optique"]);
 
-    await w.findAll("button").find((b) => b.text().includes("Filtres avancés"))!.trigger("click");
-    expect(select("Chapitre").props("items")).toEqual(["Acides et bases", "Mécanique", "Optique"]);
-
-    select("Matière").vm.$emit("update:modelValue", "Physique");
+    select(w, "Matière").vm.$emit("update:modelValue", "Physique");
     await w.vm.$nextTick();
-    expect(select("Chapitre").props("items")).toEqual(["Mécanique", "Optique"]);
+    expect(select(w, "Chapitre").props("items")).toEqual(["Mécanique", "Optique"]);
   });
 
   it("narrows Chapitre options by Niveau and Matière together", async () => {
     const w = mountWithVuetify(FilterControlsPanel, { props: { items: subjectItems, modelValue: {} as Filters } });
-    const select = (label: string) =>
-      w.findAllComponents({ name: "VSelect" }).find((c) => c.props("label") === label)!;
-
-    await w.findAll("button").find((b) => b.text().includes("Filtres avancés"))!.trigger("click");
-    select("Matière").vm.$emit("update:modelValue", "Physique");
-    await w.get('[data-test="level-2ème Bac SM"]').trigger("click");
-
-    expect(select("Chapitre").props("items")).toEqual(["Mécanique"]);
+    select(w, "Matière").vm.$emit("update:modelValue", "Physique");
+    select(w, "Niveau").vm.$emit("update:modelValue", "2ème Bac SM");
+    await w.vm.$nextTick();
+    expect(select(w, "Chapitre").props("items")).toEqual(["Mécanique"]);
   });
 
   it("clears an already-selected chapter that no longer matches the new Matière", async () => {
     const w = mountWithVuetify(FilterControlsPanel, {
       props: { items: subjectItems, modelValue: { subject: "Physique", chapter: "Mécanique" } as Filters },
     });
-    await w.findAll("button").find((b) => b.text().includes("Filtres avancés"))!.trigger("click");
-
-    w.findAllComponents({ name: "VSelect" })
-      .find((c) => c.props("label") === "Matière")!
-      .vm.$emit("update:modelValue", "Chimie");
+    select(w, "Matière").vm.$emit("update:modelValue", "Chimie");
     await w.vm.$nextTick();
-
     const events = w.emitted("update:modelValue") as Filters[][];
     const last = events[events.length - 1][0];
     expect(last.subject).toBe("Chimie");

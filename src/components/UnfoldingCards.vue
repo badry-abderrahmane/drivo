@@ -1,5 +1,7 @@
 <template>
-  <div class="unfolding-explorer my-8">
+  <!-- No top margin on phones/tablets: FilterBar is desktop-only, so below the `md`
+       breakpoint this block sits right under the header and the margin was just dead space. -->
+  <div class="unfolding-explorer mb-8 mt-0 mt-md-8">
 
     <!-- STEP 1: Level Cards Selection -->
     <v-slide-y-transition mode="out-in">

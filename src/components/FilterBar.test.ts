@@ -1,5 +1,4 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { flushPromises } from "@vue/test-utils";
 import { mountWithVuetify } from "../test/setup";
 import FilterBar from "./FilterBar.vue";
 import type { LibraryItem } from "../lib/types";
@@ -23,82 +22,25 @@ afterEach(() => {
 });
 
 describe("FilterBar", () => {
-  it("shows filters inline on desktop-width screens (no trigger button)", () => {
+  it("shows the filters inline on desktop-width screens", () => {
     setViewportWidth(1280);
     const w = mountWithVuetify(FilterBar, { props: { items, modelValue: {} as Filters } });
-    expect(w.find('[data-test="level-all"]').exists()).toBe(true);
-    expect(w.find('[data-test="mobile-filters-trigger"]').exists()).toBe(false);
+    expect(w.find('[data-test="filter-level"]').exists()).toBe(true);
   });
 
-  it("hides filters behind a trigger button on mobile-width screens", () => {
+  it("renders nothing at all on mobile-width screens", () => {
     setViewportWidth(375);
     const w = mountWithVuetify(FilterBar, { props: { items, modelValue: {} as Filters } });
-    expect(w.find('[data-test="level-all"]').exists()).toBe(false);
-    expect(w.find('[data-test="mobile-filters-trigger"]').exists()).toBe(true);
+    expect(w.find('[data-test="filter-level"]').exists()).toBe(false);
+    expect(w.find(".filter-card").exists()).toBe(false);
   });
 
-  it("opens a bottom sheet with the filters when the mobile trigger is tapped", async () => {
-    setViewportWidth(375);
-    document.body.innerHTML = ""; // v-bottom-sheet content teleports to <body>
+  it("passes a filter chosen in the panel up to its parent", async () => {
+    setViewportWidth(1280);
     const w = mountWithVuetify(FilterBar, { props: { items, modelValue: {} as Filters } });
-    await w.get('[data-test="mobile-filters-trigger"]').trigger("click");
+    w.getComponent({ name: "FilterControlsPanel" }).vm.$emit("update:modelValue", { level: "1ère Bac" });
     await w.vm.$nextTick();
-
-    const sheetLevelAll = document.querySelector('[data-test="mobile-filters-sheet"] [data-test="level-all"]');
-    expect(sheetLevelAll).not.toBeNull();
-  });
-
-  it("shows an active-filter count badge on the mobile trigger once a level is set", () => {
-    setViewportWidth(375);
-    const w = mountWithVuetify(FilterBar, {
-      props: { items, modelValue: { level: "2ème Bac SM" } as Filters },
-    });
-    expect(w.get('[data-test="mobile-filters-trigger"]').text()).toContain("1");
-  });
-
-  it("stages a chip tap in the mobile sheet — only applies it once 'Filtrer' is tapped", async () => {
-    setViewportWidth(375);
-    document.body.innerHTML = "";
-    const w = mountWithVuetify(FilterBar, { props: { items, modelValue: {} as Filters } });
-    await w.get('[data-test="mobile-filters-trigger"]').trigger("click");
-    await flushPromises();
-
-    (document.querySelector('[data-test="mobile-filters-sheet"] [data-test="level-2ème Bac SM"]') as HTMLElement).click();
-    await flushPromises();
-    expect(w.emitted("update:modelValue")).toBeUndefined();
-
-    (document.querySelector('[data-test="mobile-filters-apply"]') as HTMLElement).click();
-    await flushPromises();
     const events = w.emitted("update:modelValue") as Filters[][];
-    expect(events[events.length - 1][0].level).toBe("2ème Bac SM");
-  });
-
-  it("discards staged changes when 'Annuler' is tapped", async () => {
-    setViewportWidth(375);
-    document.body.innerHTML = "";
-    const w = mountWithVuetify(FilterBar, { props: { items, modelValue: {} as Filters } });
-    await w.get('[data-test="mobile-filters-trigger"]').trigger("click");
-    await flushPromises();
-
-    (document.querySelector('[data-test="mobile-filters-sheet"] [data-test="level-2ème Bac SM"]') as HTMLElement).click();
-    await flushPromises();
-    (document.querySelector('[data-test="mobile-filters-cancel"]') as HTMLElement).click();
-    await flushPromises();
-
-    expect(w.emitted("update:modelValue")).toBeUndefined();
-    expect(w.get('[data-test="mobile-filters-trigger"]').text()).not.toContain("1");
-  });
-
-  it("passes larger chips and a divider to the panel only inside the mobile sheet", async () => {
-    setViewportWidth(375);
-    document.body.innerHTML = "";
-    const w = mountWithVuetify(FilterBar, { props: { items, modelValue: {} as Filters } });
-    // v-bottom-sheet doesn't mount its content until opened.
-    await w.get('[data-test="mobile-filters-trigger"]').trigger("click");
-    await flushPromises();
-
-    const panel = w.getComponent({ name: "FilterControlsPanel" });
-    expect(panel.props("chipSize")).toBe("large");
-    expect(panel.props("showDivider")).toBe(true);
+    expect(events[events.length - 1][0].level).toBe("1ère Bac");
   });
 });

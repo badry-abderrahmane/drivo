@@ -1,180 +1,110 @@
 <template>
   <div class="filter-controls">
-    <!-- Quick Niveau Filter Chips -->
-    <div v-if="levels.length > 0" class="d-flex align-center flex-wrap ga-1 mb-2">
-      <span class="text-caption text-medium-emphasis font-weight-bold mr-1 d-none d-sm-inline">
-        Niveau :
-      </span>
-      <v-chip
-        :size="chipSize"
-        :variant="!local.level ? 'flat' : 'tonal'"
-        :color="!local.level ? 'primary' : 'default'"
-        :class="{ 'font-weight-bold': !local.level }"
-        class="filter-chip rounded-pill px-2"
-        data-test="level-all"
-        @click="selectLevel('')"
+    <!-- One line, four selects: Niveau, Type, Matière, Chapitre. `flex-nowrap` is the
+         whole point — this panel only ever renders on non-mobile widths (see FilterBar),
+         so there is always room for the four side by side. -->
+    <div class="d-flex align-center ga-3 flex-nowrap">
+      <v-select
+        label="Niveau"
+        :items="levels"
+        v-model="local.level"
+        data-test="filter-level"
+        clearable
+        hide-details
+        density="comfortable"
+        variant="outlined"
+        class="rounded-lg filter-select"
+        prepend-inner-icon="mdi-school-outline"
+        @update:model-value="emitChange"
+      />
+
+      <v-select
+        label="Type"
+        :items="types"
+        v-model="local.type"
+        data-test="filter-type"
+        clearable
+        hide-details
+        density="comfortable"
+        variant="outlined"
+        class="rounded-lg filter-select"
+        prepend-inner-icon="mdi-shape-outline"
+        @update:model-value="emitChange"
       >
-        Tous
-      </v-chip>
-      <v-chip
-        v-for="lvl in levels"
-        :key="lvl"
-        :size="chipSize"
-        :variant="local.level === lvl ? 'flat' : 'tonal'"
-        :color="local.level === lvl ? 'primary' : 'default'"
-        :class="{ 'font-weight-bold': local.level === lvl }"
-        class="filter-chip rounded-pill px-2"
-        :data-test="`level-${lvl}`"
-        @click="selectLevel(lvl)"
-      >
-        <v-icon icon="mdi-school-outline" size="12" class="mr-1" />
-        {{ lvl }}
-      </v-chip>
+        <!-- A dot, not a coloured field: the select is a control, and tinting it by type
+             would fight the "this filter is on" signal. The dot still teaches the
+             type-colour mapping used by the cards. -->
+        <template #item="{ props: itemProps, item }">
+          <v-list-item v-bind="itemProps">
+            <template #prepend>
+              <span
+                class="type-dot"
+                :style="{ backgroundColor: `rgb(var(--v-theme-${typeColor(item.value)}))` }"
+                data-test="type-dot"
+              />
+            </template>
+          </v-list-item>
+        </template>
+      </v-select>
+
+      <v-select
+        label="Matière"
+        :items="subjects"
+        v-model="local.subject"
+        data-test="filter-subject"
+        clearable
+        hide-details
+        density="comfortable"
+        variant="outlined"
+        class="rounded-lg filter-select"
+        prepend-inner-icon="mdi-book-open-variant"
+        @update:model-value="emitChange"
+      />
+
+      <v-select
+        label="Chapitre"
+        :items="chapters"
+        v-model="local.chapter"
+        data-test="filter-chapter"
+        clearable
+        hide-details
+        density="comfortable"
+        variant="outlined"
+        class="rounded-lg filter-select"
+        prepend-inner-icon="mdi-bookmark-outline"
+        @update:model-value="emitChange"
+      />
     </div>
 
-    <v-divider v-if="showDivider" class="my-3" />
-
-    <!-- Quick Type Filter Chips & Advanced Toggle -->
-    <div class="d-flex align-center justify-space-between flex-wrap ga-2">
-      <!-- Quick Type Pills -->
-      <div v-if="types.length > 0" class="d-flex align-center flex-wrap ga-1">
-        <span class="text-caption text-medium-emphasis font-weight-bold mr-1 d-none d-sm-inline">
-          Type :
-        </span>
-        <v-chip
-          :size="chipSize"
-          :variant="!local.type ? 'flat' : 'tonal'"
-          :color="!local.type ? 'primary' : 'default'"
-          :class="{ 'font-weight-bold': !local.type }"
-          class="filter-chip rounded-pill px-2"
-          @click="selectType('')"
-        >
-          Tous
-        </v-chip>
-        <v-chip
-          v-for="t in types"
-          :key="t"
-          :size="chipSize"
-          :variant="local.type === t ? 'flat' : 'tonal'"
-          :color="local.type === t ? 'primary' : 'default'"
-          :class="{ 'font-weight-bold': local.type === t }"
-          class="filter-chip rounded-pill px-2"
-          @click="selectType(t)"
-        >
-          <!-- A dot, not a coloured chip: these are controls, and colouring them by type
-               would drown the selected/unselected signal. The dot teaches the type-colour
-               mapping while green keeps meaning "this filter is on".
-
-               The selected chip is flat, not tonal: the bar sits on a primary-container
-               tint, and a tonal primary chip separates from that tint by 1.20:1 — exactly
-               the same as an unselected default chip, so the two become indistinguishable.
-               Flat gives 4.48:1. -->
-          <span
-            class="type-dot"
-            :style="{ backgroundColor: `rgb(var(--v-theme-${typeColor(t)}))` }"
-            data-test="type-dot"
-          />
-          {{ t }}
-        </v-chip>
-      </div>
-
-      <v-spacer />
-
-      <!-- Actions: Advanced Filter Toggle & Reset -->
-      <div class="d-flex align-center ga-1">
-        <v-btn
-          v-if="hasActiveFilters"
-          :size="actionSize"
-          variant="text"
-          color="error"
-          prepend-icon="mdi-filter-remove-outline"
-          class="rounded-pill"
-          @click="clearFilters"
-        >
-          Réinitialiser ({{ activeCount }})
-        </v-btn>
-
-        <v-btn
-          :size="actionSize"
-          variant="tonal"
-          :color="showAdvanced ? 'primary' : 'default'"
-          :append-icon="showAdvanced ? 'mdi-chevron-up' : 'mdi-chevron-down'"
-          prepend-icon="mdi-tune-variant"
-          class="rounded-pill px-3"
-          @click="showAdvanced = !showAdvanced"
-        >
-          Filtres avancés
-        </v-btn>
-      </div>
+    <div v-if="hasActiveFilters" class="d-flex justify-end mt-2">
+      <v-btn
+        size="x-small"
+        variant="text"
+        color="error"
+        prepend-icon="mdi-filter-remove-outline"
+        class="rounded-pill"
+        data-test="filter-reset"
+        @click="clearFilters"
+      >
+        Réinitialiser ({{ activeCount }})
+      </v-btn>
     </div>
-
-    <!-- Advanced Expandable Dropdown Filters -->
-    <v-expand-transition>
-      <div v-show="showAdvanced" class="pt-3 mt-2 border-t">
-        <v-row dense>
-          <v-col cols="12" sm="6" md="6">
-            <v-select
-              label="Matière"
-              :items="subjects"
-              v-model="local.subject"
-              clearable
-              hide-details
-              density="comfortable"
-              variant="outlined"
-              class="rounded-lg"
-              prepend-inner-icon="mdi-book-open-variant"
-              @update:model-value="emitChange"
-            />
-          </v-col>
-          <v-col cols="12" sm="6" md="6">
-            <v-select
-              label="Chapitre"
-              :items="chapters"
-              v-model="local.chapter"
-              clearable
-              hide-details
-              density="comfortable"
-              variant="outlined"
-              class="rounded-lg"
-              prepend-inner-icon="mdi-bookmark-outline"
-              @update:model-value="emitChange"
-            />
-          </v-col>
-        </v-row>
-      </div>
-    </v-expand-transition>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from "vue";
+import { reactive, computed, watch } from "vue";
 import { distinctValues, distinctChapters, distinctLevels, type Filters } from "../lib/filter";
 import { typeColor } from "../lib/docType";
 import { sortChaptersByProgram } from "../lib/chapterNumber";
 import type { LibraryItem } from "../lib/types";
 
-const props = withDefaults(
-  defineProps<{
-    items: LibraryItem[];
-    modelValue: Filters;
-    /** Chip size — compact by default; bumped up for the touch-friendly mobile bottom sheet. */
-    chipSize?: "x-small" | "small" | "large";
-    /** Divider between the Niveau and Type chip rows — mobile sheet only. */
-    showDivider?: boolean;
-  }>(),
-  {
-    chipSize: "x-small",
-    showDivider: false,
-  }
-);
+const props = defineProps<{
+  items: LibraryItem[];
+  modelValue: Filters;
+}>();
 const emit = defineEmits<{ "update:modelValue": [Filters] }>();
 
-// Keeps the Réinitialiser/Filtres avancés buttons visually matched to whichever
-// chip size this instance is using — compact next to compact chips, touch-sized
-// next to the mobile sheet's large ones.
-const actionSize = computed(() => (props.chipSize === "large" ? "small" : "x-small"));
-
-const showAdvanced = ref(false);
 const local = reactive<Filters>({ ...props.modelValue });
 
 watch(
@@ -195,16 +125,6 @@ watch(
 
 function emitChange(): void {
   emit("update:modelValue", { ...local });
-}
-
-function selectType(t: string): void {
-  local.type = t || undefined;
-  emitChange();
-}
-
-function selectLevel(lvl: string): void {
-  local.level = lvl || undefined;
-  emitChange();
 }
 
 function clearFilters(): void {
@@ -262,11 +182,18 @@ watch(
 </script>
 
 <style scoped>
+/* Equal quarters of the line, and `min-width: 0` so a long chapter name shrinks the field
+   instead of pushing the fourth select onto a second row. */
+.filter-select {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
 .type-dot {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   flex: none;
-  margin-right: 6px;
+  margin-right: 10px;
 }
 </style>
