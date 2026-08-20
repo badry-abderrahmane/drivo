@@ -203,8 +203,8 @@ export const CHAPTERS_BY_LEVEL: Record<string, LevelChapters> = {
       "Dipôle RL",
       "Oscillations libres d'un circuit RLC en série",
       "Lois de Newton",
-      "La chute libre verticale d'un solide",
-      "Le mouvement d'un projectile dans un plan",
+      "La chute libre d'un corps solide",
+      "Le mouvement d'un projectile dans le champ de pesanteur",
       "Mouvement de rotation d'un solide autour d'un axe fixe",
       "Oscillateurs mécaniques",
       "Aspects énergétiques des oscillations mécaniques",
@@ -219,6 +219,7 @@ export const CHAPTERS_BY_LEVEL: Record<string, LevelChapters> = {
       "Évolution spontanée d'un système chimique",
       "Transformations spontanées dans les piles et production d'énergie",
       "Réactions d'estérification et d'hydrolyse",
+      "Contrôle de l'évolution d'un système chimique"
     ],
   },
 };
