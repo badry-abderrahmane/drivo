@@ -325,6 +325,38 @@ describe("AdminView status filter", () => {
     expect(w.text()).toContain("todo1.pdf");
   });
 
+  it("switches the scope to 'Tous' as soon as the search box is filled", async () => {
+    const { w } = await mountAdminWith(mixed);
+    // "done1" is classified, so it is invisible under the default "À classer" tab —
+    // a search for it must still find it.
+    await w.get('[data-test="search"] input').setValue("done1");
+    await flushPromises();
+    expect(w.text()).toContain("done1.pdf");
+  });
+
+  it("puts the previous scope back when the search box is cleared", async () => {
+    const { w } = await mountAdminWith(mixed);
+    await w.get('[data-test="search"] input').setValue("done1");
+    await flushPromises();
+    await w.get('[data-test="search"] input').setValue("");
+    await flushPromises();
+    expect(w.text()).toContain("todo1.pdf"); // back on "À classer"
+    expect(w.text()).not.toContain("done1.pdf");
+  });
+
+  it("keeps a status picked by hand during a search once the box is cleared", async () => {
+    const { w } = await mountAdminWith(mixed);
+    await w.get('[data-test="search"] input').setValue("done1");
+    await flushPromises();
+    await w.get('[data-test="status-done"]').trigger("click");
+    await flushPromises();
+
+    await w.get('[data-test="search"] input').setValue("");
+    await flushPromises();
+    expect(w.text()).toContain("done1.pdf"); // still "Classés", not reverted to "À classer"
+    expect(w.text()).not.toContain("todo1.pdf");
+  });
+
   it("names the fields an unclassified row is missing", async () => {
     const { w } = await mountAdminWith([fileAt("todo1", ["A"], false)]);
     expect(w.text()).toContain("Niveau");

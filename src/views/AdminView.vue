@@ -16,7 +16,7 @@
             variant="solo-filled"
             flat
             clearable
-            class="search-input rounded-xl flex-grow-1"
+            class="search-input rounded-pill flex-grow-1"
             style="max-width: 380px"
           />
 
@@ -174,8 +174,9 @@
         <v-divider class="my-3" />
 
         <v-btn-toggle
-          v-model="statusFilter"
+          :model-value="statusFilter"
           mandatory
+          @update:model-value="setStatusFilter"
           density="compact"
           variant="outlined"
           divided
@@ -651,6 +652,32 @@ function onSelectFolder(path: string[]): void {
 // unclassified files, so resetting this on every hop would fight the user.
 const statusFilter = ref<"todo" | "done" | "all">("todo");
 
+/**
+ * A search must never come back empty just because the match sits on the other side of the
+ * À classer / Classés split — the box searches the folder, not the current tab. So a
+ * non-empty query switches the scope to "Tous" on its own, and clearing it puts back
+ * whichever status was active before. Picking a status by hand while searching wins:
+ * it drops the remembered value, so clearing the box then leaves that choice alone.
+ */
+const statusBeforeSearch = ref<"todo" | "done" | "all" | null>(null);
+
+function setStatusFilter(value: "todo" | "done" | "all"): void {
+  statusFilter.value = value;
+  statusBeforeSearch.value = null;
+}
+
+watch(search, (q) => {
+  if (q && q.trim()) {
+    if (statusFilter.value !== "all") {
+      statusBeforeSearch.value = statusFilter.value;
+      statusFilter.value = "all";
+    }
+  } else if (statusBeforeSearch.value) {
+    statusFilter.value = statusBeforeSearch.value;
+    statusBeforeSearch.value = null;
+  }
+});
+
 /** Counts for the three buttons: scoped to the folder, deliberately ignoring `search`. */
 const statusCounts = computed(() => {
   const done = scopedRows.value.filter(isClassified).length;
@@ -868,5 +895,19 @@ async function doReindex(): Promise<void> {
 
 .table-input :deep(.v-field) {
   border-radius: 8px !important;
+}
+
+/* Pill shape has to be set on the field itself — the class on v-text-field lands on the
+   outer wrapper, and the field's own radius would still square off the corners. */
+.search-input :deep(.v-field) {
+  border-radius: 999px !important;
+}
+
+/* Typed text in brand green: at a glance it says the list is narrowed, which matters here
+   because the toolbar is sticky and the box stays visible while you scroll the table.
+   The placeholder is left alone — it is not a filter, and green would over-promise. */
+.search-input :deep(input) {
+  color: rgb(var(--v-theme-primary));
+  font-weight: 600;
 }
 </style>
