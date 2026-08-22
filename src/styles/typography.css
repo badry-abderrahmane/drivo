@@ -1,0 +1,34 @@
+/**
+ * One typeface pair for the whole app.
+ *
+ * Vuetify hard-codes `font-family: "Roboto", sans-serif` on `html` and then repeats it on
+ * every `.text-*` typography class — 81 rules in the built stylesheet. Roboto is not served
+ * here (index.html fetches Inter and Plus Jakarta Sans only), so each of those silently
+ * resolved to the system sans. The result was two typefaces on every screen: anything
+ * wearing a Vuetify typography class in one, everything else in Inter. It reads as a
+ * rendering glitch rather than a choice, which is exactly how it was noticed.
+ *
+ * Loaded after the Vuetify plugin (see main.ts) so these land after its stylesheet.
+ */
+
+html,
+[class*="text-"] {
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+/**
+ * Headings keep the display face.
+ *
+ * The attribute selector is not decoration: `[class*="text-"]` above scores 0,1,0, so a
+ * bare `h1` (0,0,1) would lose to it the moment the heading also carries `text-h4` — which
+ * is how every heading in this app is written. `h1[class]` scores 0,1,1 and wins.
+ * `.font-heading` ties at 0,1,0 and wins on source order, being later in this same file.
+ */
+h1[class],
+h2[class],
+h3[class],
+h4[class],
+.font-heading,
+[class*="text-"].font-heading {
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+}
