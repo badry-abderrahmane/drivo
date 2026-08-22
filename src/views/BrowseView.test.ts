@@ -155,3 +155,48 @@ describe("BrowseView", () => {
     expect(w.text()).toContain("Mécanique");
   });
 });
+
+/**
+ * BrowseView serves three routes: the root, a level, and a chapter. Only the root is a
+ * search surface — on the other two the route IS the filter, and a second independent set
+ * of controls beside it could disagree with the page it sat on.
+ */
+describe("BrowseView filter bar", () => {
+  const items = [mk("1", ["2ème Bac SM"], "Mécanique"), mk("2", ["1ère Bac"], "Optique")];
+
+  it("offers the filter bar at the browse root", async () => {
+    const { w } = await mountView(items);
+    expect(w.find('[data-test="filter-level"]').exists()).toBe(true);
+  });
+
+  it("withdraws it on a level route, where the route is already the filter", async () => {
+    const { w, router } = await mountView(items);
+    await router.push({ name: "level", params: { level: "2eme-bac-sm" } });
+    await settle();
+    expect(w.find('[data-test="filter-level"]').exists()).toBe(false);
+  });
+
+  it("withdraws it on a chapter route too", async () => {
+    const { w, router } = await mountView(items);
+    await router.push({ name: "chapter", params: { level: "2eme-bac-sm", chapter: "mecanique" } });
+    await settle();
+    expect(w.find('[data-test="filter-level"]').exists()).toBe(false);
+  });
+
+  /**
+   * The trap this closes: the view stays mounted from / to /niveau/:level, so a filter set
+   * at the root survived the navigation. `filtering` stayed true, the level page rendered
+   * the flat result list for the whole library, and the bar that would have explained it
+   * was now hidden — leaving no way to see what was filtered or to clear it.
+   */
+  it("drops filters set at the root when you drill into a level", async () => {
+    const { w, router } = await mountView(items, "Mécanique");
+    expect(w.find(".list-mode").exists()).toBe(true); // filtering at the root
+
+    await router.push({ name: "level", params: { level: "2eme-bac-sm" } });
+    await settle();
+
+    expect(w.find(".list-mode").exists()).toBe(false);
+    expect(w.find('[data-test="clear-filters"]').exists()).toBe(false);
+  });
+});

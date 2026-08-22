@@ -77,8 +77,11 @@
         </v-row>
       </div> -->
 
-      <!-- Filter Bar -->
-      <div class="entrance-block entrance-filter">
+      <!-- Filter Bar. Root only: /niveau/:level and /niveau/:chapitre are the click-through
+           browser, where the route itself is the filter. Offering a second, independent set
+           of controls there let a level page and a level filter disagree about what you were
+           looking at. -->
+      <div v-if="atRoot" class="entrance-block entrance-filter">
         <FilterBar :items="published" v-model="filters" />
       </div>
 
@@ -268,9 +271,26 @@ watch(
 // column compare far faster than the same rows spread across a four-across grid.
 const userViewMode = ref<"grid" | "list">("list");
 
+/** The browse root, as opposed to the level and chapter routes this same view also serves. */
+const atRoot = computed(() => route.name === "browse");
+
+/**
+ * Filtering is a root-only state, and gated on the route rather than on the filters alone.
+ *
+ * Without the gate, drilling from a filtered root into a level kept `filtering` true, so the
+ * level page rendered the flat result list for the whole library — with the filter bar now
+ * hidden, and no way to tell what was being filtered or to clear it.
+ */
 const filtering = computed(() => {
+  if (!atRoot.value) return false;
   const f = filters.value;
   return !!(f.level || f.type || f.subject || f.chapter || (f.search && f.search.trim()));
+});
+
+// This view stays mounted across / -> /niveau/:level, so filters set at the root would
+// otherwise still be sitting there on the way back. Leaving the root drops them.
+watch(atRoot, (root) => {
+  if (!root) filters.value = {};
 });
 
 const shown = computed(() => sortItems(applyFilters(published.value, filters.value)));
