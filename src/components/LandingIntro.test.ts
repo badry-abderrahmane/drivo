@@ -139,8 +139,8 @@ describe("LandingIntro", () => {
   });
 
   it("shows the full emblem, and hides it from assistive tech", async () => {
-    // Every word inside the badge — PIPC, the portal's name, his name — is real text
-    // elsewhere on this screen, so announcing the image too would say it all three times.
+    // Every word inside the badge — PIPC and the portal's name — is real text elsewhere on
+    // this screen, so announcing the image too would say it all twice.
     const w = await mountLanding();
     const badge = w.get('[data-test="landing-badge"]');
     expect(badge.attributes("src")).toBe("/pipc-badge.png");

@@ -30,9 +30,14 @@ export const AUTHOR_ROLE = "Professeur de Physique-Chimie";
 export const AUTHOR_PHOTO = "/hassan-badry.jpg";
 
 /**
- * The full emblem: π on amber, ringed by his name and the portal's. Used for the landing
- * and the app bar. Its arched lettering does not survive 42px, so in the header it reads as
- * a mark rather than as words — the "PIPC" wordmark beside it carries the name.
+ * The full emblem: π on amber, ringed by "PIPC" above and the portal's name below. Used
+ * for the landing and the app bar. Its arched lettering does not survive 42px, so in the
+ * header it reads as a mark rather than as words — the "PIPC" wordmark beside it carries
+ * the name.
+ *
+ * The emblem no longer carries M. Hassan Badry's name in its upper ring; the app credits
+ * him in the footer and on the landing instead (see AuthorCredit), which is the only place
+ * that credit is now made.
  *
  * The favicon and the pre-bundle splash are untouched: both are static (public/favicon.*
  * and the inline SVG in index.html) and still draw the π tile.
