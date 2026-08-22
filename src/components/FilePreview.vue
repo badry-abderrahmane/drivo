@@ -9,7 +9,7 @@
       <v-toolbar density="comfortable" color="surface" class="px-2">
         <div
           class="pv-icon d-flex align-center justify-center rounded-lg ml-2 mr-1 pa-1"
-          :style="{ backgroundColor: `${kind.color}15`, color: kind.color }"
+          :style="kindTile(kind, 0.08)"
         >
           <v-icon :icon="kind.icon" size="20" />
         </div>
@@ -48,7 +48,7 @@
 // needs a modal because it previews files that are not yet classified, and those have no
 // public document page by design.
 import { computed } from "vue";
-import { fileKind } from "../lib/fileKind";
+import { fileKind, kindTile } from "../lib/fileKind";
 import { drivePreviewUrl, driveOpenUrl } from "../lib/drivePreview";
 
 export interface PreviewItem {

@@ -8,7 +8,7 @@
   >
     <div
       class="icon-wrapper flex-shrink-0 d-flex align-center justify-center rounded-lg"
-      :style="{ backgroundColor: `${kind.color}15`, color: kind.color }"
+      :style="kindTile(kind, 0.08)"
     >
       <v-icon :icon="kind.icon" size="24" />
     </div>
@@ -53,7 +53,7 @@
     <div class="d-flex align-center justify-space-between mb-3 z-index-1">
       <div
         class="icon-wrapper d-flex align-center justify-center rounded-xl pa-2"
-        :style="{ backgroundColor: `${kind.color}18`, color: kind.color }"
+        :style="kindTile(kind)"
       >
         <v-icon :icon="kind.icon" size="26" />
       </div>
@@ -112,7 +112,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import type { LibraryItem } from "../lib/types";
-import { fileKind } from "../lib/fileKind";
+import { fileKind, kindTile } from "../lib/fileKind";
 import { docSlug } from "../lib/doc";
 import DocTypeChip from "./DocTypeChip.vue";
 
@@ -155,7 +155,7 @@ const hiddenChapterCount = computed(() =>
 <style scoped>
 .course-card {
   background: rgb(var(--v-theme-surface));
-  border: 1px solid rgba(var(--v-border-color), 0.1) !important;
+  border: 1px solid rgb(var(--v-theme-outline-variant)) !important;
   transition: transform var(--pipc-fast) var(--pipc-ease),
               border-color var(--pipc-fast) var(--pipc-ease),
               background var(--pipc-fast) var(--pipc-ease);
@@ -203,8 +203,10 @@ const hiddenChapterCount = computed(() =>
   max-width: 100%;
   padding: 3px 10px;
   border-radius: 12px;
-  background: rgba(var(--v-theme-primary), 0.08);
-  color: rgb(var(--v-theme-primary));
+  /* A chapter name is a label, not an action, so it is neutral chrome. The toggle beside
+     it keeps the brand colour precisely because that one IS a control. */
+  background: rgba(var(--v-theme-on-surface), 0.06);
+  color: rgb(var(--v-theme-on-surface-variant));
   font-size: 0.72rem;
   font-weight: 500;
   line-height: 1.25;

@@ -1,22 +1,35 @@
-// Maps a file to a Material Design icon + color for display on course cards.
+// Maps a file to a Material Design icon + colour for display on course cards.
+//
+// `color` is a THEME TOKEN NAME, not a hex. It used to be a literal Material 500 value,
+// which made the tiles the one part of the app the palette could not reach: they stayed
+// tuned for white while the surface under them went dark, and the glyph fell to 2.09:1
+// against its own wash. The hexes now live per-mode in plugins/theme.ts.
 // Prefers the Drive mimeType (reliable, and the only signal for Google-native
 // files that have no extension), then falls back to the filename extension.
 
 export interface FileKind {
   icon: string;
-  color: string;
+  /** A theme token name — resolve it through `--v-theme-*`, never as a literal colour. */
+  color: FileColor;
 }
 
-const PDF = { icon: "mdi-file-pdf-box", color: "#E53935" };
-const WORD = { icon: "mdi-file-word-box", color: "#1E88E5" };
-const EXCEL = { icon: "mdi-file-excel-box", color: "#43A047" };
-const PPT = { icon: "mdi-file-powerpoint-box", color: "#FB8C00" };
-const VIDEO = { icon: "mdi-file-video", color: "#8E24AA" };
-const AUDIO = { icon: "mdi-file-music", color: "#00897B" };
-const IMAGE = { icon: "mdi-file-image", color: "#00ACC1" };
-const ARCHIVE = { icon: "mdi-folder-zip", color: "#6D4C41" };
-const TEXT = { icon: "mdi-file-document-outline", color: "#607D8B" };
-const DEFAULT: FileKind = { icon: "mdi-file-outline", color: "#757575" };
+export const FILE_COLORS = [
+  "file-pdf", "file-word", "file-excel", "file-ppt", "file-video",
+  "file-audio", "file-image", "file-archive", "file-text", "file-generic",
+] as const;
+
+export type FileColor = (typeof FILE_COLORS)[number];
+
+const PDF: FileKind = { icon: "mdi-file-pdf-box", color: "file-pdf" };
+const WORD: FileKind = { icon: "mdi-file-word-box", color: "file-word" };
+const EXCEL: FileKind = { icon: "mdi-file-excel-box", color: "file-excel" };
+const PPT: FileKind = { icon: "mdi-file-powerpoint-box", color: "file-ppt" };
+const VIDEO: FileKind = { icon: "mdi-file-video", color: "file-video" };
+const AUDIO: FileKind = { icon: "mdi-file-music", color: "file-audio" };
+const IMAGE: FileKind = { icon: "mdi-file-image", color: "file-image" };
+const ARCHIVE: FileKind = { icon: "mdi-folder-zip", color: "file-archive" };
+const TEXT: FileKind = { icon: "mdi-file-document-outline", color: "file-text" };
+const DEFAULT: FileKind = { icon: "mdi-file-outline", color: "file-generic" };
 
 const BY_EXT: Record<string, FileKind> = {
   pdf: PDF,
@@ -46,4 +59,17 @@ export function fileKind(name: string, mimeType?: string): FileKind {
   }
   const ext = name.includes(".") ? name.split(".").pop()!.toLowerCase() : "";
   return BY_EXT[ext] ?? DEFAULT;
+}
+
+/**
+ * The inline style for a file's tile: a faint wash of its colour behind the glyph.
+ *
+ * Here rather than repeated at each of the six call sites, so the wash and the glyph can
+ * never drift apart, and so the token is resolved through the theme in one place.
+ */
+export function kindTile(kind: FileKind, alpha = 0.09): Record<string, string> {
+  return {
+    backgroundColor: `rgba(var(--v-theme-${kind.color}), ${alpha})`,
+    color: `rgb(var(--v-theme-${kind.color}))`,
+  };
 }

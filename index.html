@@ -63,8 +63,11 @@
       @keyframes pipc-failsafe {
         to { opacity: 0; visibility: hidden; }
       }
+      /* Literal copies of tokens in src/plugins/theme.ts, and they have to be: this paints
+         before the bundle exists, so there is no --v-theme-* to read here. shell.test.ts
+         asserts each still equals the token it was copied from. */
       #pipc-splash.pipc-dark {
-        background: linear-gradient(165deg, #16241C, #0B120E);
+        background: linear-gradient(165deg, #2A2A28, #191919);
       }
       #pipc-splash.pipc-out { opacity: 0; }
       /* No `forwards` and no zeroed base: the resting state is the visible one, and the
@@ -87,7 +90,7 @@
         opacity: 0;
         animation: pipc-rise 400ms 1000ms cubic-bezier(.2, .8, .2, 1) forwards;
       }
-      #pipc-splash.pipc-dark .pipc-word { color: #E8F0EA; }
+      #pipc-splash.pipc-dark .pipc-word { color: #E9E9E7; }
       #pipc-splash .pipc-sub {
         font-size: 9px;
         letter-spacing: .22em;

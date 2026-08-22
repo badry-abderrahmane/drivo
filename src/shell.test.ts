@@ -9,6 +9,7 @@ import { describe, it, expect } from "vitest";
 // import needs none.
 import shell from "../index.html?raw";
 import { BRAND_BADGE } from "./config";
+import { THEME_COLORS } from "./plugins/theme";
 
 describe("the pre-bundle shell", () => {
   it("opens on the same emblem the app wears", () => {
@@ -24,6 +25,27 @@ describe("the pre-bundle shell", () => {
 
   it("keeps the id App.vue measures the opening flight from", () => {
     expect(shell).toContain('id="pipc-splash-mark"');
+  });
+
+  /**
+   * The splash paints before the bundle parses, so it cannot read a --v-theme-* variable:
+   * every colour in it is a hand-copied token value. That makes it the one place a literal
+   * is unavoidable, so it is pinned here instead — a palette change that forgets the shell
+   * fails rather than shipping an opening in the previous theme's colours.
+   */
+  describe("paints the opening in the app's own palette", () => {
+    const { dark } = THEME_COLORS;
+
+    it("grounds the dark splash on the dark theme's own tokens", () => {
+      expect(shell).toContain(
+        `linear-gradient(165deg, ${dark["surface-variant"]}, ${dark.background})`
+      );
+    });
+
+    it("sets the dark wordmark in on-background and the subtitle in secondary", () => {
+      expect(shell).toContain(`.pipc-word { color: ${dark["on-background"]}; }`);
+      expect(shell).toContain(`.pipc-sub { color: ${dark.secondary}; }`);
+    });
   });
 
   it("leaves no stroke-draw rules behind, now that the mark is an image", () => {

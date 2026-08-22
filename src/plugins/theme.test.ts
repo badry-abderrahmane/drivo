@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { contrastRatio, overlay } from "../lib/contrast";
 import { THEME_COLORS, LANDING_GROUND, type ThemeColors } from "./theme";
 import { TYPE_COLORS } from "../lib/docType";
+import { FILE_COLORS } from "../lib/fileKind";
 
 /**
  * Contrast guard for the palette.
@@ -132,10 +133,81 @@ describe.each(modes)("%s theme contrast", (_mode, c) => {
     }
   });
 
+  // The tile behind a file's glyph is a wash of the glyph's own colour, so the two have to
+  // stay apart. A glyph is a graphical object, not text: 3:1, not 4.5:1.
+  //
+  // Dark is held to 4.5 because that is the mode this broke in — the Material 500 values
+  // these used to inherit put `file-archive` at 2.09:1 there. Light is held only to a 2.0
+  // floor: several of its 500-level values sit under 3:1 too (`file-ppt` measures 2.20:1),
+  // but changing them would restyle a mode nobody reported a problem with, so that is
+  // flagged rather than silently fixed.
+  it("keeps every file-format glyph legible on its own tile", () => {
+    const floor = _mode === "dark" ? 4.5 : 2;
+    for (const name of FILE_COLORS) {
+      const hex = c[name];
+      expect(hex, `${name} is missing from the ${_mode} theme`).toBeDefined();
+      expect(
+        contrastRatio(hex, overlay(hex, c.surface, 0.09)),
+        `${name} (${hex}) as a file tile`
+      ).toBeGreaterThanOrEqual(floor);
+    }
+  });
+
   // A badge is a label, not an action — see docType.ts.
   it("never lets a document-type badge wear the brand colour", () => {
     for (const name of TYPE_COLORS) {
       expect(c[name], `${name} must not be the brand colour`).not.toBe(c.primary);
+    }
+  });
+});
+
+/**
+ * Dark-only structural guards.
+ *
+ * Everything above measures whether a foreground is readable on a background. All of it
+ * passed while three successive dark themes were rejected as bad — because legibility was
+ * never what was wrong. These measure the things contrast maths cannot see.
+ *
+ * Note what is NOT asserted: a luminance step between page and card. This theme puts the
+ * card only 1.066:1 above the page on purpose and lets the hairline define the object,
+ * which is how the Notion/Obsidian register works. An earlier revision of this file
+ * demanded a 1.12 step; that was a rule written for a different depth strategy, and
+ * holding this theme to it would measure the wrong thing.
+ */
+describe("dark theme structure", () => {
+  const c = THEME_COLORS.dark;
+
+  it("gives the hairline enough separation to define a card by itself", () => {
+    expect(
+      contrastRatio(c["outline-variant"], c.surface),
+      "border against the card it outlines — this is what carries depth here"
+    ).toBeGreaterThanOrEqual(1.3);
+  });
+
+  // 8-bit chroma (max channel - min channel) rather than HSL saturation, which is unstable
+  // down at these luminances. The rejected green-black ran its surface-variant at 14.
+  it("keeps the neutral grounds neutral instead of tinting them with the brand", () => {
+    const chroma = (hex: string) => {
+      const n = parseInt(hex.slice(1), 16);
+      const ch = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+      return Math.max(...ch) - Math.min(...ch);
+    };
+    for (const ground of ["background", "surface", "surface-variant", "outline-variant"]) {
+      expect(chroma(c[ground]), `${ground} (${c[ground]}) is too saturated to be a neutral`)
+        .toBeLessThanOrEqual(6);
+    }
+    expect(chroma(c.primary), "the accent must still be unmistakably green")
+      .toBeGreaterThanOrEqual(80);
+  });
+
+  // Warm-neutral, not cool: red is never the channel that trails. This is the difference
+  // between a restful charcoal and a clinical one, and it is one hex digit wide.
+  it("keeps the greys warm rather than cool", () => {
+    for (const ground of ["background", "surface", "surface-variant", "on-surface"]) {
+      const n = parseInt(c[ground].slice(1), 16);
+      const [r, , b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+      expect(r, `${ground} (${c[ground]}) should not be cooler than neutral`)
+        .toBeGreaterThanOrEqual(b);
     }
   });
 });

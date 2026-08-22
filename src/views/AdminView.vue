@@ -254,7 +254,7 @@
             <div class="d-flex align-center ga-2 py-2">
               <div
                 class="icon-wrapper flex-shrink-0 d-flex align-center justify-center rounded-lg pa-1"
-                :style="{ backgroundColor: `${kindOf(item).color}15`, color: kindOf(item).color }"
+                :style="kindTile(kindOf(item), 0.08)"
               >
                 <v-icon :icon="kindOf(item).icon" size="20" />
               </div>
@@ -373,7 +373,7 @@
           <template #prepend>
             <div
               class="icon-wrapper d-flex align-center justify-center rounded-xl pa-2 mr-2"
-              :style="{ backgroundColor: `${kindOf(editingRow).color}15`, color: kindOf(editingRow).color }"
+              :style="kindTile(kindOf(editingRow), 0.08)"
             >
               <v-icon :icon="kindOf(editingRow).icon" size="28" />
             </div>
@@ -598,7 +598,7 @@ import { saveMeta } from "../api";
 import { reindex } from "../api";
 import { LEVELS, TYPES, SUBJECTS } from "../config";
 import { loadAdminPassword, saveAdminPassword, clearAdminPassword } from "../lib/adminAuth";
-import { fileKind } from "../lib/fileKind";
+import { fileKind, kindTile } from "../lib/fileKind";
 import FilePreview from "../components/FilePreview.vue";
 import { isClassified, classificationStats, missingFields } from "../lib/classification";
 import FolderTree from "../components/FolderTree.vue";

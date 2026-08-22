@@ -5,6 +5,10 @@
  *
  * Green & Marine since 2026-08-19, replacing Orange & Marine. Green carries the brand and
  * marks what is actionable; marine carries structure and authorship.
+ *
+ * Light is a tinted near-white. Dark is a warm charcoal on a different principle entirely
+ * — see DARK_COLORS. The two modes are not tonal inversions of each other and should not
+ * be made into one.
  */
 export type ThemeColors = Record<string, string>;
 
@@ -56,6 +60,20 @@ export const LIGHT_COLORS: ThemeColors = {
   "type-video": "#0E6E7A",
   "type-autre": "#5B6560",
 
+  // One colour per file format, for the document-card tile. In the theme rather than in
+  // lib/fileKind.ts, where they were hardcoded: a value tuned against white is not a value
+  // that survives on a dark ground. Light keeps the Material 500 set it always had.
+  "file-pdf": "#E53935",
+  "file-word": "#1E88E5",
+  "file-excel": "#43A047",
+  "file-ppt": "#FB8C00",
+  "file-video": "#8E24AA",
+  "file-audio": "#00897B",
+  "file-image": "#00ACC1",
+  "file-archive": "#6D4C41",
+  "file-text": "#607D8B",
+  "file-generic": "#757575",
+
   // The landing screen rides on the brand green, and its wordmark, button and glass edges
   // are a gradient across these two. Neither is decorative: text and a button label sit on
   // them, so they are tokens the contrast guard measures rather than hexes in a component.
@@ -66,10 +84,28 @@ export const LIGHT_COLORS: ThemeColors = {
 };
 
 export const DARK_COLORS: ThemeColors = {
-  primary: "#57C98C",
-  "on-primary": "#06301C",
-  "primary-container": "#0B4A2C",
-  "on-primary-container": "#BFEBD3",
+  // A warm-neutral charcoal, in the Notion/Obsidian register: soft rather than black, and
+  // built for reading a chapter end to end without glare. Three earlier attempts at this
+  // theme all went the other way — #0E1712, then #0A0F0E, then a generated M3 scheme at
+  // #0B0F0B — and all three were rejected. They were gloomy where this needs to be calm.
+  //
+  // The neutrals are a hair warm (R >= G >= B) rather than dead grey; that is the whole
+  // difference between restful and clinical, and it costs nothing.
+  //
+  // DEPTH COMES FROM THE HAIRLINE, NOT FROM LUMINANCE. A card sits only 1.066:1 above the
+  // page, which would be flat on its own — the 1.383:1 `outline-variant` border around it
+  // is what makes it an object. Components must draw that border at full token strength;
+  // the old `rgba(var(--v-border-color), 0.1)` is far too faint to carry it, and a card
+  // that loses its edge here loses its shape entirely.
+  //
+  // GREEN MEANS ACTION, AND NOTHING ELSE. Buttons, links, the active nav pill, the card's
+  // open arrow, focus rings. Not headings, not counts, not chips, not icon tiles. The
+  // first complaint about this theme was that everything was green with nothing to rest
+  // against; restraint here is the fix, not a different green.
+  primary: "#4ADE80",
+  "on-primary": "#052E16",
+  "primary-container": "#14532D",
+  "on-primary-container": "#BBF7D0",
   secondary: "#7FB6E8",
   "on-secondary": "#0E2A47",
   "secondary-container": "#14395E",
@@ -78,34 +114,54 @@ export const DARK_COLORS: ThemeColors = {
   "on-tertiary": "#3D2A12",
   "tertiary-container": "#574127",
   "on-tertiary-container": "#F3E7D6",
-  // A green-black, not a neutral grey: the green has to sit inside the palette
-  // rather than glow on top of it.
-  background: "#0E1712",
-  "on-background": "#E8F0EA",
-  surface: "#141F19",
-  "on-surface": "#E8F0EA",
-  "surface-variant": "#1C2A22",
-  "on-surface-variant": "#9AAAA0",
-  outline: "#7A8C80",
-  "outline-variant": "#29372E",
-  "surface-tint": "#57C98C",
+  background: "#191919",
+  "on-background": "#E9E9E7",
+  surface: "#1F1F1E",
+  "on-surface": "#E9E9E7",
+  "surface-variant": "#2A2A28",
+  "on-surface-variant": "#9B9B99",
+  outline: "#6F6F6C",
+  "outline-variant": "#373735",
+  "surface-tint": "#4ADE80",
   error: "#FFB4AB",
   "on-error": "#690005",
   "error-container": "#93000A",
   "on-error-container": "#FFDAD6",
   warning: "#FBBF24",
-  success: "#4ADE80",
-  // Lightened so the tonal chip stays legible on the green-black surface.
-  "type-cours": "#AFD2F0",
-  "type-exercices": "#E0B978",
-  "type-devoir": "#CBBEFD",
-  "type-examen": "#F5A3B5",
-  "type-video": "#8FDDE5",
-  "type-autre": "#AEBDB4",
+  // Emerald rather than the brand green: `primary` is now #4ADE80, and a success alert in
+  // that same colour would read as an ordinary control.
+  success: "#34D399",
+  // These stay colourful precisely BECAUSE everything around them went quiet. With the
+  // chrome neutral, the badge is the one thing you scan a page of results by, so the
+  // document type is the job colour is spent on here. Retuned for the charcoal ground.
+  "type-cours": "#A8CBEA",
+  "type-exercices": "#DFB876",
+  "type-devoir": "#C6B9F5",
+  "type-examen": "#F0A0B2",
+  "type-video": "#87D6DE",
+  "type-autre": "#B3B3AF",
 
-  // Measured on primary-container, the ground the landing uses in dark mode: 4.81 and 5.79:1.
-  "landing-sheen-cool": "#7FB6E8",
-  "landing-sheen-warm": "#D9BE96",
+  // One colour per file format, for the tile on every document card. These used to be
+  // hardcoded Material 500 hexes in lib/fileKind.ts — the one part of the app the palette
+  // never reached. Tuned against white, they put the worst glyph (archive) at 2.09:1 on a
+  // dark ground, so the tile read as a muddy smear with an unreadable mark in it. These
+  // are the 200/300-level equivalents and clear 6.19:1 at worst.
+  "file-pdf": "#F28B82",
+  "file-word": "#8AB4F8",
+  "file-excel": "#81C995",
+  "file-ppt": "#FCAD70",
+  "file-video": "#D7AEFB",
+  "file-audio": "#78D9CE",
+  "file-image": "#7FD1E8",
+  "file-archive": "#BCAAA4",
+  "file-text": "#B0BEC5",
+  "file-generic": "#BDBDBD",
+
+  // The landing paints primary-container full-bleed and puts these on it: 7.4 and 8.4:1 on
+  // that ground, and light enough for the button's dark label to clear 12:1 across the
+  // whole gradient.
+  "landing-sheen-cool": "#D8F3FF",
+  "landing-sheen-warm": "#F0EAD6",
 };
 
 export const THEME_COLORS = { light: LIGHT_COLORS, dark: DARK_COLORS } as const;

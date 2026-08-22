@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { fileKind } from "./fileKind";
+import { fileKind, FILE_COLORS } from "./fileKind";
 
 describe("fileKind", () => {
   it("maps by extension", () => {
@@ -28,8 +28,12 @@ describe("fileKind", () => {
     expect(fileKind("data.xyz").icon).toBe("mdi-file-outline");
   });
 
-  it("returns a color with every kind", () => {
-    expect(fileKind("cours.pdf").color).toMatch(/^#/);
-    expect(fileKind("x").color).toMatch(/^#/);
+  // A token name, never a literal colour: the hexes are per-mode in plugins/theme.ts, and a
+  // hex leaking back in here is exactly how the tiles ended up tuned for white only.
+  it("returns a theme token with every kind, not a hex", () => {
+    expect(FILE_COLORS).toContain(fileKind("cours.pdf").color);
+    expect(FILE_COLORS).toContain(fileKind("x").color);
+    expect(fileKind("cours.pdf").color).toBe("file-pdf");
+    expect(fileKind("cours.pdf").color).not.toMatch(/^#/);
   });
 });
