@@ -64,7 +64,7 @@
         <v-btn
           :to="{ name: 'browse' }"
           :variant="route.name === 'browse' ? 'flat' : 'text'"
-          :color="route.name === 'browse' ? 'primary' : 'default'"
+          :color="route.name === 'browse' ? 'primary' : undefined"
           size="small"
           class="rounded-pill font-weight-semibold px-4 nav-pill"
           prepend-icon="mdi-atom"
@@ -75,7 +75,7 @@
         <v-btn
           :to="{ name: 'menu' }"
           :variant="route.name === 'menu' ? 'flat' : 'text'"
-          :color="route.name === 'menu' ? 'primary' : 'default'"
+          :color="route.name === 'menu' ? 'primary' : undefined"
           size="small"
           class="rounded-pill font-weight-semibold px-4 nav-pill"
           prepend-icon="mdi-format-list-checks"
@@ -86,7 +86,7 @@
         <v-btn
           :to="{ name: 'examen-national' }"
           :variant="route.name === 'examen-national' ? 'flat' : 'text'"
-          :color="route.name === 'examen-national' ? 'primary' : 'default'"
+          :color="route.name === 'examen-national' ? 'primary' : undefined"
           size="small"
           class="rounded-pill font-weight-semibold px-4 nav-pill"
           prepend-icon="mdi-certificate-outline"
@@ -399,7 +399,7 @@ onMounted(() => {
 .app-header {
   background: rgba(var(--v-theme-surface), 0.85) !important;
   backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(var(--v-border-color), 0.08) !important;
+  border-bottom: 1px solid rgb(var(--v-theme-outline-variant)) !important;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -440,7 +440,7 @@ onMounted(() => {
 }
 
 .search-trigger {
-  border: 1px solid rgba(var(--v-border-color), 0.15);
+  border: 1px solid rgb(var(--v-theme-outline-variant));
   background: rgba(var(--v-theme-surface-variant), 0.4);
   padding: 6px 12px;
   cursor: pointer;
@@ -456,8 +456,22 @@ onMounted(() => {
   background-color: rgba(var(--v-theme-surface-variant), 0.5);
 }
 
+/* The inactive pills carry no `color` prop. They used to pass `color="default"`, which is
+   not a Vuetify theme colour — it compiles to a `text-default` class the library never
+   defines, so the label's colour was whatever happened to be inherited through it. */
 .nav-pill {
   transition: all 0.2s ease;
+  color: rgb(var(--v-theme-on-surface));
+}
+
+/* Green is for what you can act on, and the active pill is already green and filled. An
+   inactive destination is chrome: it recedes, and comes up to full strength on hover. */
+.nav-pill:not(.v-btn--active) {
+  opacity: 0.7;
+}
+
+.nav-pill:not(.v-btn--active):hover {
+  opacity: 1;
 }
 
 .nav-pill:hover {
@@ -473,13 +487,13 @@ onMounted(() => {
 }
 
 .app-footer {
-  border-top: 1px solid rgba(var(--v-border-color), 0.08) !important;
+  border-top: 1px solid rgb(var(--v-theme-outline-variant)) !important;
 }
 
 .footer-quote-card {
   max-width: 680px;
   background: rgba(var(--v-theme-surface-variant), 0.25);
-  border-color: rgba(var(--v-border-color), 0.12) !important;
+  border-color: rgb(var(--v-theme-outline-variant)) !important;
   backdrop-filter: blur(8px);
 }
 
@@ -512,7 +526,7 @@ onMounted(() => {
 }
 
 .author-card {
-  border-color: rgba(var(--v-border-color), 0.1) !important;
+  border-color: rgb(var(--v-theme-outline-variant)) !important;
 }
 
 .back-to-top-btn {

@@ -14,7 +14,6 @@
         density="compact"
         variant="outlined"
         color="primary"
-        base-color="primary"
         class="filter-select elevation-0"
         prepend-inner-icon="mdi-school-outline"
         @update:model-value="emitChange"
@@ -30,7 +29,6 @@
         density="compact"
         variant="outlined"
         color="primary"
-        base-color="primary"
         class="filter-select"
         prepend-inner-icon="mdi-shape-outline"
         @update:model-value="emitChange"
@@ -61,7 +59,6 @@
         density="compact"
         variant="outlined"
         color="primary"
-        base-color="primary"
         class="filter-select"
         prepend-inner-icon="mdi-book-open-variant"
         @update:model-value="emitChange"
@@ -77,7 +74,6 @@
         density="compact"
         variant="outlined"
         color="primary"
-        base-color="primary"
         class="filter-select flex-grow-1"
         prepend-inner-icon="mdi-bookmark-outline"
         @update:model-value="emitChange"
@@ -155,9 +151,14 @@ watch(
 </script>
 
 <style scoped>
-/* `base-color` primary tints the outline and the label; the chosen value is a plain
-   on-surface string until it is set here too, which is the part that actually says
-   "this filter is on" once the menu is closed. */
+/* The chosen value is a plain on-surface string until it is set here, and this is the part
+   that actually says "this filter is on" once the menu is closed.
+
+   The fields deliberately carry no `base-color` any more. Vuetify applies `base-color` to
+   the RESTING outline and `color` only to the focused one, so `base-color="primary"` drew
+   four full-strength brand-green rectangles across the top of every page — the loudest
+   thing on screen, framing labels too dim to read. Green marks focus here, which is the
+   state that earned it; at rest the field is neutral like the rest of the chrome. */
 .filter-select :deep(.v-field__input) {
   color: rgb(var(--v-theme-primary));
   font-weight: 600;
@@ -168,7 +169,9 @@ watch(
    .v-field they would be shadowed by the element's own declarations. */
 .filter-select :deep(.v-field__outline) {
   --v-field-border-width: 2px;
-  --v-field-border-opacity: 1;
+  /* Was 1. Full opacity is a shout at rest; this keeps the deliberate weight of the line
+     while letting it sit behind the text it frames. */
+  --v-field-border-opacity: 0.5;
 }
 
 /* Focus still has to read as a step up from an already-bold resting outline. Matching

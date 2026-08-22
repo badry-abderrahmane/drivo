@@ -154,7 +154,7 @@ onMounted(ensureLoaded);
   position: relative;
   cursor: pointer;
   background: rgb(var(--v-theme-surface));
-  border: 1px solid rgba(var(--v-border-color), 0.1) !important;
+  border: 1px solid rgb(var(--v-theme-outline-variant)) !important;
   transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .level-card:hover {

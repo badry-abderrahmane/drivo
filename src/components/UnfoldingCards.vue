@@ -35,9 +35,9 @@
               <div>
                 <div class="d-flex align-center justify-space-between mb-4">
                   <div class="icon-avatar rounded-xl d-flex align-center justify-center pa-3">
-                    <v-icon :icon="getLevelIcon(lvl.level)" color="primary" size="30" />
+                    <v-icon :icon="getLevelIcon(lvl.level)" color="medium-emphasis" size="30" />
                   </div>
-                  <v-chip size="small" color="primary" variant="tonal" class="font-weight-bold rounded-pill">
+                  <v-chip size="small" variant="tonal" class="font-weight-bold rounded-pill">
                     {{ lvl.count }} fichier{{ lvl.count > 1 ? "s" : "" }}
                   </v-chip>
                 </div>
@@ -53,7 +53,7 @@
               <div class="unfold-action-bar d-flex align-center justify-space-between pt-3 border-t">
                 <span class="text-caption font-weight-bold text-primary">Déplier les chapitres</span>
                 <div class="unfold-icon-circle rounded-circle d-flex align-center justify-center">
-                  <v-icon icon="mdi-chevron-down" color="primary" size="20" class="unfold-arrow" />
+                  <v-icon icon="mdi-chevron-down" color="medium-emphasis" size="20" class="unfold-arrow" />
                 </div>
               </div>
             </v-card>
@@ -84,12 +84,12 @@
             <!-- Matière Group Header (Single Line) -->
             <div class="d-flex align-center ga-2 mb-4 px-1 text-no-wrap flex-nowrap">
               <div class="icon-avatar-sm rounded-lg d-flex align-center justify-center pa-2 flex-shrink-0">
-                <v-icon :icon="getSubjectIcon(subGroup.subject)" color="primary" size="20" />
+                <v-icon :icon="getSubjectIcon(subGroup.subject)" color="medium-emphasis" size="20" />
               </div>
               <h3 class="text-subtitle-1 font-weight-bold font-heading text-no-wrap flex-shrink-0">
                 Matière : {{ subGroup.subject }}
               </h3>
-              <v-chip size="x-small" color="primary" variant="tonal" class="font-weight-bold ml-1 flex-shrink-0">
+              <v-chip size="x-small" variant="tonal" class="font-weight-bold ml-1 flex-shrink-0">
                 {{ subGroup.chapters.length }} chapitre{{ subGroup.chapters.length > 1 ? "s" : "" }}
               </v-chip>
               <v-divider class="ms-3 flex-grow-1" />
@@ -114,7 +114,7 @@
                     {{ ch.count }} document{{ ch.count > 1 ? "s" : "" }}
                   </span>
                 </span>
-                <v-icon icon="mdi-chevron-right" size="20" color="primary" class="mt-1 spine-arrow" />
+                <v-icon icon="mdi-chevron-right" size="20" color="medium-emphasis" class="mt-1 spine-arrow" />
               </button>
             </div>
           </div>
@@ -142,11 +142,11 @@
         <template v-else>
           <div v-for="group in docsByType" :key="group.type" class="mb-8">
             <div class="d-flex align-center ga-2 mb-4 px-1 text-no-wrap flex-nowrap">
-              <v-icon :icon="getTypeIcon(group.type)" color="primary" size="18" />
+              <v-icon :icon="getTypeIcon(group.type)" color="medium-emphasis" size="18" />
               <h3 class="text-subtitle-2 font-weight-bold font-heading text-no-wrap flex-shrink-0">
                 {{ group.type }}
               </h3>
-              <v-chip size="x-small" color="primary" variant="tonal" class="font-weight-bold ml-1 flex-shrink-0">
+              <v-chip size="x-small" variant="tonal" class="font-weight-bold ml-1 flex-shrink-0">
                 {{ group.docs.length }} document{{ group.docs.length > 1 ? "s" : "" }}
               </v-chip>
               <v-divider class="ms-3 flex-grow-1" />
@@ -415,7 +415,7 @@ function selectChapter(ch: string): void {
 
 .unfold-card {
   background: rgb(var(--v-theme-surface));
-  border: 1px solid rgba(var(--v-border-color), 0.1) !important;
+  border: 1px solid rgb(var(--v-theme-outline-variant)) !important;
   transition: transform var(--pipc-base) var(--pipc-ease),
               border-color var(--pipc-base) var(--pipc-ease),
               box-shadow var(--pipc-base) var(--pipc-ease);

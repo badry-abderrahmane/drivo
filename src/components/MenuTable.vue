@@ -2,7 +2,7 @@
   <div class="menu-table">
     <div v-for="section in menu.sections" :key="section.subject" class="mb-8">
       <div class="matiere-header d-flex align-center ga-2 mb-2">
-        <v-icon icon="mdi-book-open-page-variant-outline" color="primary" size="20" />
+        <v-icon icon="mdi-book-open-page-variant-outline" color="medium-emphasis" size="20" />
         <span class="text-h6 font-weight-bold text-primary">{{ section.subject }}</span>
       </div>
 

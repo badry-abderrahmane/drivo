@@ -65,7 +65,7 @@
             </p>
             <div class="d-flex flex-wrap ga-3">
               <div class="hero-stat-pill rounded-pill px-3 py-1 bg-surface border text-caption font-weight-bold d-flex align-center ga-1">
-                <v-icon icon="mdi-book-open-page-variant-outline" size="14" color="primary" />
+                <v-icon icon="mdi-book-open-page-variant-outline" size="14" color="medium-emphasis" />
                 <span>{{ published.length }} Documents de cours</span>
               </div>
               <div class="hero-stat-pill rounded-pill px-3 py-1 bg-surface border text-caption font-weight-bold d-flex align-center ga-1">
@@ -328,7 +328,7 @@ onMounted(ensureLoaded);
 
 .hero-banner {
   background: linear-gradient(135deg, rgba(var(--v-theme-surface), 0.9), rgba(var(--v-theme-surface-variant), 0.4));
-  border: 1px solid rgba(var(--v-border-color), 0.12) !important;
+  border: 1px solid rgb(var(--v-theme-outline-variant)) !important;
   position: relative;
   box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.04);
 }
