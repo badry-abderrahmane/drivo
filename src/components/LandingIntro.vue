@@ -15,22 +15,29 @@
       <div class="aurora-bleed"><b></b><b></b><b></b></div>
     </div>
 
-    <!-- Layer 2: the formulae. A radial mask holds the centre column clear, which position
-         alone could not guarantee once each glyph starts drifting. -->
-    <div class="formulae" aria-hidden="true">
-      <span
-        v-for="(f, i) in FORMULAE"
-        :key="f.text"
-        class="formula"
-        :class="{ 'formula-extra': i >= 6 }"
+    <!-- Layer 2: the apparatus. A radial mask holds the centre column clear, which position
+         alone could not guarantee once each drawing starts drifting. -->
+    <div class="apparatus" aria-hidden="true">
+      <svg
+        v-for="(a, i) in APPARATUS"
+        :key="a.name"
+        class="glass"
+        :class="{ 'glass-extra': i >= 6 }"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.3"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        vector-effect="non-scaling-stroke"
         :style="{
-          left: `${f.x}%`,
-          top: `${f.y}%`,
-          '--drift': `${f.duration}s`,
-          '--delay': `-${f.delay}s`,
-          '--scale': f.scale,
+          left: `${a.x}%`,
+          top: `${a.y}%`,
+          '--drift': `${a.duration}s`,
+          '--delay': `-${a.delay}s`,
+          '--scale': a.scale,
         }"
-      >{{ f.text }}</span>
+      ><path :d="a.d" vector-effect="non-scaling-stroke" /></svg>
     </div>
 
     <!-- The emblem, alone and centred. No atom behind it and no separate wordmark beside
@@ -146,17 +153,32 @@ const props = withDefaults(
 );
 const emit = defineEmits<{ start: [HTMLElement | null] }>();
 
-const FORMULAE = [
-  { text: "∮E·dl = -dΦ/dt", x: 3, y: 10, duration: 30, delay: 0, scale: 1.05 },
-  { text: "F = ma", x: 84, y: 14, duration: 26, delay: 3, scale: 1.3 },
-  { text: "λ = c/ν", x: 5, y: 70, duration: 34, delay: 6, scale: 1.15 },
-  { text: "E = mc²", x: 80, y: 78, duration: 28, delay: 2, scale: 1.4 },
-  { text: "pH = -log[H₃O⁺]", x: 38, y: 3, duration: 22, delay: 8, scale: 0.85 },
-  { text: "ΔG = ΔH - TΔS", x: 2, y: 40, duration: 24, delay: 5, scale: 0.95 },
-  { text: "∑F⃗ = 0", x: 90, y: 44, duration: 30, delay: 1, scale: 1.2 },
-  { text: "PV = nRT", x: 30, y: 92, duration: 26, delay: 7, scale: 1 },
-  { text: "q = m·c·ΔT", x: 86, y: 62, duration: 32, delay: 4, scale: 0.8 },
-  { text: "Δp·Δx ≥ ℏ/2", x: 4, y: 24, duration: 28, delay: 9, scale: 0.75 },
+/**
+ * Layer 2 of the landing: laboratory glassware, drifting behind the emblem.
+ *
+ * This was a set of physics formulae — E = mc², PV = nRT and so on. Equations behind a
+ * welcome screen read as a formula sheet, and a formula sheet is the thing a student came
+ * here to get away from. Apparatus says the same "this is physics-chemistry" without
+ * asserting anything the reader has to parse.
+ *
+ * Line art rather than glyphs, so nothing here is language: 24x24 viewBox, stroked with
+ * `currentColor` so each drawing inherits `--landing-fg` and works on either theme's
+ * ground. Positions, drift durations and delays are carried over unchanged from the
+ * formulae — that composition was already balanced around the centre column.
+ */
+const APPARATUS = [
+  // Erlenmeyer flask, with its liquid line.
+  { name: "erlenmeyer", d: "M9.4 2.8h5.2M10.1 2.8v5.4L5 18.5A1.7 1.7 0 0 0 6.5 21h11a1.7 1.7 0 0 0 1.5-2.5L13.9 8.2V2.8M7.6 15.2h8.8", x: 3, y: 10, duration: 30, delay: 0, scale: 1.05 },
+  // Beaker, graduations on the right.
+  { name: "beaker", d: "M5 3.6h14M6.4 3.6v14.6A2.8 2.8 0 0 0 9.2 21h5.6a2.8 2.8 0 0 0 2.8-2.8V3.6M14.4 7.6h3M14.4 11.2h3M14.4 14.8h3", x: 84, y: 14, duration: 26, delay: 3, scale: 1.3 },
+  { name: "test tube", d: "M8.2 2.6h7.6M9.6 2.6v13.9a2.4 2.4 0 0 0 4.8 0V2.6M9.6 12.4h4.8", x: 5, y: 70, duration: 34, delay: 6, scale: 1.15 },
+  { name: "round-bottom flask", d: "M8.9 2.7h6.2M10.3 2.7v5.6a6.6 6.6 0 1 0 3.4 0V2.7", x: 80, y: 78, duration: 28, delay: 2, scale: 1.4 },
+  { name: "funnel", d: "M3.6 3.8h16.8l-6.5 7.7v7.7l-3.8 2v-9.7z", x: 38, y: 3, duration: 22, delay: 8, scale: 0.85 },
+  { name: "graduated cylinder", d: "M8.1 3.4h7.8M9.2 3.4v14.4a2.3 2.3 0 0 0 2.3 2.3h1a2.3 2.3 0 0 0 2.3-2.3V3.4M7.4 20.1h9.2M12.6 7.4h2.2M12.6 10.8h2.2M12.6 14.2h2.2", x: 2, y: 40, duration: 24, delay: 5, scale: 0.95 },
+  { name: "microscope", d: "M10.4 2.6h4.3v4.1h-4.3zM12.5 6.7v3M8.3 9.7h8.5M9.7 9.7a6.4 6.4 0 0 0 .5 8.3M5.6 21.3h12.8M8.4 17.9h7.2", x: 90, y: 44, duration: 30, delay: 1, scale: 1.2 },
+  { name: "bunsen burner", d: "M6.8 21.2h10.4M9.6 21.2v-6.8h4.8v6.8M12 14.4V8.9M12 8.6c-1.7-1.5-.7-3.6.7-4.9.1 1.7 1.2 2.2 1.8 3.2.9 1.6-.5 3.1-2.5 1.7z", x: 30, y: 92, duration: 26, delay: 7, scale: 1 },
+  { name: "balance", d: "M12 3.2v3.4M4.8 6.6h14.4M12 6.6v11.2M8.4 21.2h7.2M2.4 6.6l2.4 5.2 2.4-5.2M16.8 6.6l2.4 5.2 2.4-5.2", x: 86, y: 62, duration: 32, delay: 4, scale: 0.8 },
+  { name: "pipette", d: "M12 2.4a2.6 2.6 0 0 1 2.6 2.6v1.3H9.4V5A2.6 2.6 0 0 1 12 2.4zM10.5 6.3h3v10.5L12 21.3l-1.5-4.5z", x: 4, y: 24, duration: 28, delay: 9, scale: 0.75 },
 ] as const;
 
 const markEl = ref<HTMLElement | null>(null);
@@ -366,7 +388,7 @@ watch(stats, (val, old) => {
 }
 
 .landing.out .aurora,
-.landing.out .formulae,
+.landing.out .apparatus,
 .landing.out .stack {
   opacity: 0;
   transition: opacity 300ms ease;
@@ -450,8 +472,8 @@ watch(stats, (val, old) => {
 @keyframes aurora-2 { to { transform: translate(-12%, 8%) scale(1.12); } }
 @keyframes aurora-3 { to { transform: translate(8%, -12%) scale(1.22); } }
 
-/* ---- layer 2: formulae ---- */
-.formulae {
+/* ---- layer 2: apparatus ---- */
+.apparatus {
   position: absolute;
   inset: 0;
   z-index: 1;
@@ -470,23 +492,25 @@ watch(stats, (val, old) => {
   );
 }
 
-.formula {
+/* `currentColor` on the stroke, `color` set here: each drawing inherits the ground's ink,
+   so the layer follows the theme without a second set of values. */
+.glass {
   position: absolute;
-  font-style: italic;
-  font-size: calc(20px * var(--scale));
-  white-space: nowrap;
+  width: calc(58px * var(--scale));
+  height: calc(58px * var(--scale));
   color: var(--landing-fg);
-  opacity: 0.16;
-  filter: blur(0.5px);
-  animation: formula-drift var(--drift) var(--delay) ease-in-out infinite alternate;
+  opacity: 0.17;
+  animation: apparatus-drift var(--drift) var(--delay) ease-in-out infinite alternate;
 }
 
-.formula:nth-child(even) {
+/* Alternating depth: the even ones sit further back. Line art needs less blur than the
+   italic text did — at 1.8px a 1.3px hairline simply disappears. */
+.glass:nth-child(even) {
   opacity: 0.11;
-  filter: blur(1.8px);
+  filter: blur(0.7px);
 }
 
-@keyframes formula-drift {
+@keyframes apparatus-drift {
   from { transform: translate(0, 0) rotate(-1.5deg); }
   to { transform: translate(24px, -28px) rotate(1.5deg); }
 }
@@ -740,6 +764,6 @@ kbd {
   .stat span { font-size: 9px; letter-spacing: 0.06em; }
   .start { font-size: 18px; padding: 18px 42px; }
   .proverb { font-size: 14px; min-height: 4.6em; padding-top: 16px; }
-  .formula-extra { display: none; }
+  .glass-extra { display: none; }
 }
 </style>
