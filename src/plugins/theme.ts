@@ -56,6 +56,13 @@ export const LIGHT_COLORS: ThemeColors = {
   "type-video": "#0E6E7A",
   "type-autre": "#5B6560",
 
+  // The landing screen rides on the brand green, and its wordmark, button and glass edges
+  // are a gradient across these two. Neither is decorative: text and a button label sit on
+  // them, so they are tokens the contrast guard measures rather than hexes in a component.
+  // The obvious picks failed — primary-container measures 4.48:1 on primary and
+  // tertiary-container 4.36:1, both under AA. These clear 4.72:1.
+  "landing-sheen-cool": "#EDF6FA",
+  "landing-sheen-warm": "#FAF0E2",
 };
 
 export const DARK_COLORS: ThemeColors = {
@@ -96,6 +103,17 @@ export const DARK_COLORS: ThemeColors = {
   "type-video": "#8FDDE5",
   "type-autre": "#AEBDB4",
 
+  // Measured on primary-container, the ground the landing uses in dark mode: 4.81 and 5.79:1.
+  "landing-sheen-cool": "#7FB6E8",
+  "landing-sheen-warm": "#D9BE96",
 };
 
 export const THEME_COLORS = { light: LIGHT_COLORS, dark: DARK_COLORS } as const;
+
+/**
+ * The token the landing screen paints itself with, per theme. Light mode takes the brand
+ * green itself; dark mode cannot — `primary` there is a bright mint, and a full-bleed sheet
+ * of it at night is a lamp — so it takes the deep `primary-container` instead. Exported so
+ * theme.test.ts can measure what the landing actually puts on each ground.
+ */
+export const LANDING_GROUND = { light: "primary", dark: "primary-container" } as const;

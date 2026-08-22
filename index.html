@@ -8,6 +8,11 @@
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <!-- The splash below paints this emblem before the bundle has even parsed, and the
+         landing screen shows it at 280px straight after. Preloaded so it races the module
+         script rather than queueing behind it — the mark is the one thing the opening
+         cannot fake. -->
+    <link rel="preload" as="image" href="/pipc-badge.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -62,13 +67,17 @@
         background: linear-gradient(165deg, #16241C, #0B120E);
       }
       #pipc-splash.pipc-out { opacity: 0; }
-      #pipc-splash-mark { transform-origin: center; }
-      #pipc-splash-mark .pipc-draw {
-        stroke-dasharray: 80;
-        stroke-dashoffset: 80;
-        animation: pipc-draw 1000ms cubic-bezier(.6, 0, .3, 1) forwards;
+      /* No `forwards` and no zeroed base: the resting state is the visible one, and the
+         animation only describes where the mark comes FROM. App.vue clears this animation
+         before flying the mark to its destination, and a filled animation would snap the
+         emblem back to opacity 0 the instant it did. */
+      #pipc-splash-mark {
+        transform-origin: center;
+        animation: pipc-mark-in 620ms cubic-bezier(.2, .8, .2, 1);
       }
-      #pipc-splash-mark .pipc-fill { opacity: 0; animation: pipc-fade 450ms 850ms forwards; }
+      @keyframes pipc-mark-in {
+        from { opacity: 0; transform: scale(.82); }
+      }
       #pipc-splash .pipc-word {
         font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
         font-weight: 800;
@@ -88,8 +97,6 @@
         animation: pipc-rise 400ms 1120ms cubic-bezier(.2, .8, .2, 1) forwards;
       }
       #pipc-splash.pipc-dark .pipc-sub { color: #7FB6E8; }
-      @keyframes pipc-draw { to { stroke-dashoffset: 0; } }
-      @keyframes pipc-fade { to { opacity: 1; } }
       @keyframes pipc-rise {
         from { opacity: 0; transform: translateY(9px); }
         to   { opacity: 1; transform: translateY(0); }
@@ -124,15 +131,14 @@
         el.id = "pipc-splash";
         if (dark) el.className = "pipc-dark";
         el.setAttribute("aria-hidden", "true");
+        // The real emblem, not a traced approximation of it — the same file config.ts
+        // exports as BRAND_BADGE and the header, footer and landing all wear. Preloaded in
+        // <head>, so by the time this runs it is normally already in cache.
+        //
+        // The wordmark below stays: at 96px the badge's arched lettering is texture rather
+        // than words, exactly as in the app bar, so the name still has to be spelled out.
         el.innerHTML =
-          '<svg id="pipc-splash-mark" width="72" height="72" viewBox="0 0 64 64">' +
-          '<rect class="pipc-fill" width="64" height="64" rx="14" fill="#16A34A"/>' +
-          '<path class="pipc-draw" d="M16 22 H48 M26 26 V44 M42 26 V44" stroke="#16A34A" ' +
-          'stroke-width="8" stroke-linecap="round" fill="none"/>' +
-          '<g class="pipc-fill" fill="#FFFFFF">' +
-          '<rect x="12" y="18" width="40" height="8" rx="4"/>' +
-          '<rect x="22" y="22" width="8" height="26" rx="4"/>' +
-          '<rect x="38" y="22" width="8" height="26" rx="4"/></g></svg>' +
+          '<img id="pipc-splash-mark" src="/pipc-badge.png" width="96" height="96" alt="" />' +
           '<div class="pipc-word">PIPC</div>' +
           '<div class="pipc-sub">Physique-Chimie</div>';
         document.body.appendChild(el);

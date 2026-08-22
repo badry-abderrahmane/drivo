@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { contrastRatio, overlay } from "../lib/contrast";
-import { THEME_COLORS, type ThemeColors } from "./theme";
+import { THEME_COLORS, LANDING_GROUND, type ThemeColors } from "./theme";
 import { TYPE_COLORS } from "../lib/docType";
 
 /**
@@ -71,6 +71,54 @@ describe.each(modes)("%s theme contrast", (_mode, c) => {
       "selected chip against the filter-bar tint"
     ).toBeGreaterThanOrEqual(3);
     expect(contrastRatio(c["on-primary"], c.primary)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  // The landing paints a full screen of brand colour and puts a gradient wordmark, a button
+  // label and captions on it. Every stop has to clear AA on that ground — the two obvious
+  // candidates did not, which is the whole reason these tokens exist.
+  it("keeps the landing sheen readable on the ground the landing actually uses", () => {
+    const ground = c[LANDING_GROUND[_mode as "light" | "dark"]];
+    expect(ground, `no landing ground for ${_mode}`).toBeDefined();
+    for (const stop of ["landing-sheen-cool", "landing-sheen-warm"]) {
+      expect(
+        contrastRatio(c[stop], ground),
+        `${stop} (${c[stop]}) on ${LANDING_GROUND[_mode as "light" | "dark"]} (${ground})`
+      ).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  // The glass panels on the landing are a dark wash over that same ground. A white wash —
+  // the usual glassmorphism recipe — lightens it and closes the gap to the text on top:
+  // 4.21:1 at 12% and worse as it thickens. Deepening it instead is what keeps this legible.
+  it("keeps text on the landing's frosted panels at AA", () => {
+    const mode = _mode as "light" | "dark";
+    const ground = c[LANDING_GROUND[mode]];
+    const wash = mode === "light" ? "#0B2E1D" : "#04170E";
+    const glass = overlay(wash, ground, 0.2);
+    const fg = mode === "light" ? c["on-primary"] : c["on-primary-container"];
+    expect(contrastRatio(fg, glass), `landing text on frosted glass (${glass})`)
+      .toBeGreaterThanOrEqual(4.5);
+    // The captions under each number run at 76% of that foreground — still a UI label, 3:1.
+    expect(contrastRatio(overlay(fg, glass, 0.76), glass), "muted caption on frosted glass")
+      .toBeGreaterThanOrEqual(3);
+  });
+
+  // The landing's Commencer button is a light gradient across these three in both themes,
+  // so its label has to clear AA at every point along it. This shipped once as
+  // `on-primary-container` in dark mode — the exact value of the gradient's first stop,
+  // i.e. 1.00:1, a label the same colour as the button.
+  it("keeps the landing button's label readable across its whole gradient", () => {
+    const mode = _mode as "light" | "dark";
+    const label = mode === "light" ? c.primary : c["on-primary"];
+    const stops = [
+      mode === "light" ? c["on-primary"] : c["on-primary-container"],
+      c["landing-sheen-cool"],
+      c["landing-sheen-warm"],
+    ];
+    for (const stop of stops) {
+      expect(contrastRatio(label, stop), `button label ${label} on gradient stop ${stop}`)
+        .toBeGreaterThanOrEqual(4.5);
+    }
   });
 
   it("keeps every document-type badge legible as a tonal chip", () => {

@@ -28,3 +28,13 @@ export const AUTHOR_ROLE = "Professeur de Physique-Chimie";
 
 /** His portrait. Served from public/, so it is a site-absolute path, not a bundled import. */
 export const AUTHOR_PHOTO = "/hassan-badry.jpg";
+
+/**
+ * The full emblem: π on amber, ringed by his name and the portal's. Used for the landing
+ * and the app bar. Its arched lettering does not survive 42px, so in the header it reads as
+ * a mark rather than as words — the "PIPC" wordmark beside it carries the name.
+ *
+ * The favicon and the pre-bundle splash are untouched: both are static (public/favicon.*
+ * and the inline SVG in index.html) and still draw the π tile.
+ */
+export const BRAND_BADGE = "/pipc-badge.png";

@@ -8,7 +8,19 @@
     >
       <v-app-bar-title class="d-flex align-center">
         <router-link :to="{ name: 'browse' }" class="d-flex align-center ga-3 text-decoration-none color-inherit">
-          <BrandMark :size="42" class="header-mark" data-test="brand-mark" />
+          <!-- The full emblem, at 42px. Its arched lettering does not survive this size, so
+               it reads as a mark rather than as words — the wordmark beside it carries the
+               name. The favicon is unaffected — it is a static file in public/, still the
+               π tile. Hidden from assistive tech: "PIPC" sits next to it as real text. -->
+          <img
+            :src="BRAND_BADGE"
+            alt=""
+            aria-hidden="true"
+            class="header-mark"
+            width="42"
+            height="42"
+            data-test="brand-mark"
+          />
           <div class="d-flex flex-column">
             <span class="font-weight-black text-h6 brand-title">
               PIPC
@@ -118,6 +130,15 @@
 
     <SearchPalette v-model="searchOpen" />
 
+    <!-- The way in, on the home route only, once per session. Rendered here rather than as a
+         route so the URL never changes and deep links stay untouched. -->
+    <LandingIntro
+      v-if="showLanding"
+      :quote="quote"
+      :ready="splashGone"
+      @start="onLandingStart"
+    />
+
     <v-main class="app-main">
       <!-- Keyed by route NAME, not path: UnfoldingCards drives its drill-down from route
            params, so keying by path would remount it on every level -> chapter step and
@@ -155,7 +176,7 @@
           <!-- Column 1: Brand Info -->
           <v-col cols="12" md="4" class="d-flex flex-column align-start">
             <router-link :to="{ name: 'browse' }" class="d-flex align-center ga-3 text-decoration-none color-inherit mb-3">
-              <BrandMark :size="40" />
+              <img :src="BRAND_BADGE" alt="" aria-hidden="true" width="40" height="40" />
               <div class="d-flex flex-column">
                 <span class="font-weight-black text-h6 brand-title">PIPC</span>
                 <span class="text-caption text-medium-emphasis brand-subtitle">Physique-Chimie</span>
@@ -231,13 +252,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, watch, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { useTheme, useDisplay } from "vuetify";
-import { INTRO_DURATION_MS, INTRO_EXIT_MS } from "./lib/intro";
+import {
+  INTRO_DURATION_MS,
+  INTRO_EXIT_MS,
+  shouldShowLanding,
+  markLandingSeen,
+} from "./lib/intro";
+import { flyTo } from "./lib/flyTo";
+import { BRAND_BADGE } from "./config";
 import SearchPalette from "./components/SearchPalette.vue";
-import BrandMark from "./components/BrandMark.vue";
 import AuthorCredit from "./components/AuthorCredit.vue";
+import LandingIntro from "./components/LandingIntro.vue";
 import { randomQuote } from "./lib/quotes";
 
 const route = useRoute();
@@ -263,6 +291,57 @@ function toggleTheme(): void {
 
 function scrollToTop(): void {
   window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+/** Long enough to read as a flight rather than a cut, short enough not to be a wait. */
+const LANDING_EXIT_MS = 620;
+
+/**
+ * Whether the shell's splash has finished covering the screen.
+ *
+ * Read at setup, not in onMounted: the inline script at the top of <body> has already run
+ * by the time this module executes, so the node is there to find. The landing has to mount
+ * underneath the splash — the opening flight needs its emblem to land on — and this is what
+ * tells it to hold its typing, its counts and its key handler until it is actually visible.
+ */
+const splashGone = ref(!document.getElementById("pipc-splash"));
+
+/**
+ * Decided once, from the first route the app resolves — deliberately not a computed. The
+ * landing answers "how did you arrive", and re-evaluating it per navigation would raise the
+ * gate again the moment someone clicked the logo to come home.
+ *
+ * It watches for the first *named* route rather than reading route.name at setup: main.ts
+ * mounts without awaiting the router, so at setup the route is still START_LOCATION and its
+ * name is undefined. Reading it there means the gate never appears in production, while
+ * every test that resolves the router before mounting still passes. The flag is what keeps
+ * this a boot-time decision: later navigations run the watcher but change nothing.
+ */
+const showLanding = ref(false);
+let landingDecided = false;
+watch(
+  () => route.name,
+  (name) => {
+    if (landingDecided || !name) return;
+    landingDecided = true;
+    showLanding.value = shouldShowLanding(name);
+  },
+  { immediate: true }
+);
+
+/**
+ * Commencer: the mark flies out of the landing and into the header, the same FLIP the
+ * splash uses. The landing is only removed once the flight is over, so the mark has
+ * somewhere to fly from.
+ */
+function onLandingStart(mark: HTMLElement | null): void {
+  markLandingSeen();
+  const target = document.querySelector(".header-mark");
+  const flew = mark && target ? flyTo(mark, target, LANDING_EXIT_MS) : false;
+  // The landing fades itself the moment it emits; App only decides when it is gone.
+  window.setTimeout(() => {
+    showLanding.value = false;
+  }, flew ? LANDING_EXIT_MS : 0);
 }
 
 /**
@@ -291,22 +370,18 @@ onMounted(() => {
 
   window.setTimeout(() => {
     const mark = document.getElementById("pipc-splash-mark");
-    const target = document.querySelector<HTMLElement>(".header-mark");
-    if (mark && target) {
-      const from = mark.getBoundingClientRect();
-      const to = target.getBoundingClientRect();
-      if (from.width > 0 && to.width > 0) {
-        // transform-origin is center, so the delta has to be measured center-to-center;
-        // using the corners would leave the mark off by half the size difference.
-        const dx = to.left + to.width / 2 - (from.left + from.width / 2);
-        const dy = to.top + to.height / 2 - (from.top + from.height / 2);
-        const scale = to.width / from.width;
-        mark.style.transition = `transform ${INTRO_EXIT_MS}ms cubic-bezier(.2, .8, .2, 1)`;
-        mark.style.transform = `translate(${dx}px, ${dy}px) scale(${scale})`;
-      }
-    }
+    // Where the splash resolves depends on what is on screen behind it. With the landing up
+    // the header is covered, so flying there would land the mark somewhere nobody can see:
+    // it flies into the landing's nucleus instead, and the header gets its turn on Commencer.
+    const target =
+      document.querySelector<HTMLElement>('[data-test="landing-mark"]') ??
+      document.querySelector<HTMLElement>(".header-mark");
+    if (mark && target) flyTo(mark, target, INTRO_EXIT_MS);
     splash.classList.add("pipc-out");
-    window.setTimeout(() => splash.remove(), INTRO_EXIT_MS);
+    window.setTimeout(() => {
+      splash.remove();
+      splashGone.value = true;
+    }, INTRO_EXIT_MS);
   }, remaining);
 });
 </script>
@@ -314,6 +389,11 @@ onMounted(() => {
 <style scoped>
 .pipc-app {
   background: rgb(var(--v-theme-background));
+}
+
+.header-mark {
+  display: block;
+  flex: none;
 }
 
 .app-header {

@@ -27,4 +27,19 @@ describe("AuthorCredit", () => {
     const expected = AUTHOR_NAME.split(/\s+/).map((word) => word[0]).join("").toUpperCase();
     expect(w.get(".initials").text()).toBe(expected);
   });
+
+  it("drops Vuetify's muted grey on a coloured ground, since that rule is !important", () => {
+    // .text-medium-emphasis paints `on-background` with !important, which no amount of
+    // `color: inherit` in this component can outrank. On the landing's green that renders
+    // near-black on green — about 2.5:1. The class has to come off, not be overridden.
+    const w = mountWithVuetify(AuthorCredit, { props: { tone: "on-color" } });
+    const claim = w.findAll(".credit-line").at(-1)!;
+    expect(claim.classes()).not.toContain("text-medium-emphasis");
+  });
+
+  it("keeps the muted grey on a light surface, where it is the right colour", () => {
+    const w = mountWithVuetify(AuthorCredit);
+    const claim = w.findAll(".credit-line").at(-1)!;
+    expect(claim.classes()).toContain("text-medium-emphasis");
+  });
 });
