@@ -66,7 +66,8 @@ describe("MenuView", () => {
     expect(w.text()).toContain("Menu thématique — 2ème Bac SM");
     // full program rows present, incl. a chapter with no file
     expect(w.text()).toContain("Ondes mécaniques progressives");
-    expect(w.text()).toContain("Modulation d'amplitude"); // official chapter with no file → still a row
+    // official chapter with no file → still a row
+    expect(w.text()).toContain("Ondes électromagnétiques - Modulation et démodulation d'amplitude");
     expect(w.findAll('[data-test="menu-link"]').length).toBe(1); // only the one file
   });
 

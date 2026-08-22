@@ -5,19 +5,19 @@ describe("chaptersFor", () => {
   it("returns Physique chapters when subject is Physique", () => {
     const list = chaptersFor("2ème Bac SM", "Physique");
     expect(list).toContain("Ondes mécaniques progressives");
-    expect(list).not.toContain("Dosage acido-basique"); // a chimie chapter
+    expect(list).not.toContain("État d'équilibre d'un système chimique"); // a chimie chapter
   });
 
   it("returns Chimie chapters when subject is Chimie", () => {
     const list = chaptersFor("2ème Bac SM", "Chimie");
-    expect(list).toContain("Dosage acido-basique");
+    expect(list).toContain("État d'équilibre d'un système chimique");
     expect(list).not.toContain("Ondes mécaniques progressives");
   });
 
   it("merges both when subject is unset or 'Physique & Chimie'", () => {
     const merged = chaptersFor("2ème Bac SM");
     expect(merged).toContain("Ondes mécaniques progressives");
-    expect(merged).toContain("Dosage acido-basique");
+    expect(merged).toContain("État d'équilibre d'un système chimique");
     expect(chaptersFor("2ème Bac SM", "Physique & Chimie")).toEqual(merged);
   });
 
