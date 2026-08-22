@@ -1,5 +1,49 @@
 <template>
-  <div class="table-scroll">
+  <!-- Phones get an accordion instead of the two-row header. The table's meaning lives in
+       a header that spans "Session normale" and "Session de rattrapage" over Sujet/Corrigé
+       pairs, and that structure is exactly what horizontal scrolling destroys: scroll right
+       and the year is gone, so a Corrigé no longer belongs to anything. Each year becomes a
+       panel that names its own sessions. -->
+  <v-expansion-panels v-if="mobile" variant="accordion" class="year-panels">
+    <v-expansion-panel v-for="row in rows" :key="row.year" data-test="exam-panel">
+      <template #title>
+        <v-icon icon="mdi-calendar-outline" size="16" class="mr-2 flex-shrink-0" />
+        <span class="font-weight-bold flex-grow-1">{{ row.year }}</span>
+        <v-chip size="x-small" variant="tonal" class="ml-2 flex-shrink-0">
+          {{ countFiles(row) }}
+        </v-chip>
+      </template>
+      <template #text>
+        <div v-for="session in sessionsOf(row)" :key="session.label" class="mb-3">
+          <p class="session-label mb-1">{{ session.label }}</p>
+          <div
+            v-for="part in session.parts"
+            :key="part.head"
+            class="d-flex align-center ga-3 py-1"
+          >
+            <span class="part-label flex-shrink-0">{{ part.head }}</span>
+            <div v-if="part.files.length" class="d-flex flex-wrap ga-1">
+              <button
+                v-for="f in part.files"
+                :key="f.item.fileId"
+                type="button"
+                class="exam-link"
+                :title="f.item.displayTitle"
+                data-test="exam-link"
+                @click="goToDoc(f.item)"
+              >
+                <v-icon icon="mdi-file-pdf-box" size="14" class="mr-1" />
+                {{ f.label }}
+              </button>
+            </div>
+            <span v-else class="text-disabled">—</span>
+          </div>
+        </div>
+      </template>
+    </v-expansion-panel>
+  </v-expansion-panels>
+
+  <div v-else class="table-scroll">
     <v-table density="comfortable" class="exam-table rounded-lg border">
       <thead>
         <tr>
@@ -51,6 +95,7 @@
 
 <script setup lang="ts">
 import { useRouter } from "vue-router";
+import { useDisplay } from "vuetify";
 import type { ExamRow } from "../lib/examenNational";
 import type { LibraryItem } from "../lib/types";
 import { docSlug } from "../lib/doc";
@@ -59,6 +104,30 @@ defineProps<{ rows: ExamRow[] }>();
 
 // Same order as ExamRow.cells: N/Sujet, N/Corrigé, R/Sujet, R/Corrigé.
 const HEADS = ["Sujet", "Corrigé", "Sujet", "Corrigé"];
+
+const { mobile } = useDisplay();
+
+/**
+ * The same four cells the table shows, regrouped under the session each belongs to — the
+ * relationship the spanning header carries on desktop and that a phone has to state.
+ */
+function sessionsOf(row: ExamRow) {
+  return [
+    { label: "Session normale", parts: [
+      { head: HEADS[0], files: row.cells[0].files },
+      { head: HEADS[1], files: row.cells[1].files },
+    ] },
+    { label: "Session de rattrapage", parts: [
+      { head: HEADS[2], files: row.cells[2].files },
+      { head: HEADS[3], files: row.cells[3].files },
+    ] },
+  ];
+}
+
+/** Documents on a year — the count on the collapsed panel. */
+function countFiles(row: ExamRow): number {
+  return row.cells.reduce((n, c) => n + c.files.length, 0);
+}
 
 const router = useRouter();
 
@@ -70,6 +139,33 @@ function goToDoc(f: LibraryItem): void {
 <style scoped>
 .table-scroll {
   overflow-x: auto;
+}
+
+.year-panels :deep(.v-expansion-panel) {
+  background: rgb(var(--v-theme-surface));
+}
+
+.year-panels :deep(.v-expansion-panel-title) {
+  min-height: 52px;
+  padding-inline: 14px;
+}
+
+.year-panels :deep(.v-expansion-panel-text__wrapper) {
+  padding: 4px 14px 12px;
+}
+
+.session-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgb(var(--v-theme-on-surface-variant));
+}
+
+.part-label {
+  min-width: 68px;
+  font-size: 0.8rem;
+  color: rgb(var(--v-theme-on-surface-variant));
 }
 .year-col,
 .year-cell {

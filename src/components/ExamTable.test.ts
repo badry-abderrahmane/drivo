@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { createRouter, createMemoryHistory } from "vue-router";
 import { flushPromises } from "@vue/test-utils";
-import { mountWithVuetify } from "../test/setup";
+import { mountWithVuetify, mountMobileWithVuetify } from "../test/setup";
 import ExamTable from "./ExamTable.vue";
 import { buildExamTable } from "../lib/examenNational";
 import type { LibraryItem } from "../lib/types";
@@ -79,5 +79,54 @@ describe("ExamTable", () => {
     await flushPromises();
     expect(router.currentRoute.value.name).toBe("doc");
     expect(router.currentRoute.value.params.fileId).toBe("n");
+  });
+});
+
+/**
+ * On a phone the table becomes an accordion, one panel per year.
+ *
+ * The table's meaning lives in a header that spans "Session normale" and "Session de
+ * rattrapage" over Sujet/Corrigé pairs — precisely what horizontal scrolling destroys,
+ * since scrolling right takes the year off screen and a Corrigé then belongs to nothing.
+ * So the panel has to name both the year and the session itself.
+ */
+describe("ExamTable on a phone", () => {
+  it("replaces the scrolling table with one panel per year", () => {
+    const w = mountMobileWithVuetify(ExamTable, { props: { rows: buildExamTable(items, "2ème Bac PC").rows } });
+    expect(w.find("table").exists()).toBe(false);
+    expect(w.find(".table-scroll").exists()).toBe(false);
+    // Stated, not derived from the same call the component was given: comparing a count to
+    // itself passes just as happily when both are zero, which is how the first draft of this
+    // test "passed" while rendering nothing at all.
+    expect(w.findAll('[data-test="exam-panel"]').length).toBe(2);
+  });
+
+  it("names both sessions inside the panel, since no column header can", async () => {
+    const w = mountMobileWithVuetify(ExamTable, { props: { rows: buildExamTable(items, "2ème Bac PC").rows } });
+    await w.find('[data-test="exam-panel"] .v-expansion-panel-title').trigger("click");
+    await flushPromises();
+    const text = w.text();
+    expect(text).toContain("Session normale");
+    expect(text).toContain("Session de rattrapage");
+    expect(text).toContain("Sujet");
+    expect(text).toContain("Corrigé");
+  });
+
+  it("still opens a document from inside an expanded panel", async () => {
+    const router = createRouter({ history: createMemoryHistory(), routes: [
+      { path: "/", component: { template: "<div/>" } },
+      { path: "/doc/:fileId/:slug?", name: "doc", component: { template: "<div/>" } },
+    ] });
+    router.push("/");
+    await router.isReady();
+    const w = mountMobileWithVuetify(ExamTable, {
+      props: { rows: buildExamTable(items, "2ème Bac PC").rows },
+      global: { plugins: [router] },
+    });
+    await w.find('[data-test="exam-panel"] .v-expansion-panel-title').trigger("click");
+    await flushPromises();
+    await w.find('[data-test="exam-link"]').trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.name).toBe("doc");
   });
 });

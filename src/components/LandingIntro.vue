@@ -91,7 +91,9 @@
         Commencer <span class="arrow" aria-hidden="true">→</span>
       </button>
 
-      <p class="hint">
+      <!-- Desktop only: it names a key a phone does not have, and the button above it is
+           the whole instruction on a touch screen. -->
+      <p v-if="!mobile" class="hint">
         ou appuyez sur <kbd>↵ Entrée</kbd>
       </p>
 
@@ -109,7 +111,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from "vue";
-import { useTheme } from "vuetify";
+import { useTheme, useDisplay } from "vuetify";
 import AuthorCredit from "./AuthorCredit.vue";
 import { useLibrary } from "../composables/useLibrary";
 import { isClassified } from "../lib/classification";
@@ -132,6 +134,7 @@ import { BRAND_BADGE } from "../config";
  */
 const theme = useTheme();
 const isDark = computed(() => theme.global.current.value.dark);
+const { mobile } = useDisplay();
 
 const props = withDefaults(
   defineProps<{

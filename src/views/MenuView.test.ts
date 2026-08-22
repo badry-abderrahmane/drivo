@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createRouter, createMemoryHistory } from "vue-router";
-import { mountWithVuetify } from "../test/setup";
+import { mountWithVuetify, mountMobileWithVuetify } from "../test/setup";
 import { flushPromises } from "@vue/test-utils";
 import type { LibraryItem } from "../lib/types";
 
@@ -15,7 +15,7 @@ const full = (fileId: string, over: Partial<LibraryItem["meta"]>): LibraryItem =
 
 beforeEach(() => vi.resetModules());
 
-async function mountMenu(items: LibraryItem[]) {
+async function mountMenu(items: LibraryItem[], phone = false) {
   vi.doMock("../lib/loadLibrary", () => ({
     loadLibrary: vi.fn().mockResolvedValue({ items, stale: false }),
     readFreshCache: () => null,
@@ -33,7 +33,8 @@ async function mountMenu(items: LibraryItem[]) {
   });
   router.push("/");
   await router.isReady();
-  const w = mountWithVuetify(MenuView, { global: { plugins: [router] } });
+  const mountFn = phone ? mountMobileWithVuetify : mountWithVuetify;
+  const w = mountFn(MenuView, { global: { plugins: [router] } });
   await flushPromises();
   return w;
 }
@@ -80,5 +81,42 @@ describe("MenuView", () => {
     const route = w.vm.$router.currentRoute.value;
     expect(route.name).toBe("doc");
     expect(route.params.fileId).toBe("1");
+  });
+});
+
+/**
+ * On a phone the chapters x types matrix becomes an accordion, one panel per chapter.
+ *
+ * A grid that wide cannot be read at phone size, and the horizontal scroll it needed took
+ * whole type columns off screen with nothing to say they were there. The panel shows only
+ * the types that actually hold a document.
+ */
+describe("MenuView on a phone", () => {
+  it("replaces the scrolling matrix with one panel per chapter", async () => {
+    const w = await mountMenu([full("1", { chapter: ["Ondes mécaniques progressives"] })], true);
+    await cardFor(w, "2ème Bac SM").trigger("click");
+    await settle();
+    expect(w.find("table").exists()).toBe(false);
+    expect(w.find(".table-scroll").exists()).toBe(false);
+    // The official program for this level, so: many chapters, each its own panel.
+    expect(w.findAll('[data-test="menu-panel"]').length).toBeGreaterThan(5);
+    expect(w.text()).toContain("Ondes mécaniques progressives");
+  });
+
+  it("lists only the types that hold a document, and still opens one", async () => {
+    const w = await mountMenu([full("1", { chapter: ["Ondes mécaniques progressives"], type: "Cours" })], true);
+    await cardFor(w, "2ème Bac SM").trigger("click");
+    await settle();
+    const panel = w.findAll('[data-test="menu-panel"]')
+      .find((p) => p.text().includes("Ondes mécaniques progressives"))!;
+    await panel.find(".v-expansion-panel-title").trigger("click");
+    await settle();
+    expect(panel.text()).toContain("Cours");
+    // The types with nothing in them are omitted rather than shown as dashes.
+    expect(panel.text()).not.toContain("Vidéo");
+
+    await w.get('[data-test="menu-link"]').trigger("click");
+    await settle();
+    expect(w.vm.$router.currentRoute.value.name).toBe("doc");
   });
 });

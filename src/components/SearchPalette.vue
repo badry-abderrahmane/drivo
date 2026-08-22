@@ -175,9 +175,12 @@
       </v-fade-transition>
     </template>
 
-    <!-- Bottom Keyboard Hints Toolbar -->
+    <!-- Bottom keyboard-hints toolbar. Desktop only: every hint on it names a key a phone
+         does not have — arrows to navigate, Enter to open, Escape to close — and on a small
+         screen it was spending a strip of the results area saying so. -->
     <template #append>
       <v-sheet
+        v-if="!mobile"
         color="primary-container"
         class="px-6 py-3 border-t d-flex align-center justify-space-between text-caption"
       >
@@ -333,6 +336,32 @@ const noDataText = computed(() =>
 </script>
 
 <style scoped>
+/* Vuetify's fullscreen rule is
+     .v-dialog--fullscreen > .v-overlay__content > form > .v-sheet { min-height: 100% }
+   which reaches its sheet THROUGH A FORM. VCommandPalette renders
+   `.v-overlay__content > .v-sheet` with no form wrapper, so that rule never matched and the
+   panel stopped partway down the screen with dead space under it, even though `fullscreen`
+   was set. Vuetify's own `.v-command-palette > .v-overlay__content > .v-sheet` carries
+   `flex: 1 1 100%`, which needs a flex parent it never gets either — so both are supplied
+   here. Scoped to the fullscreen breakpoint: on desktop the palette is a centred box and
+   must keep sizing to its content. */
+@media (max-width: 959.98px) {
+  :deep(.v-overlay__content) {
+    display: flex;
+    flex-direction: column;
+  }
+
+  :deep(.v-overlay__content > .v-sheet) {
+    min-height: 100%;
+    flex: 1 1 auto;
+  }
+
+  /* The results list is what should absorb the extra height, not the input or the header. */
+  :deep(.v-command-palette__content) {
+    flex: 1 1 auto;
+  }
+}
+
 .glass-palette {
   background: rgba(var(--v-theme-surface), 0.94) !important;
   backdrop-filter: blur(20px);
