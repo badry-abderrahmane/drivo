@@ -4,7 +4,7 @@
   <div
     ref="rootEl"
     class="landing"
-    :class="{ out: dismissing }"
+    :class="{ out: dismissing, 'landing--dark': isDark }"
     role="dialog"
     aria-modal="true"
     aria-label="Bienvenue sur PIPC"
@@ -102,12 +102,29 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from "vue";
+import { useTheme } from "vuetify";
 import AuthorCredit from "./AuthorCredit.vue";
 import { useLibrary } from "../composables/useLibrary";
 import { isClassified } from "../lib/classification";
 import { distinctLevels, distinctChapters } from "../lib/filter";
 import type { Quote } from "../lib/quotes";
 import { BRAND_BADGE } from "../config";
+
+/**
+ * The dark variant rides on a real class on this element, NOT on a `:global(.v-theme--dark)`
+ * ancestor selector.
+ *
+ * That selector is why this component broke the whole app. Vue's scoped-CSS compiler turned
+ * the ancestor form of it into a bare `.v-theme--dark { ... }` — it kept the global part and
+ * dropped the ` .landing` descendant entirely. One of those rules set
+ * `color: rgb(var(--v-theme-on-primary))`, so the app root inherited near-black-green ink in
+ * dark mode and every element that did not set its own colour went nearly invisible: nav
+ * icons, filter labels, count chips, tonal chips, the "Ouvrir dans Drive" button. The
+ * landing itself looked fine, because it reads those custom properties by inheritance
+ * either way, which is exactly why it hid for so long.
+ */
+const theme = useTheme();
+const isDark = computed(() => theme.global.current.value.dark);
 
 const props = withDefaults(
   defineProps<{
@@ -357,7 +374,7 @@ watch(stats, (val, old) => {
 
 /* Dark mode cannot use `primary` — there it is a bright mint, and a full screen of it at
    night is a lamp. See LANDING_GROUND in theme.ts. */
-:global(.v-theme--dark) .landing {
+.landing--dark {
   --landing-bg: rgb(var(--v-theme-primary-container));
   --landing-fg: rgb(var(--v-theme-on-primary-container));
   --glass: rgba(4, 23, 14, 0.2);
@@ -617,7 +634,7 @@ watch(stats, (val, old) => {
    It was `on-primary-container` here — #BFEBD3, which is *exactly* the gradient's first
    stop: 1.00:1, an invisible label. `on-primary` is the token that means "ink on brand
    green" and measures 6.74:1 at the gradient's worst point. */
-:global(.v-theme--dark) .landing .start {
+.landing--dark .start {
   color: rgb(var(--v-theme-on-primary));
 }
 
