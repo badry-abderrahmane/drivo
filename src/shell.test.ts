@@ -9,7 +9,7 @@ import { describe, it, expect } from "vitest";
 // import needs none.
 import shell from "../index.html?raw";
 import { BRAND_BADGE } from "./config";
-import { THEME_COLORS } from "./plugins/theme";
+import { THEME_COLORS, LANDING_GROUND } from "./plugins/theme";
 
 describe("the pre-bundle shell", () => {
   it("opens on the same emblem the app wears", () => {
@@ -45,6 +45,24 @@ describe("the pre-bundle shell", () => {
     it("sets the dark wordmark in on-background and the subtitle in secondary", () => {
       expect(shell).toContain(`.pipc-word { color: ${dark["on-background"]}; }`);
       expect(shell).toContain(`.pipc-sub { color: ${dark.secondary}; }`);
+    });
+
+    /**
+     * theme-color tints the OS chrome — Chrome's address bar, Safari's status bar — so it is
+     * the palette leaking outside the page. Same reason as the splash: no --v-theme-* exists
+     * for the browser to read, so the value is a literal and has to be pinned here.
+     *
+     * It takes the same token per mode as LANDING_GROUND, and for the same reason: a
+     * full-bleed sheet of dark-mode `primary` is a lamp. Asserted through that constant so
+     * the browser chrome and the landing can never drift apart.
+     */
+    it("tints the browser chrome with the same token the landing grounds itself on", () => {
+      for (const scheme of ["light", "dark"] as const) {
+        const value = THEME_COLORS[scheme][LANDING_GROUND[scheme]];
+        expect(shell).toContain(
+          `<meta name="theme-color" content="${value}" media="(prefers-color-scheme: ${scheme})" />`
+        );
+      }
     });
   });
 

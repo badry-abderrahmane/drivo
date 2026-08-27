@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PIPC — Portail Interactif de Physique-Chimie</title>
 
+    <!-- The brand green painted into the browser chrome itself: Chrome on Android tints the
+         address bar with this, and Safari on iOS the status bar. Light gets `primary`
+         (#1E7A4D) as-is. Dark deliberately does NOT get the dark theme's `primary`
+         (#4ADE80) — that value exists to be readable *on* a dark surface, and as a fill
+         behind the OS chrome it glares; `primary-container` is the same hue at the weight
+         this position wants. Both are hand-copied token values, pinned in shell.test.ts. -->
+    <meta name="theme-color" content="#1E7A4D" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14532D" media="(prefers-color-scheme: dark)" />
+
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />

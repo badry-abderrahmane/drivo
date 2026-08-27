@@ -43,3 +43,18 @@ export const AUTHOR_PHOTO = "/hassan-badry.jpg";
  * and the inline SVG in index.html) and still draw the π tile.
  */
 export const BRAND_BADGE = "/pipc-badge.png";
+
+/**
+ * The link-preview card, and the only brand asset built for a 1.91:1 frame. WhatsApp,
+ * Facebook, LinkedIn and Slack all read `og:image`; none of them will crop a square emblem
+ * into a decent wide card, so this is a purpose-made 1200x630 composition of the gradient,
+ * the emblem and the wordmark rather than a resize of BRAND_BADGE.
+ *
+ * Regenerated with ImageMagick from public/pipc-badge.png plus Plus Jakarta Sans — see
+ * OG_CARD_SIZE below for the dimensions injectPage() declares.
+ */
+export const BRAND_OG_CARD = "/og-card.png";
+
+/** Declared in og:image:width / og:image:height, so a crawler can lay the card out
+ *  before it has finished downloading it. Must match the real file. */
+export const OG_CARD_SIZE = { width: 1200, height: 630 } as const;
