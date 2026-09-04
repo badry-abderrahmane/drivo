@@ -37,6 +37,18 @@ describe("aliasesFor", () => {
     expect(got).toContain("electromagnetique");
   });
 
+  it("reaches the merged mouvements plans chapter from any of the three it replaced", () => {
+    // Same shape as the modulation merge above: three chapters collapsed into one, so the
+    // survivor has to answer to what all three used to answer to. A student searching
+    // "champ magnetique" must still land somewhere.
+    const merged = "Les mouvements plans";
+    expect(onProgramme.has(merged)).toBe(true);
+    const got = aliasesFor([merged]);
+    expect(got).toContain("projectile");
+    expect(got).toContain("champ magnetique");
+    expect(got).toContain("champ electrique");
+  });
+
   it("keys the programme no longer carries are retired on purpose, not by accident", () => {
     // The drift this catches is silent: rename a chapter in chapters.ts and its aliases go
     // on pointing at a name nothing uses, while the new name is unsearchable. A key may

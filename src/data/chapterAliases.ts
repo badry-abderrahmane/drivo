@@ -17,6 +17,10 @@ export const RETIRED_CHAPTERS: string[] = [
   "Modulation d'amplitude",
   // Off the programme entirely.
   "Dosage acido-basique",
+  // Merged into "Les mouvements plans".
+  "Mouvements plans : projectile dans le champ de pesanteur",
+  "Mouvements plans : particule chargée dans un champ magnétique",
+  "Mouvements plans : particule chargée dans un champ électrique",
 ];
 
 export const CHAPTER_ALIASES: Record<string, string[]> = {
@@ -40,7 +44,16 @@ export const CHAPTER_ALIASES: Record<string, string[]> = {
   "Modulation d'amplitude": ["التضمين", "modulation", "am"],
   "Lois de Newton": ["قوانين نيوتن", "newton", "lois newton"],
   "Chute verticale d'un corps solide": ["السقوط الرأسي", "chute libre", "chute verticale"],
+  // The merged chapter carries the union of what the three used to answer to, so a student
+  // searching any one of the projectile, magnetic or electric cases still lands on it.
+  "Les mouvements plans": [
+    "mouvements plans", "mouvement plan", "projectile", "champ pesanteur",
+    "champ magnetique", "champ electrique", "particule chargee",
+  ],
+  // Retired, kept for files still tagged with them. See RETIRED_CHAPTERS above.
   "Mouvements plans : projectile dans le champ de pesanteur": ["projectile", "champ pesanteur", "mouvement plan"],
+  "Mouvements plans : particule chargée dans un champ magnétique": ["champ magnetique", "particule chargee", "mouvement plan"],
+  "Mouvements plans : particule chargée dans un champ électrique": ["champ electrique", "particule chargee", "mouvement plan"],
   "Mouvement des satellites et des planètes": ["الأقمار الاصطناعية", "satellites", "kepler", "planetes"],
   "Mouvement de rotation d'un solide autour d'un axe fixe": ["دوران جسم صلب", "rotation solide"],
   "Oscillateurs mécaniques": ["المتذبذب الميكانيكي", "pendule", "oscillateur"],
