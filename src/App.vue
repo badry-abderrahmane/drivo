@@ -150,8 +150,19 @@
       </router-view>
     </v-main>
 
+    <!-- The way to reach him, on every student-facing page. A sibling of <v-main> rather
+         than a child, so it can go full-bleed against the footer's top edge. Not on
+         /admin: that is his own screen, and he does not need to email himself. -->
+    <ContactProfessor v-if="route.name !== 'admin'" />
+
     <!-- Footer -->
-    <v-footer class="app-footer border-t mt-12 bg-surface pa-0">
+    <!-- The contact band supplies the closing zone's top gap and then sits flush on the
+         footer, so the two read as one. Without the band — /admin — the footer needs that
+         gap back, or it butts straight against the editor. -->
+    <v-footer
+      class="app-footer border-t bg-surface pa-0"
+      :class="{ 'mt-12': route.name === 'admin' }"
+    >
       <v-container class="py-10 px-4 px-md-8">
         <!-- Quote Hero Section -->
         <div class="footer-quote-wrapper mb-10 text-center">
@@ -223,7 +234,9 @@
               Enseignant & Auteur
             </h3>
             <v-card variant="flat" class="author-card pa-4 rounded-lg bg-surface-variant-subtle border">
-              <AuthorCredit />
+              <!-- No portrait here: the contact band directly above already carries his
+                   face, and the same photo twice within a screen-inch reads as a bug. -->
+              <AuthorCredit :photo="false" />
             </v-card>
           </v-col>
         </v-row>
@@ -265,6 +278,7 @@ import { flyTo } from "./lib/flyTo";
 import { BRAND_BADGE } from "./config";
 import SearchPalette from "./components/SearchPalette.vue";
 import AuthorCredit from "./components/AuthorCredit.vue";
+import ContactProfessor from "./components/ContactProfessor.vue";
 import LandingIntro from "./components/LandingIntro.vue";
 import { randomQuote } from "./lib/quotes";
 

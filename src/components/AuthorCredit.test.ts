@@ -43,3 +43,18 @@ describe("AuthorCredit", () => {
     expect(claim.classes()).toContain("text-medium-emphasis");
   });
 });
+
+describe("AuthorCredit portrait", () => {
+  it("drops the portrait when the caller already shows one nearby", () => {
+    // The contact band above the footer carries his face at 112px. Repeating it a few
+    // centimetres below reads as a layout bug, not as a second credit.
+    const w = mountWithVuetify(AuthorCredit, { props: { photo: false } });
+    expect(w.find('[data-test="author-photo"]').exists()).toBe(false);
+    expect(w.text()).toContain(`M. ${AUTHOR_NAME}`);
+  });
+
+  it("still shows the portrait by default", () => {
+    const w = mountWithVuetify(AuthorCredit);
+    expect(w.find('[data-test="author-photo"]').exists()).toBe(true);
+  });
+});

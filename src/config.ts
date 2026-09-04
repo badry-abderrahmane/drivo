@@ -58,3 +58,9 @@ export const BRAND_OG_CARD = "/og-card.png";
 /** Declared in og:image:width / og:image:height, so a crawler can lay the card out
  *  before it has finished downloading it. Must match the real file. */
 export const OG_CARD_SIZE = { width: 1200, height: 630 } as const;
+
+/**
+ * Where students write to him. Spelled `badri`, deliberately: the address predates the
+ * site and does not match the `y` in AUTHOR_NAME. Confirmed with him — do not "fix" it.
+ */
+export const AUTHOR_EMAIL = "hassanbadri@gmail.com";

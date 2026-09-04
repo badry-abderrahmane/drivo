@@ -3,7 +3,7 @@ import { createRouter, createMemoryHistory } from "vue-router";
 import { flushPromises } from "@vue/test-utils";
 import { mountWithVuetify } from "./test/setup";
 import App from "./App.vue";
-import { AUTHOR_NAME, AUTHOR_ROLE } from "./config";
+import { AUTHOR_NAME, AUTHOR_ROLE, AUTHOR_EMAIL } from "./config";
 import { LANDING_SESSION_KEY } from "./lib/intro";
 
 function mockReducedMotion(reduce: boolean): void {
@@ -190,5 +190,43 @@ describe("the landing gate", () => {
     await flushPromises();
 
     expect(w.find('[data-test="landing"]').exists()).toBe(false);
+  });
+});
+
+describe("App contact band", () => {
+  it("invites students to write to him, above the footer", async () => {
+    const w = await mountApp();
+    const band = w.find('[data-test="contact-professor"]');
+    expect(band.exists()).toBe(true);
+    expect(band.get('[data-test="contact-mailto"]').attributes("href")).toContain(AUTHOR_EMAIL);
+  });
+
+  it("stays out of the admin editor, which is his own screen, not a student's", async () => {
+    const w = await mountApp("/admin");
+    expect(w.find('[data-test="contact-professor"]').exists()).toBe(false);
+  });
+
+  it("closes the page flush against the footer, with no gap for the band to float in", async () => {
+    const w = await mountApp();
+    expect(w.get(".app-footer").classes()).not.toContain("mt-12");
+  });
+
+  it("gives the footer its own top gap back on admin, where the band is absent", async () => {
+    const w = await mountApp("/admin");
+    expect(w.get(".app-footer").classes()).toContain("mt-12");
+  });
+
+  it("sits between the content and the footer, not inside either", async () => {
+    const w = await mountApp();
+    expect(w.findAll('.app-footer [data-test="contact-professor"]')).toHaveLength(0);
+    expect(w.findAll('.app-main [data-test="contact-professor"]')).toHaveLength(0);
+  });
+});
+
+describe("App author portrait", () => {
+  it("shows his face once on the page, in the contact band", async () => {
+    const w = await mountApp();
+    expect(w.findAll('[data-test="contact-photo"]')).toHaveLength(1);
+    expect(w.findAll('.app-footer [data-test="author-photo"]')).toHaveLength(0);
   });
 });

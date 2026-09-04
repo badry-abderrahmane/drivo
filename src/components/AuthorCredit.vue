@@ -7,7 +7,7 @@
     :class="{ 'on-color': tone === 'on-color' }"
     data-test="author-credit"
   >
-    <div class="portrait rounded-circle flex-none">
+    <div v-if="photo" class="portrait rounded-circle flex-none">
       <!-- The initials sit underneath the photo rather than in an #error slot: if the image
            is slow, blocked or missing, something recognisable is already in place instead of
            a grey hole, and there is no failure path to get right. -->
@@ -54,8 +54,14 @@ withDefaults(
      * ground's own foreground and separates by weight and opacity instead of by hue.
      */
     tone?: "surface" | "on-color";
+    /**
+     * Whether to draw the portrait. Off where a caller already shows his face nearby —
+     * the contact band above the footer does, at 112px, and the same photo again a few
+     * centimetres below reads as a layout bug rather than as a second credit.
+     */
+    photo?: boolean;
   }>(),
-  { tone: "surface" }
+  { tone: "surface", photo: true }
 );
 
 // Derived rather than typed out, so the initials cannot drift from the name.
