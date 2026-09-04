@@ -1,0 +1,103 @@
+/**
+ * One compact phone layout for the three level pickers.
+ *
+ * Browse (UnfoldingCards), Menu thématique and Examen National each open on a grid of level
+ * cards built the same way: an icon tile and a count chip on one row, a title, a subtitle,
+ * and an action row along the bottom. At full size that spends a whole line on the tile
+ * before the title starts — on a phone, where every card is full width, roughly a third of
+ * the card's height carries no information.
+ *
+ * These rules live here rather than in each component's <style scoped> for one reason: the
+ * `display: contents` trick below is subtle enough to get wrong once, and three private
+ * copies would drift. The components supply the hooks; this file owns the behaviour.
+ *
+ * The contract, applied by all three:
+ *   .lvl-card         the card itself
+ *   .lvl-card-body      wraps head + text (the flex row on phones)
+ *   .lvl-card-head        the tile/chip row, dissolved on phones
+ *   .lvl-card-tile          the icon tile
+ *   .lvl-card-text        wraps title + subtitle, so the tile has ONE block to centre on
+ *   .lvl-card-title
+ *   .lvl-card-sub
+ *   .lvl-card-chevron   phone-only affordance, replaces the action row
+ *   .lvl-card-action    the desktop action row
+ *
+ * Loaded from main.ts after the Vuetify plugin, so these land after its stylesheet.
+ */
+
+@media (max-width: 599.98px) {
+  /* Every selector here is two classes deep on purpose. Vuetify ships its spacing and
+     typography utilities as `padding: 24px !important` / `font-size: … !important`, so
+     `!important` alone only ties with them and leaves the result to source order. The
+     second class breaks the tie on specificity instead. Same reasoning as radius.css. */
+  .v-card.lvl-card {
+    padding: 16px !important;
+  }
+
+  /* Dissolves the tile/chip row so the tile becomes a direct flex child of the body,
+     beside the text block. `display: contents` changes box generation, never the DOM tree
+     — so every selector below is a DESCENDANT selector, not a child one. `.lvl-card-body >
+     .lvl-card-tile` matches nothing, because the tile is still the head's child as far as
+     matching is concerned. jsdom has no layout engine, so no unit test can catch that
+     mistake: it fails only in a real browser, silently, as a card that never compacts.
+     The row's own `mb-4` goes with it — an element generating no box has no margin. */
+  .lvl-card .lvl-card-head {
+    display: contents;
+    padding-top: 16px;
+  }
+
+  /* Flex, not a two-row grid. A grid put the tile in a row-spanning cell and the title in
+     row one, so `align-items: center` centred the two on different axes and the tile rode
+     visibly high of the title. One text block beside one tile has a single centreline and
+     cannot drift. */
+  .lvl-card .lvl-card-body {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .lvl-card .lvl-card-tile {
+    flex: none;
+    padding: 11px !important;
+  }
+
+  .lvl-card .lvl-card-tile .v-icon {
+    font-size: 26px !important;
+    width: 26px !important;
+    height: 26px !important;
+  }
+
+  .lvl-card .lvl-card-text {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .lvl-card .lvl-card-title {
+    font-size: 1.25rem !important;
+    line-height: 1.3 !important;
+    margin-bottom: 2px !important;
+  }
+
+  .lvl-card .lvl-card-sub {
+    margin-bottom: 0 !important;
+  }
+
+  /* The chevron carries the whole affordance once the action row is gone, so it sits on
+     the card's centreline with the tile rather than hanging off the title's baseline. */
+  .lvl-card .lvl-card-chevron {
+    flex: none;
+    align-self: center;
+  }
+
+  /* Vuetify's grid gutter is `padding: 12px` on every column, so two stacked cards sit
+     24px apart — sized for a desktop row of three, and far too airy once the cards are
+     full-width and compact. Halving the vertical half of that puts them 12px apart; the
+     horizontal padding is untouched, since that is what holds the cards off the screen
+     edge. The row's own negative margin is deliberately left alone: the only side effect
+     is 6px less dead space above the first card and below the last, which is wanted here
+     anyway. Two classes deep to outrank Vuetify's own `.v-col-12`. */
+  .v-row.lvl-card-grid > [class*="v-col"] {
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+}

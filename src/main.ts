@@ -5,5 +5,6 @@ import vuetify from "./plugins/vuetify";
 // After the vuetify plugin, so these rules land after Vuetify's own stylesheet.
 import "./styles/radius.css";
 import "./styles/typography.css";
+import "./styles/levelCard.css";
 
 createApp(App).use(router).use(vuetify).mount("#app");

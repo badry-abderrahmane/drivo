@@ -17,7 +17,7 @@
           </div>
         </div>
 
-        <v-row>
+        <v-row class="lvl-card-grid">
           <v-col
             v-for="(lvl, index) in levels"
             :key="lvl.level"
@@ -27,30 +27,55 @@
           >
             <v-card
               variant="flat"
-              class="unfold-card level-unfold-card rounded-2xl border pa-6 h-100 d-flex flex-column justify-space-between cursor-pointer"
+              class="unfold-card level-unfold-card lvl-card rounded-2xl border pa-6 h-100 d-flex flex-column justify-space-between cursor-pointer"
               :data-test="`unfold-level-${lvl.level}`"
               :style="{ animationDelay: `${staggerDelay(index)}ms` }"
               @click="selectLevel(lvl.level)"
             >
-              <div>
-                <div class="d-flex align-center justify-space-between mb-4">
-                  <div class="icon-avatar rounded-xl d-flex align-center justify-center pa-3">
-                    <v-icon :icon="getLevelIcon(lvl.level)" color="medium-emphasis" size="30" />
+              <div class="lvl-card-body">
+                <div class="lvl-card-head d-flex align-center justify-space-between mb-4">
+                  <!-- Green on both, against the palette's usual "green means action, and
+                       nothing else" rule — asked for directly. The tile was already a 10%
+                       green wash, so the grey glyph on it was the odd one out. Measured:
+                       the glyph clears 4.66:1 on its own tile and the chip's label 4.52:1
+                       on its own tonal ground, both above AA in light and far above in
+                       dark. A tonal chip is a wash — read it against its panel, never the
+                       card behind it. -->
+                  <div class="icon-avatar lvl-card-tile rounded-xl d-flex align-center justify-center pa-3">
+                    <v-icon :icon="getLevelIcon(lvl.level)" color="primary" size="30" />
                   </div>
-                  <v-chip size="small" variant="tonal" class="font-weight-bold rounded-pill">
+                  <!-- Hidden below `sm`: the compact card puts the title beside the tile,
+                       and the count is the one thing there that the chapter line under it
+                       does not already imply. Same d-none/d-sm-* idiom the header uses for
+                       the brand subtitle. -->
+                  <v-chip size="small" color="primary" variant="tonal" class="d-none d-sm-inline-flex font-weight-bold rounded-pill">
                     {{ lvl.count }} fichier{{ lvl.count > 1 ? "s" : "" }}
                   </v-chip>
                 </div>
 
-                <h3 class="text-h5 font-weight-bold font-heading mb-2">
-                  {{ lvl.level }}
-                </h3>
-                <p class="text-caption text-medium-emphasis mb-4">
-                  {{ lvl.chapters.length }} chapitre{{ lvl.chapters.length > 1 ? "s" : "" }} disponible{{ lvl.chapters.length > 1 ? "s" : "" }}
-                </p>
+                <!-- The wrapper is inert on desktop (a block containing two blocks) and
+                     load-bearing on phones: it gives the tile one text block to centre
+                     against instead of two separate grid rows. -->
+                <div class="lvl-card-text">
+                  <h3 class="lvl-card-title text-h5 font-weight-bold font-heading mb-2">
+                    {{ lvl.level }}
+                  </h3>
+                  <p class="lvl-card-sub text-caption text-medium-emphasis mb-4">
+                    {{ lvl.chapters.length }} chapitre{{ lvl.chapters.length > 1 ? "s" : "" }} disponible{{ lvl.chapters.length > 1 ? "s" : "" }}
+                  </p>
+                </div>
+
+                <!-- Phones only: the unfold row below is hidden there, so this carries the
+                     whole affordance on the card's one line. -->
+                <v-icon
+                  icon="mdi-chevron-right"
+                  class="lvl-card-chevron d-sm-none"
+                  color="primary"
+                  size="24"
+                />
               </div>
 
-              <div class="unfold-action-bar d-flex align-center justify-space-between pt-3 border-t">
+              <div class="unfold-action-bar lvl-card-action d-none d-sm-flex align-center justify-space-between pt-3 border-t">
                 <span class="text-caption font-weight-bold text-primary">Déplier les chapitres</span>
                 <div class="unfold-icon-circle rounded-circle d-flex align-center justify-center">
                   <v-icon icon="mdi-chevron-down" color="medium-emphasis" size="20" class="unfold-arrow" />
@@ -507,17 +532,6 @@ function selectChapter(ch: string): void {
   background: rgba(var(--v-theme-primary), 0.1);
 }
 
-.icon-avatar-sm {
-  background: rgba(var(--v-theme-primary), 0.1);
-  width: 34px;
-  height: 34px;
-}
-
-.unfold-icon-circle {
-  width: 28px;
-  height: 28px;
-  background: rgba(var(--v-theme-primary), 0.1);
-}
 
 .unfold-arrow {
   transition: transform 0.2s ease;

@@ -268,3 +268,56 @@ describe("UnfoldingCards.vue", () => {
     expect(wrapper.text()).toContain("Choisissez votre Niveau");
   });
 });
+
+describe("UnfoldingCards level card", () => {
+  it("paints the level's icon and file count in the brand green", async () => {
+    // Asked for directly: the card's tile already carried a 10% green wash, but the glyph
+    // and the count chip sat in grey on top of it, so the card read as colourless.
+    // Measured before changing: the green glyph clears 4.66:1 on its own tile and the
+    // tonal chip's label 4.52:1 on its own ground, both above AA. See lib/contrast.ts —
+    // a tonal chip is a wash, so it must be read against the panel, never the card.
+    const { wrapper } = await mountUnfolding(mockItems);
+    const card = wrapper.find('[data-test="unfold-level-2BAC"]');
+
+    expect(card.get(".icon-avatar .v-icon").classes()).toContain("text-primary");
+    expect(card.get(".v-chip").classes()).toContain("text-primary");
+  });
+});
+
+describe("UnfoldingCards level card on phones", () => {
+  it("drops the file count, which the compact card has no room for", async () => {
+    const { wrapper } = await mountUnfolding(mockItems);
+    const chip = wrapper.find('[data-test="unfold-level-2BAC"]').get(".v-chip");
+    expect(chip.classes()).toContain("d-none");
+    expect(chip.classes()).toContain("d-sm-inline-flex");
+  });
+});
+
+describe("UnfoldingCards level card compact hooks", () => {
+  it("wears the shared level-card hooks the compact stylesheet targets", async () => {
+    const { wrapper } = await mountUnfolding(mockItems);
+    const card = wrapper.find('[data-test="unfold-level-2BAC"]');
+    for (const hook of ["lvl-card-body", "lvl-card-head", "lvl-card-tile", "lvl-card-text", "lvl-card-title", "lvl-card-sub"]) {
+      expect(card.find(`.${hook}`).exists(), hook).toBe(true);
+    }
+    expect(card.classes()).toContain("lvl-card");
+  });
+
+  it("swaps the unfold row for a single chevron on phones", async () => {
+    const { wrapper } = await mountUnfolding(mockItems);
+    const card = wrapper.find('[data-test="unfold-level-2BAC"]');
+    expect(card.get(".unfold-action-bar").classes()).toEqual(
+      expect.arrayContaining(["d-none", "d-sm-flex"])
+    );
+    expect(card.get(".lvl-card-chevron").classes()).toContain("d-sm-none");
+  });
+});
+
+describe("UnfoldingCards level grid", () => {
+  it("marks the level row so the compact stylesheet can tighten its gutter on phones", async () => {
+    const { wrapper } = await mountUnfolding(mockItems);
+    const grid = wrapper.find(".lvl-card-grid");
+    expect(grid.exists()).toBe(true);
+    expect(grid.find('[data-test="unfold-level-2BAC"]').exists()).toBe(true);
+  });
+});

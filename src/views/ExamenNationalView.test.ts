@@ -87,3 +87,35 @@ describe("ExamenNationalView", () => {
     expect(other.text()).toContain("Sujet sans année");
   });
 });
+
+describe("ExamenNationalView level card on phones", () => {
+  it("wears the shared level-card hooks the compact stylesheet targets", async () => {
+    const w = await mountExamenNational([full("1", {})]);
+    const card = w.find('[data-test="level-card"]');
+    for (const hook of ["lvl-card-body", "lvl-card-head", "lvl-card-tile", "lvl-card-text", "lvl-card-title", "lvl-card-sub"]) {
+      expect(card.find(`.${hook}`).exists(), hook).toBe(true);
+    }
+    expect(card.classes()).toContain("lvl-card");
+  });
+
+  it("drops the count and the action row, leaving one chevron", async () => {
+    const w = await mountExamenNational([full("1", {})]);
+    const card = w.find('[data-test="level-card"]');
+    expect(card.get(".v-chip").classes()).toEqual(
+      expect.arrayContaining(["d-none", "d-sm-inline-flex"])
+    );
+    expect(card.get(".lvl-card-action").classes()).toEqual(
+      expect.arrayContaining(["d-none", "d-sm-flex"])
+    );
+    expect(card.get(".lvl-card-chevron").classes()).toContain("d-sm-none");
+  });
+});
+
+describe("ExamenNationalView level grid", () => {
+  it("marks the level row so the compact stylesheet can tighten its gutter on phones", async () => {
+    const w = await mountExamenNational([full("1", {})]);
+    const grid = w.find(".lvl-card-grid");
+    expect(grid.exists()).toBe(true);
+    expect(grid.find('[data-test="level-card"]').exists()).toBe(true);
+  });
+});

@@ -26,30 +26,43 @@
           </p>
         </div>
 
-        <v-row>
+        <v-row class="lvl-card-grid">
           <v-col v-for="lvl in levels" :key="lvl.level" cols="12" sm="6" md="4">
             <v-card
               variant="flat"
-              class="level-card rounded-2xl border pa-6 h-100 d-flex flex-column justify-space-between"
+              class="level-card lvl-card rounded-2xl border pa-6 h-100 d-flex flex-column justify-space-between"
               data-test="level-card"
               @click="selectedLevel = lvl.level"
             >
-              <div>
-                <div class="d-flex align-center justify-space-between mb-4">
-                  <div class="lvl-icon rounded-xl d-flex align-center justify-center pa-3">
+              <div class="lvl-card-body">
+                <div class="lvl-card-head d-flex align-center justify-space-between mb-4">
+                  <div class="lvl-icon lvl-card-tile rounded-xl d-flex align-center justify-center pa-3">
                     <v-icon icon="mdi-atom" color="primary" size="28" />
                   </div>
-                  <v-chip size="small" color="primary" variant="tonal" class="font-weight-bold rounded-pill">
+                  <v-chip size="small" color="primary" variant="tonal" class="d-none d-sm-inline-flex font-weight-bold rounded-pill">
                     {{ lvl.count }} sujet{{ lvl.count > 1 ? "s" : "" }}
                   </v-chip>
                 </div>
-                <h3 class="text-h5 font-weight-bold font-heading mb-1">{{ lvl.level }}</h3>
-                <p class="text-caption text-medium-emphasis mb-4">
-                  Sujets d'examen national
-                </p>
+                <!-- The wrapper is inert on desktop (a block holding two blocks) and load-bearing
+                     on phones: it gives the tile one text block to centre against. -->
+                <div class="lvl-card-text">
+                  <h3 class="lvl-card-title text-h5 font-weight-bold font-heading mb-1">{{ lvl.level }}</h3>
+                  <p class="lvl-card-sub text-caption text-medium-emphasis mb-4">
+                    Sujets d'examen national
+                  </p>
+                </div>
+
+                <!-- Phones only: the action row below is hidden there, so this carries
+                     the whole affordance on the card's one line. -->
+                <v-icon
+                  icon="mdi-chevron-right"
+                  class="lvl-card-chevron d-sm-none"
+                  color="primary"
+                  size="24"
+                />
               </div>
 
-              <div class="d-flex align-center justify-space-between pt-3 border-t">
+              <div class="lvl-card-action d-none d-sm-flex align-center justify-space-between pt-3 border-t">
                 <span class="text-caption font-weight-semibold color-primary">Voir les sujets</span>
                 <v-icon icon="mdi-arrow-right" class="arrow" color="primary" />
               </div>
