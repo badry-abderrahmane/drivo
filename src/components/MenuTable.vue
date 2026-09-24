@@ -25,20 +25,23 @@
             </v-chip>
           </template>
           <template #text>
-            <div v-if="filledCells(row).length" class="d-flex flex-column ga-2">
-              <div v-for="cell in filledCells(row)" :key="cell.type" class="d-flex align-start ga-3">
-                <span class="type-label flex-shrink-0">{{ cell.type }}</span>
-                <div class="d-flex flex-wrap ga-1">
+            <!-- On a phone each document is a full-width row carrying its title: a thumb
+                 needs a target it can hit, and a bare "1 2 3" said nothing about what opens. -->
+            <div v-if="filledCells(row).length" class="d-flex flex-column ga-3">
+              <div v-for="cell in filledCells(row)" :key="cell.type">
+                <div class="type-label mb-1">{{ cell.type }}</div>
+                <div class="doc-list">
                   <button
-                    v-for="(f, i) in cell.files"
+                    v-for="f in cell.files"
                     :key="f.fileId"
                     type="button"
-                    class="num-link"
-                    :title="f.displayTitle"
+                    class="doc-row"
                     data-test="menu-link"
                     @click="goToDoc(f)"
                   >
-                    {{ i + 1 }}
+                    <v-icon icon="mdi-file-document-outline" size="20" class="flex-shrink-0" />
+                    <span class="doc-title">{{ f.displayTitle }}</span>
+                    <v-icon icon="mdi-chevron-right" size="18" class="flex-shrink-0 doc-chevron" />
                   </button>
                 </div>
               </div>
@@ -138,16 +141,76 @@ function goToDoc(f: LibraryItem): void {
   padding-inline: 14px;
 }
 
+/* An open chapter has to read as a header over its contents, not as one more white row:
+   the title takes a primary tint and weight, and the documents sit on a recessed ground
+   hung off a primary rule, so the eye sees where the chapter ends and its list begins. */
+.chapter-panels :deep(.v-expansion-panel--active > .v-expansion-panel-title) {
+  background: rgba(var(--v-theme-primary), 0.1);
+  color: rgb(var(--v-theme-primary));
+}
+.chapter-panels :deep(.v-expansion-panel--active > .v-expansion-panel-title .v-expansion-panel-title__overlay) {
+  opacity: 0;
+}
+.chapter-panels :deep(.v-expansion-panel--active > .v-expansion-panel-title .font-weight-medium) {
+  font-weight: 700 !important;
+}
+.chapter-panels :deep(.v-expansion-panel--active .chapter-num) {
+  opacity: 1;
+}
+
+.chapter-panels :deep(.v-expansion-panel-text) {
+  background: rgb(var(--v-theme-surface-variant));
+  box-shadow: inset 3px 0 0 rgb(var(--v-theme-primary));
+}
+
 .chapter-panels :deep(.v-expansion-panel-text__wrapper) {
-  padding: 4px 14px 14px;
+  padding: 14px 14px 16px 20px;
 }
 
 .type-label {
-  min-width: 104px;
-  font-size: 0.78rem;
-  font-weight: 600;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: rgb(var(--v-theme-on-surface-variant));
-  padding-top: 3px;
+}
+.doc-list {
+  background: rgb(var(--v-theme-surface));
+  border: 1px solid rgb(var(--v-theme-outline-variant));
+  border-radius: 10px;
+  overflow: hidden;
+}
+.doc-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 0;
+  background: transparent;
+  color: rgb(var(--v-theme-on-surface));
+  text-align: left;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.doc-row + .doc-row {
+  border-top: 1px solid rgb(var(--v-theme-outline-variant));
+}
+.doc-row .v-icon {
+  color: rgb(var(--v-theme-primary));
+}
+.doc-row:active {
+  background: rgba(var(--v-theme-primary), 0.1);
+}
+.doc-title {
+  font-weight: 700;
+  flex-grow: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.doc-chevron {
+  opacity: 0.5;
 }
 .theme-col {
   min-width: 220px;
