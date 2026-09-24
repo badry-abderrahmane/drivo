@@ -113,16 +113,16 @@
     </v-app-bar>
 
     <!-- Mobile bottom nav: Admin isn't a student-facing destination, so it stays desktop-only -->
-    <v-bottom-navigation v-if="mobile" grow color="primary" class="mobile-bottom-nav">
-      <v-btn :to="{ name: 'browse' }" :color="route.name === 'browse' ? 'primary' : undefined">
+    <v-bottom-navigation v-if="mobile" grow bg-color="primary" color="on-primary" class="mobile-bottom-nav">
+      <v-btn :to="{ name: 'browse' }">
         <v-icon icon="mdi-atom" />
         Parcourir
       </v-btn>
-      <v-btn :to="{ name: 'menu' }" :color="route.name === 'menu' ? 'primary' : undefined">
+      <v-btn :to="{ name: 'menu' }">
         <v-icon icon="mdi-format-list-checks" />
         Menu
       </v-btn>
-      <v-btn :to="{ name: 'examen-national' }" :color="route.name === 'examen-national' ? 'primary' : undefined">
+      <v-btn :to="{ name: 'examen-national' }">
         <v-icon icon="mdi-certificate-outline" />
         Examen
       </v-btn>
@@ -528,6 +528,10 @@ onMounted(() => {
 
 .tracking-wider {
   letter-spacing: 0.05em;
+}
+
+.mobile-bottom-nav :deep(.v-btn) {
+  font-weight: 700;
 }
 
 .footer-nav-link {
