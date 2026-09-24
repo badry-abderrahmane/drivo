@@ -2,6 +2,12 @@
 export const BACKEND_URL =
   "https://script.google.com/macros/s/AKfycbzxrDtvVBdg0XuBD0hXCuaBpF3WUlWAmCt0WWbUMJNOilXV0ualQYT5AqNSrZ965Jzqww/exec";
 
+/**
+ * Google Analytics 4 measurement ID ("G-XXXXXXXXXX"). Public by design — it ships in every
+ * page. Empty turns analytics off entirely.
+ */
+export const GA_MEASUREMENT_ID = "G-0GC9509T70";
+
 /** Canonical origin + base path of the deployed site. Trailing slash required. */
 export const SITE_URL = "https://pipc.ma/";
 
