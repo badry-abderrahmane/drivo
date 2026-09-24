@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createRouter, createMemoryHistory } from "vue-router";
 import { mountWithVuetify } from "../test/setup";
 import { flushPromises } from "@vue/test-utils";
@@ -39,6 +39,40 @@ async function mountDoc(items: LibraryItem[], fileId: string, opts: { pending?: 
   await flushPromises();
   return w;
 }
+
+describe("DocView analytics", () => {
+  let gtag: ReturnType<typeof vi.fn>;
+  beforeEach(() => {
+    gtag = vi.fn();
+    window.gtag = gtag;
+  });
+  afterEach(() => {
+    delete window.gtag;
+  });
+
+  const events = () => gtag.mock.calls.filter((c) => c[0] === "event").map((c) => [c[1], c[2]]);
+
+  it("counts one view per document, with what it is", async () => {
+    await mountDoc([full("a")], "a");
+    expect(events()).toEqual([
+      ["view_document", {
+        doc_id: "a", doc_title: "Dipôle RC — Cours", doc_type: "Cours", doc_subject: "Physique",
+        doc_level: "2ème Bac SM", doc_chapter: "Dipôle RC",
+      }],
+    ]);
+  });
+
+  it("counts a download when Télécharger is clicked", async () => {
+    const w = await mountDoc([full("a")], "a");
+    await w.get('[data-test="doc-download"]').trigger("click");
+    expect(events().map((e) => e[0])).toEqual(["view_document", "file_download"]);
+  });
+
+  it("counts nothing for an unknown id", async () => {
+    await mountDoc([full("a")], "nope");
+    expect(events()).toEqual([]);
+  });
+});
 
 describe("DocView", () => {
   it("renders the document title and metadata", async () => {

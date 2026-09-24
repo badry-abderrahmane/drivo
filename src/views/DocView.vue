@@ -82,6 +82,7 @@
           variant="flat"
           prepend-icon="mdi-download-outline"
           class="rounded-pill px-5"
+          @click="trackDoc('file_download')"
         >
           Télécharger
         </v-btn>
@@ -92,6 +93,7 @@
           variant="tonal"
           prepend-icon="mdi-open-in-new"
           class="rounded-pill px-5"
+          @click="trackDoc('open_in_drive')"
         >
           Ouvrir dans Drive
         </v-btn>
@@ -121,7 +123,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useRoute } from "vue-router";
 import FileCard from "../components/FileCard.vue";
 import DocTypeChip from "../components/DocTypeChip.vue";
@@ -130,6 +132,7 @@ import { findDoc, relatedDocs } from "../lib/doc";
 import { slugify } from "../lib/slug";
 import { drivePreviewUrl, driveOpenUrl, driveDownloadUrl } from "../lib/drivePreview";
 import { AUTHOR_NAME } from "../config";
+import { track } from "../lib/analytics";
 
 const { items, loading, ensureLoaded } = useLibrary();
 const route = useRoute();
@@ -147,12 +150,40 @@ const previewSrc = computed(() => (doc.value ? drivePreviewUrl(doc.value.fileId,
 const openHref = computed(() => (doc.value ? driveOpenUrl(doc.value.fileId, doc.value.mimeType) : "#"));
 const downloadHref = computed(() => (doc.value ? driveDownloadUrl(doc.value.fileId, doc.value.mimeType) : "#"));
 
+/**
+ * What the professor wants to learn from the numbers: which documents are used, and how.
+ * Level and chapter are joined because a document can sit in several; GA takes one string.
+ */
+function trackDoc(event: string): void {
+  const d = doc.value;
+  if (!d) return;
+  track(event, {
+    doc_id: d.fileId,
+    doc_title: d.displayTitle,
+    doc_type: d.meta.type,
+    doc_subject: d.meta.subject,
+    doc_level: d.meta.level.join(", "),
+    doc_chapter: d.meta.chapter.join(", "),
+  });
+}
+
+// Once per document shown, keyed on the id: the library refreshing in the background
+// replaces `doc` with an equal object, and that must not count as a second view.
+watch(
+  () => doc.value?.fileId,
+  (id) => {
+    if (id) trackDoc("view_document");
+  },
+  { immediate: true }
+);
+
 const related = computed(() => (doc.value ? relatedDocs(items.value, doc.value) : []));
 
 // Most students are on mobile, where the native share sheet is what they expect;
 // the clipboard is the desktop fallback.
 const shared = ref(false);
 async function share(): Promise<void> {
+  trackDoc("share");
   const url = window.location.href;
   const title = doc.value?.displayTitle ?? "PIPC";
   if (navigator.share) {
