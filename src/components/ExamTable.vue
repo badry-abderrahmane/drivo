@@ -7,36 +7,38 @@
   <v-expansion-panels v-if="mobile" variant="accordion" class="year-panels">
     <v-expansion-panel v-for="row in rows" :key="row.year" data-test="exam-panel">
       <template #title>
-        <v-icon icon="mdi-calendar-outline" size="16" class="mr-2 flex-shrink-0" />
-        <span class="font-weight-bold flex-grow-1">{{ row.year }}</span>
-        <v-chip size="x-small" variant="tonal" class="ml-2 flex-shrink-0">
+        <v-icon icon="mdi-calendar-outline" size="18" class="mr-2 flex-shrink-0" />
+        <span class="year-title flex-grow-1">{{ row.year }}</span>
+        <v-chip size="x-small" variant="tonal" color="primary" class="ml-2 flex-shrink-0">
           {{ countFiles(row) }}
         </v-chip>
       </template>
       <template #text>
-        <div v-for="session in sessionsOf(row)" :key="session.label" class="mb-3">
-          <p class="session-label mb-1">{{ session.label }}</p>
-          <div
-            v-for="part in session.parts"
-            :key="part.head"
-            class="d-flex align-center ga-3 py-1"
-          >
-            <span class="part-label flex-shrink-0">{{ part.head }}</span>
-            <div v-if="part.files.length" class="d-flex flex-wrap ga-1">
-              <button
-                v-for="f in part.files"
-                :key="f.item.fileId"
-                type="button"
-                class="exam-link"
-                :title="f.item.displayTitle"
-                data-test="exam-link"
-                @click="goToDoc(f.item)"
-              >
-                <v-icon icon="mdi-file-pdf-box" size="14" class="mr-1" />
-                {{ f.label }}
-              </button>
+        <!-- Same shape as the thematic menu on a phone: a caption per session, then one
+             full-width row per document, so each target is thumb-sized and names itself. -->
+        <div class="d-flex flex-column ga-3">
+          <div v-for="session in sessionsOf(row)" :key="session.label">
+            <p class="session-label mb-1">{{ session.label }}</p>
+            <div class="doc-list">
+              <template v-for="part in session.parts" :key="part.head">
+                <button
+                  v-for="f in part.files"
+                  :key="f.item.fileId"
+                  type="button"
+                  class="doc-row"
+                  data-test="exam-link"
+                  @click="goToDoc(f.item)"
+                >
+                  <v-icon icon="mdi-file-pdf-box" size="20" class="flex-shrink-0 doc-icon" />
+                  <span class="doc-title">{{ f.label }}</span>
+                  <v-icon icon="mdi-chevron-right" size="18" class="flex-shrink-0 doc-chevron" />
+                </button>
+                <div v-if="!part.files.length" class="doc-row doc-row--empty">
+                  <v-icon icon="mdi-file-hidden" size="20" class="flex-shrink-0" />
+                  <span class="doc-title">{{ part.head }} — non disponible</span>
+                </div>
+              </template>
             </div>
-            <span v-else class="text-disabled">—</span>
           </div>
         </div>
       </template>
@@ -150,8 +152,74 @@ function goToDoc(f: LibraryItem): void {
   padding-inline: 14px;
 }
 
+.year-panels :deep(.v-expansion-panel-title) {
+  color: rgb(var(--v-theme-primary));
+}
+
+/* Mirrors MenuTable: an open year reads as a header over its contents — tinted title,
+   recessed ground hung off a primary rule, white lists on top. */
+.year-panels :deep(.v-expansion-panel--active > .v-expansion-panel-title) {
+  background: rgba(var(--v-theme-primary), 0.1);
+}
+.year-panels :deep(.v-expansion-panel--active > .v-expansion-panel-title .v-expansion-panel-title__overlay) {
+  opacity: 0;
+}
+
+.year-panels :deep(.v-expansion-panel-text) {
+  background: rgb(var(--v-theme-surface-variant));
+  box-shadow: inset 3px 0 0 rgb(var(--v-theme-primary));
+}
+
 .year-panels :deep(.v-expansion-panel-text__wrapper) {
-  padding: 4px 14px 12px;
+  padding: 14px 14px 16px 20px;
+}
+
+.year-title {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.doc-list {
+  background: rgb(var(--v-theme-surface));
+  border: 1px solid rgb(var(--v-theme-outline-variant));
+  border-radius: 10px;
+  overflow: hidden;
+}
+.doc-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 0;
+  background: transparent;
+  color: rgb(var(--v-theme-on-surface));
+  text-align: left;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.doc-row + .doc-row {
+  border-top: 1px solid rgb(var(--v-theme-outline-variant));
+}
+.doc-row:active {
+  background: rgba(var(--v-theme-primary), 0.1);
+}
+.doc-icon {
+  color: rgb(var(--v-theme-primary));
+}
+.doc-row--empty {
+  cursor: default;
+  color: rgba(var(--v-theme-on-surface), 0.38);
+}
+.doc-title {
+  font-weight: 700;
+  flex-grow: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.doc-chevron {
+  opacity: 0.5;
 }
 
 .session-label {
@@ -162,11 +230,6 @@ function goToDoc(f: LibraryItem): void {
   color: rgb(var(--v-theme-on-surface-variant));
 }
 
-.part-label {
-  min-width: 68px;
-  font-size: 0.8rem;
-  color: rgb(var(--v-theme-on-surface-variant));
-}
 .year-col,
 .year-cell {
   min-width: 110px;
