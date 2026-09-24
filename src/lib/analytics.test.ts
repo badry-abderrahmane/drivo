@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { createRouter, createMemoryHistory } from "vue-router";
-import { initAnalytics } from "./analytics";
+import { initAnalytics, track } from "./analytics";
 
 const Stub = { template: "<div />" };
 
@@ -60,5 +60,25 @@ describe("initAnalytics", () => {
     initAnalytics(router, "G-TEST123");
     await router.push("/admin");
     expect(pageViews()).toEqual([]);
+  });
+
+  it("sends the title it is given for the path", async () => {
+    const router = makeRouter();
+    initAnalytics(router, "G-TEST123", (path) => (path === "/menu" ? "Menu | PIPC" : undefined));
+    await router.push("/menu?x=1");
+    expect(pageViews()[0].page_title).toBe("Menu | PIPC");
+  });
+});
+
+describe("track", () => {
+  it("is a no-op when analytics never started", () => {
+    expect(() => track("file_download", { doc_id: "a" })).not.toThrow();
+  });
+
+  it("queues the event once analytics is running", () => {
+    initAnalytics(makeRouter(), "G-TEST123");
+    track("file_download", { doc_id: "a" });
+    const last = Array.from(window.dataLayer!.at(-1) as ArrayLike<unknown>);
+    expect(last).toEqual(["event", "file_download", { doc_id: "a" }]);
   });
 });

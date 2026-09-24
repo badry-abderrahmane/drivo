@@ -20,7 +20,12 @@ const UNTRACKED_ROUTES = new Set(["admin"]);
  * Injected at runtime rather than written into index.html: the prerender copies that shell
  * into ~1100 static pages, and a tag there would also fire for every crawler that renders.
  */
-export function initAnalytics(router: Router, measurementId: string, doc: Document = document): void {
+export function initAnalytics(
+  router: Router,
+  measurementId: string,
+  titleFor: (path: string) => string | undefined = () => undefined,
+  doc: Document = document
+): void {
   if (!measurementId) return;
 
   const w = doc.defaultView as Window;
@@ -42,9 +47,21 @@ export function initAnalytics(router: Router, measurementId: string, doc: Docume
   router.afterEach((to, _from, failure) => {
     if (failure) return;
     if (typeof to.name === "string" && UNTRACKED_ROUTES.has(to.name)) return;
+    // The title is resolved here, not read off document.title: App.vue retitles the tab in
+    // a watcher that runs after this hook, so the tab would still carry the previous page's.
+    // Undefined (library not loaded yet) lets gtag fall back to the prerendered title.
     w.gtag!("event", "page_view", {
       page_path: to.fullPath,
       page_location: w.location.origin + to.fullPath,
+      page_title: titleFor(to.path),
     });
   });
+}
+
+/**
+ * One named event, e.g. a download. A no-op wherever analytics never started — dev, tests,
+ * or an empty measurement ID — so callers need not check.
+ */
+export function track(event: string, params: Record<string, unknown> = {}): void {
+  window.gtag?.("event", event, params);
 }

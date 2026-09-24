@@ -281,11 +281,26 @@ import AuthorCredit from "./components/AuthorCredit.vue";
 import ContactProfessor from "./components/ContactProfessor.vue";
 import LandingIntro from "./components/LandingIntro.vue";
 import { randomQuote } from "./lib/quotes";
+import { pageTitle, DEFAULT_TITLE } from "./lib/pageTitle";
+import { useLibrary } from "./composables/useLibrary";
 
 const route = useRoute();
 const theme = useTheme();
 const searchOpen = ref(false);
 const { mobile } = useDisplay();
+
+// The tab carries the same title the prerender baked into this URL's file, so a student
+// with several documents open can tell the tabs apart. Until the library has loaded the
+// title stays as the loaded file set it, which for a cold load is already the right one.
+const { items: libraryItems } = useLibrary();
+watch(
+  [() => route.path, libraryItems],
+  ([path, list]) => {
+    if (!list.length) return;
+    document.title = pageTitle(path, list) ?? DEFAULT_TITLE;
+  },
+  { immediate: true }
+);
 
 // Chosen once per page load, not per navigation: a quotation that changed under the
 // reader every time they opened a document would be a distraction, not a note.
